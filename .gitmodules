@@ -1,0 +1,3 @@
+[submodule "vendors/US-Stock-Symbols"]
+	path = vendors/US-Stock-Symbols
+	url = https://github.com/rreichel3/US-Stock-Symbols.git
