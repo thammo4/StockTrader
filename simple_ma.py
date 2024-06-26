@@ -47,7 +47,20 @@ def sma_strategy(symbol, w_short, w_long):
 	#
 
 	past_data = quotes.get_historical_quotes(symbol, start_date=start_date, end_date=end_date);
-	# print(past_data);
+
+	#
+	# Error Handlling
+	# Note - Quotes.get_historical_quotes in uvatradier will return string if API Error occurs
+	#
+
+
+	if isinstance(past_data, str):
+		print(f"ERROR: {symbol} -> {past_data}");
+		return;
+
+	if past_data.empty:
+		print(f"No data for {symbol}");
+		return;
 
 
 	#
@@ -94,8 +107,9 @@ def sma_strategy(symbol, w_short, w_long):
 
 
 #
-# Run Example on Dow30 Sample
+# Run Example on Random Sample from NYSE
 #
 
-dow30_sample = random.sample(DOW30, 5);
-[sma_strategy(x, 5, 30) for x in dow30_sample];
+nyse = pd.read_json("vendors/US-Stock-Symbols/nyse/nyse_tickers.json")[0];
+nyse = list(nyse);
+nyse = [s for s in nyse if '^' not in s];
