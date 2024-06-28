@@ -26,44 +26,86 @@ today = datetime.today().strftime("%Y-%m-%d");
 
 nyse_sector_names = list(nyse_sectors.keys());
 
-nyse_sector_names.remove('Unknown');
+#
+# Retrieve adjusted closing prices for given sector_symbols within the user-supplied date range
+#
 
-nyse_sector_names = random.sample(nyse_sector_names, 4);
+def get_backtest_data (start_date, end_date, window_size, sector_symbols):
+	backtest_start_date = (datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=window_size)).strftime('%Y-%m-%d');
+
+	try:
+		data = yf.download(sector_symbols, start=backtest_start_date, end=end_date)['Adj Close'];
+		return data;
+	except Exception as e:
+		print(f'Failed: {e}');
+		return pd.DataFrame();
+
+
+#
+# Collect adjusted closing price data for several sectors
+#
+
+def gather_sector_data (start_date, end_date, window_size, sectors):
+	all_sector_data = {};
+	for sector, symbols in sectors.items():
+		print(f'Retrieving data for: {sector}');
+		sector_data = get_backtest_data(start_date, end_date, window_size, symbols);
+		all_sector_data[sector] = sector_data;
+	return all_sector_data;
+
+
+#
+# Compute intra-sector Z-scores of log-returns
+#
+
+def nyse_sector_Zreturns (sector_data):
+	stocks_daily_returns = np.log(sector_data / sector_data.shift(1));
+
+	stocks_agg_mean_returns = stocks_daily_returns.mean();
+	stocks_agg_std_returns = stocks_daily_returns.std();
+
+	sector_mean_return = stocks_agg_mean_returns.mean();
+	sector_std_return = stocks_agg_std_returns.mean();
+	sector_volatility = stocks_agg_std_returns.std();
+
+	stocks_Zreturns = (stocks_agg_mean_returns - sector_mean_return) / sector_std_return;
+
+	return stocks_Zreturns;
 
 
 #
 # Backtest Sector-based log-returns z-score strategy
 #
 
-def backtest_sector_strategy (start_date, end_date, window_size):
-	from nyse_analysis import window_to_dates, get_sector_adjClose, nyse_sector_Zreturns;
+def backtest_sector_strategy (start_date, end_date, window_size, backtest_data):
 	results = {};
-	current_date = datetime.strptime(start_date, "%Y-%m-%d");
-	end_date = datetime.strptime(end_date, "%Y-%m-%d");
+	current_date 	= pd.to_datetime(start_date);
+	end_date 		= pd.to_datetime(end_date);
 
 	while current_date <= end_date:
-		test_end = current_date.strftime("%Y-%m-%d");
-		test_start = (current_date - timedelta(days=window_size)).strftime("%Y-%m-%d");
-		print(f"Dates: {test_start} - {test_end}")
+		backtest_end 	= current_date.strftime("%Y-%m-%d");
+		backtest_start 	= (current_date-timedelta(days=window_size)).strftime("%Y-%m-%d");
 
-		period_results = {sector: [] for sector in nyse_sector_names};
+		print(f"DATES: {backtest_start} - {backtest_end}");
 
-		for nyse_sector in nyse_sector_names:
-			print(f'SECTOR: {nyse_sector}');
-			sector_data = get_sector_adjClose(sector=nyse_sector, start_date=test_start, end_date=test_end);
+		period_results = {sector: [] for sector in backtest_data.keys()};
+
+		for sector, data in backtest_data.items():
+			print(f"SECTOR: {sector}");
+
+			sector_data = data[ (data.index >= backtest_start) & (data.index <= backtest_end)];
 			sector_Zscores = nyse_sector_Zreturns(sector_data);
 
 			for ticker, zscore in sector_Zscores.items():
 				if zscore > .6745:
-					period_results[nyse_sector].append(ticker);
+					period_results[sector].append(ticker);
 
-			results[test_end] = period_results;
-			current_date += timedelta(days=1);
-			print(f"Period Results:\n{period_results}\n");
-		print(f"RESULTS:\n{results}\n");
-		print("\n");
-		print("------------------");
-		print("\n");
+			results[backtest_end] = period_results;
+			print(f"PERIOD RESULTS:\n{period_results}");
+
+		current_date += timedelta(days=1);
+		print(f'RESULTS:\n{results}');
+		print('\n-------------\n');
 
 	return results;
 
@@ -72,103 +114,98 @@ def backtest_sector_strategy (start_date, end_date, window_size):
 # Helper function to directly update portfolio dictionary
 #
 
-def update_portfolio_value (portfolio, date):
+def update_portfolio_value (portfolio, date, backtest_data):
 	total_value = portfolio['cash'];
 	for ticker, (shares, last_price) in portfolio['holdings'].items():
-		total_value += shares*last_price;
+		if ticker in backtest_data and date in backtest_data[ticker].index:
+			current_price = backtest_data[ticker].loc[date];
+			portfolio['holdings'][ticker] = (shares, current_price);
+			total_value += shares*current_price;
+		else:
+			total_value += shares*last_price;
+
 	portfolio['total_value'] = total_value;
+
 
 #
 # Compute returns accumulated from log-returns z-score sector strategy
 #
 
-# def backtest_sector_returns (backtest_results, window_size):
-# 	portfolio = {};
-# 	returns = {};
-# 	for date, sectors in backtest_results.items():
-# 		date_obj = datetime.strptime(date, "%Y-%m-%d");
-# 		end_date = (date_obj + timedelta(days=window_size)).strftime("%Y-%m-%d");
-
-# 		for sector, tickers in sectors.items():
-# 			for ticker in tickers:
-# 				try:
-# 					stock_data = yf.download(ticker, start=date, end=end_date);
-# 					if not stock_data.empty:
-# 						start_price = stock_data['Adj Close'].iloc[0];
-# 						end_price = stock_data['Adj Close'].iloc[-1];
-# 						returns.setdefault(date, {}).setdefault(sector, {})[ticker] = (end_price-start_price)/start_price;
-# 				except Exception as e:
-# 					print(f"Error computing return for {ticker}: {e}");
-
-# 	return returns;
-
-def backtest_sector_returns(backtest_results, cash_initial, window_size):
-	from nyse_analysis import get_sector_adjClose;
-	portfolio = {'cash':cash_initial, 'holdings':{}, 'total_value':cash_initial};
+def backtest_sector_returns (backtest_results, backtest_data, cash_initial, window_size):
+	portfolio = {
+		'cash': cash_initial,
+		'holdings': {},
+		'total_value': cash_initial
+	};
 	portfolio_history = [];
 
 	for date, sectors in backtest_results.items():
-		print(f'(DATE, SECTOR): ({date},{sectors})');
+		print(f"(DATE, SECTOR): ({date}, {sectors})");
 		date_obj = datetime.strptime(date, "%Y-%m-%d");
 		end_date = (date_obj + timedelta(days=window_size)).strftime("%Y-%m-%d");
 
-		#
-		# Record portfolio value at start of day
-		#
 
-		update_portfolio_value(portfolio, date);
-		# portfolio_history.append((date, portfolio['total_value']));
+		# record portfolio value at day's start
+		update_portfolio_value(portfolio, date, backtest_data);
 
+		current_tickers = [ticker for sector_tickers in sectors.values() for ticker in sector_tickers];
+
+		# remove holdings not in current tickers
+		portfolio['holdings'] = {ticker: holdings for ticker, holdings in portfolio['holdings'].items() if ticker in current_tickers};
 
 		#
 		# Track performance from trades
 		#
-
 		for sector, tickers in sectors.items():
-			print(f'TRYING (SECTOR, TICKERS): ({sector}, {tickers})')
+			print(f"TRYING (SECTOR, TICKERS): ({sector}, {tickers})")
 			try:
-				sector_data = get_sector_adjClose(sector, start_date=date, end_date=end_date);
+				sector_data = backtest_data[sector][(backtest_data[sector].index >= date) & (backtest_data[sector].index <= end_date)]
 
 				for ticker in tickers:
 					if ticker in sector_data.columns:
-						start_price = sector_data[ticker].iloc[0];
-						amount_invested = min(portfolio['cash'], 1000);
-						if amount_invested > 0:
-							num_shares = amount_invested / start_price;
-							portfolio['holdings'][ticker] = (num_shares, start_price);
-							portfolio['cash'] -= amount_invested;
+						start_price = sector_data[ticker].iloc[0]
+						max_spend_per_trade = 1000  # Maximum $1000 to spend per trade
+						shares_to_buy = int(max_spend_per_trade / start_price)  # Calculate number of shares to buy for $1000
+
+						amount_invested = shares_to_buy * start_price
+
+						if amount_invested <= portfolio['cash'] and shares_to_buy > 0:  # Check sufficient cash and that we can buy at least one share
+							if ticker in portfolio['holdings']:
+								current_shares, _ = portfolio['holdings'][ticker]
+								portfolio['holdings'][ticker] = (current_shares + shares_to_buy, start_price)
+							else:
+								portfolio['holdings'][ticker] = (shares_to_buy, start_price)
+							portfolio['cash'] -= amount_invested
 						else:
-							print(f"Nothing for {ticker} in {sector}");
+							print(f"Not enough cash to invest $1000: {ticker} [{sector}]")
 			except Exception as e:
-				print(f"ERROR: {sector} - {e}");
+				print(f"ERROR\t{sector}: {e}")
 
-		update_portfolio_value(portfolio, date);
-
+		update_portfolio_value(portfolio, date, backtest_data);
 		portfolio_history.append((end_date, portfolio['total_value']));
-		print(f'PORTFOLIO:\n{portfolio}');
-		print('------');
-		print('\n\n\n\n\n');
+		print(f'PORTFOLIO\n{portfolio}');
+		print('-------------------\n\n');
 
 	return portfolio, portfolio_history;
 
 
-
 backtest_start = "2023-01-01";
-backtest_end = "2023-06-30";
+backtest_end = "2023-03-01";
 cash_start = 100000;
+w_size = 90;
 
-# backtest_results = backtest_sector_strategy(backtest_start, backtest_end, window_size=90);
-backtest_results = {'2023-01-01': {'Real Estate': [], 'Energy': ['NINE'], 'Healthcare': [], 'Industrials': []}, '2023-01-05': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-01-09': {'Real Estate': [], 'Energy': ['NINE'], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-01-13': {'Real Estate': ['NYC'], 'Energy': ['NINE'], 'Healthcare': [], 'Industrials': []}, '2023-01-17': {'Real Estate': ['NYC'], 'Energy': ['NINE'], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-01-21': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-01-25': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-01-29': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-02-02': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-02-06': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-02-10': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-02-14': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-02-18': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['VATE']}, '2023-02-22': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-02-26': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-03-02': {'Real Estate': ['NYC'], 'Energy': ['NGL'], 'Healthcare': [], 'Industrials': []}, '2023-03-06': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-03-10': {'Real Estate': ['NYC'], 'Energy': ['NGL'], 'Healthcare': [], 'Industrials': []}, '2023-03-14': {'Real Estate': ['NYC'], 'Energy': ['NGL'], 'Healthcare': [], 'Industrials': []}, '2023-03-18': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-03-22': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-03-26': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-03-30': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-04-03': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['CR']}, '2023-04-07': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': ['CR']}, '2023-04-11': {'Real Estate': ['NYC'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-04-15': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-04-19': {'Real Estate': ['PKST'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-04-23': {'Real Estate': ['PKST'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-04-27': {'Real Estate': ['PKST'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-01': {'Real Estate': ['PKST'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-05': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-09': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-13': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-17': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-21': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-25': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-05-29': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-02': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': ['ARLO']}, '2023-06-06': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-10': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-14': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-18': {'Real Estate': ['PKST'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-22': {'Real Estate': ['PKST'], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-26': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}, '2023-06-30': {'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []}};
-portfolio_final, portfolio_history = backtest_sector_returns(backtest_results, cash_start, window_size=90);
+btest_data 								= gather_sector_data(start_date=backtest_start, end_date=backtest_end, window_size=w_size, sectors=nyse_sectors);
+btest_results 							= backtest_sector_strategy(start_date=backtest_start, end_date=backtest_end, window_size=w_size, backtest_data=btest_data);
+portfolio_final, portfolio_history 		= backtest_sector_returns(backtest_results=btest_results, backtest_data=btest_data, cash_initial=cash_start, window_size=w_size);
 
 daily_returns = [(portfolio_history[i+1][1] - portfolio_history[i][1])/portfolio_history[i][1] for i in range(len(portfolio_history)-1)];
-cumulative_returns = np.cumprod(1+np.array(daily_returns));
-
 
 
 #
 # Analyze Trade Results
 #
+
+cumulative_returns = np.cumprod(1+np.array(daily_returns));
 
 print(f"Initial Portfolio Value: ${cash_start:,.2f}");
 print(f"Final Portfolio Value: ${portfolio_final['total_value']:,.2f}");
@@ -188,41 +225,3 @@ plt.title(f'Cumulative Returns {backtest_start} - {backtest_end}');
 plt.xlabel('Trades');
 plt.ylabel('Cumulative Returns');
 plt.show();
-
-
-
-#
-# OUTPUT
-#
-
-# (DATE, SECTOR): (2023-06-30,{'Real Estate': [], 'Energy': [], 'Healthcare': [], 'Industrials': []})
-# TRYING (SECTOR, TICKERS): (Real Estate, [])
-# [*********************100%%**********************]  186 of 186 completed
-
-# 4 Failed downloads:
-# ['AHR', 'SDHC', 'SILA', 'NLOP']: Exception("%ticker%: Data doesn't exist for startDate = 1688097600, endDate = 1695873600")
-# TRYING (SECTOR, TICKERS): (Energy, [])
-# [*********************100%%**********************]  178 of 178 completed
-
-# 2 Failed downloads:
-# ['MNR', 'DEC']: Exception("%ticker%: Data doesn't exist for startDate = 1688097600, endDate = 1695873600")
-# TRYING (SECTOR, TICKERS): (Healthcare, [])
-# [*********************100%%**********************]  118 of 118 completed
-
-# 4 Failed downloads:
-# ['SOLV', 'ANRO', 'AUNA', 'PACS']: Exception("%ticker%: Data doesn't exist for startDate = 1688097600, endDate = 1695873600")
-# TRYING (SECTOR, TICKERS): (Industrials, [])
-# [*********************100%%**********************]  309 of 309 completed
-
-# 7 Failed downloads:
-# ['ULS', 'CDLR', 'VLTO', 'HAFN', 'ECO', 'VSTS', 'LOAR']: Exception("%ticker%: Data doesn't exist for startDate = 1688097600, endDate = 1695873600")
-# PORTFOLIO:
-# {'cash': 51000, 'holdings': {'NINE': (66.62225081621432, 15.010000228881836), 'VATE': (336.7003334568775, 2.9700000286102295), 'NYC': (81.23476571182256, 12.3100004196167), 'NGL': (298.507471184445, 3.3499999046325684), 'CR': (12.764871671513355, 78.33999633789062), 'PKST': (28.96871340495873, 34.52000045776367), 'ARLO': (101.112231070361, 9.890000343322754)}, 'total_value': 58000.0}
-# ------
-
-
-
-# Initial Portfolio Value: $100,000.00
-# Final Portfolio Value: $58,000.00
-# Total Return: -42.00%
-# Sharpe Ratio: -18.97
