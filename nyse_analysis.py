@@ -137,16 +137,17 @@ def buy_sector_stocks (Zscores):
 # 	• Iterate over each stock in the sector and buy those whose log-returns have Z-score > .6745 (prob of log-returns ≈ .750)
 #
 
-bought_sector_stocks = {sector: [] for sector in nyse_sector_names};
-window90 = window_to_dates(window_size=90);
-for nyse_sector in nyse_sector_names:
-	print(f"COMPUTING Z-SCORES FOR SECTOR: {nyse_sector}.");
-	sector_data = get_sector_adjClose(sector=nyse_sector, start_date=window90[0], end_date=window90[1]);
-	sector_Zscores = nyse_sector_Zreturns(sector_data);
-	stocks_to_buy = buy_sector_stocks(sector_Zscores);
-	bought_sector_stocks[nyse_sector] = stocks_to_buy;
-	print(f"Bought: {stocks_to_buy}");
-	print("\n");
+def Zscore_strategy():
+	bought_sector_stocks = {sector: [] for sector in nyse_sector_names};
+	window90 = window_to_dates(window_size=90);
+	for nyse_sector in nyse_sector_names:
+		print(f"COMPUTING Z-SCORES FOR SECTOR: {nyse_sector}.");
+		sector_data = get_sector_adjClose(sector=nyse_sector, start_date=window90[0], end_date=window90[1]);
+		sector_Zscores = nyse_sector_Zreturns(sector_data);
+		stocks_to_buy = buy_sector_stocks(sector_Zscores);
+		bought_sector_stocks[nyse_sector] = stocks_to_buy;
+		print(f"Bought: {stocks_to_buy}");
+		print("\n");
 
 
 #
