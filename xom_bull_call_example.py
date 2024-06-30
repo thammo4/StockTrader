@@ -336,17 +336,3 @@ print(f'Return on Risk: {return_on_risk:.2f}.');
 S_T=np.linspace(105, 126, 90);
 
 bull_call_payoff_diagram(S_T=S_T, payoffs=payoff_values);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
