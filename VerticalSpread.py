@@ -1,6 +1,5 @@
 from config import *
 
-
 class VerticalSpread:
 	def __init__ (self, underlying_price, K1, K2, premium1, premium2, spread_type):
 		self.underlying_price = underlying_price;
@@ -29,7 +28,6 @@ class VerticalSpread:
 
 		self.is_credit_spread = spread_type in ['bear_call', 'bull_put'];
 		self.is_debit_spread = not self.is_credit_spread;
-
 
 		print(f'Lower Strike: {self.K1}');
 		print(f'Upper Strike: {self.K2}');
@@ -66,14 +64,12 @@ class VerticalSpread:
 		lower_bound = self.K1;
 		upper_bound = self.K2;
 
-		print(f'Bounds: ({lower_bound, upper_bound})');
-
 		if self.is_credit_spread:
 			upper_bound += self.premium;
 		else:
 			lower_bound -= self.premium;
 
-		print(f'Bounds: ({lower_bound, upper_bound})');
+		print(f'Search Bounds for Breakeven: ({lower_bound, upper_bound})');
 
 		try:
 			return brentq(objective_function, lower_bound, upper_bound);
@@ -98,6 +94,16 @@ class VerticalSpread:
 
 	def return_on_risk (self):
 		return self.max_profit() / self.max_loss();
+
+	def metrics(self):
+		spread_metrics = {
+			'breakeven_price': 		self.breakeven_price(),
+			'max_loss': 			np.round(self.max_loss(), 4),
+			'max_profit': 			np.round(self.max_profit(), 4),
+			'risk_reward_ratio': 	np.round(self.risk_reward_ratio(), 4),
+			'return_on_risk': 		np.round(self.return_on_risk(), 4)
+		};
+		return spread_metrics;
 
 	def payoff_diagram (self):
 		payoff_values = self.get_payoff(self.price_range);
