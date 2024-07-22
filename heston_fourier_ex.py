@@ -5,7 +5,6 @@ from config import * # load necessary packages
 option_type = ql.Option.Call
 underlying = 100.0;
 strike_price = 100.0;
-# expiry = 1.0;
 expiry = 30/365; # month
 risk_free_rate = 0.05;
 dividend_yield = 0.02;

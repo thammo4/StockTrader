@@ -5,9 +5,13 @@ import numpy as np;
 import yfinance as yf;
 import QuantLib as ql;
 import random;
+import cmath;
 from datetime import datetime, timedelta;
 import matplotlib.pyplot as plt;
 from scipy.optimize import brentq;
+from scipy.optimize import minimize_scalar;
+from scipy import stats;
+from scipy import integrate;
 from arch import arch_model;
 import requests;
 
@@ -40,15 +44,10 @@ options_data = OptionsData(tradier_acct, tradier_token);
 
 fred = Fred(api_key = fred_api_key);
 
-
 today = datetime.today().strftime("%Y-%m-%d");
 
 nyse_sector_names = list(nyse_sectors.keys());
 nyse_stocks_all = [k for sector_stocks in nyse_sectors.values() for k in sector_stocks];
-
-
-
-
 
 options_subset_columns = ['symbol', 'last', 'bid', 'ask', 'strike', 'option_type'];
 
