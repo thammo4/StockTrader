@@ -29,6 +29,8 @@ from fredapi import Fred;
 from uvatradier import Account, Quotes, EquityOrder, OptionsOrder, OptionsData, Stream;
 from nyse_sectors import nyse_sectors; # gives access to sector-sorted dictionary of NYSE symbols
 from nyse_dividend_stocks import nyse_dividend_stocks; # list of ≈ 1000 NYSE-listed stocks that pay dividends (https://dividendhistory.org/nyse/)
+from nyse_large_cap import nyse_large_cap;
+from ticker_symbols_with_dividends import ticker_symbols_with_dividends;
 from dow30 import DOW30;
 
 
@@ -108,12 +110,44 @@ def dividend_table (symbol):
 
 def dividend_yield (symbol, price_per_share=None):
 	div_data = dividend_table(symbol);
+	if div_data.empty:
+		div_data = polygon_dividends(symbol);
 	div_payout_per_year = div_data.iloc[0]['cash_amount'] * div_data.iloc[0]['frequency'];
 
 	if price_per_share is None:
 		price_per_share = quotes.get_quote_day(symbol, True);
 
 	return np.round(div_payout_per_year/price_per_share, 4);
+
+
+#
+# Helper Function to Get Dividends from Polygon.io Because Tradier's Fundamentals API Is Garbage
+#
+
+def polygon_dividends (symbol):
+	try:
+		r = requests.get(url='https://api.polygon.io/v3/reference/dividends',params={'ticker':symbol, 'apiKey':polygon_api_key});
+		r.raise_for_status();
+		data = r.json();
+		if not data['results']:
+			print(f"No Polygon Dividend Data {symbol}");
+			return pd.DataFrame(columns=['ex_date', 'cash_amount', 'frequency']);
+
+		df_dividends = pd.json_normalize(r.json()['results']);
+		df_dividends = df_dividends[['cash_amount', 'ex_dividend_date', 'frequency']];
+		df_dividends.columns = ['cash_amount', 'ex_date', 'frequency'];
+		df_dividends['symbol'] = symbol;
+		return df_dividends;
+
+	except requests.exceptions.HTTPError as e:
+		print(f"Polygon HTTP Error {symbol}: {str(e)}");
+	except requests.exceptions.RequestException as e:
+		print(f"Polygon Request Error {symbol}: {str(e)}");
+	except KeyError:
+		print(f"Polygon Response Lacks results {symbol}");
+	except Exception as e:
+		print(f"Polygon who knows error {str(e)}");
+	return pd.DataFrame(columns=['cash_amount', 'ex_date', 'frequency']);
 
 
 
