@@ -1,2 +1,2 @@
 # StockTrader
-Automated stock trading implementations and analysis.
+Automated securities retail trading implementations and analysis
