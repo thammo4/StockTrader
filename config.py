@@ -131,7 +131,11 @@ from large_cap_with_dividends import *
 # StockTrader Universe
 #
 
-STOCK_UNIVERSE = list(acct.get_positions()['symbol'].values);
+STOCK_UNIVERSE = [];
+try:
+	STOCK_UNIVERSE = list(acct.get_positions()['symbol'].values);
+except:
+	print('No current account positions for STOCK_UNIVERSE [config.py]');
 STOCK_UNIVERSE +=nyse_dividend_sample;
 STOCK_UNIVERSE += etrade_phil;
 STOCK_UNIVERSE += etrade_tom;
