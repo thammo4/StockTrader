@@ -1,4 +1,6 @@
-build-backend='setuptools.build_meta'
+[build-system]
+requires = ["setuptools>=69.2.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name='StockTrader'
@@ -31,10 +33,22 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev=['black', 'flake8', 'mypy', 'pytest', 'pre-commit']
+dev=['black', 'ruff', 'mypy', 'pytest', 'pre-commit']
 
 [tool.setuptools.packages.find]
 where=['src']
 
 [tool.pytest.ini_options]
 testpaths=['tests']
+
+[tool.ruff]
+select = ["E", "F", "B"]
+ignore = []
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.mccabe]
+max-complexity = 10
