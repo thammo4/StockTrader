@@ -28,6 +28,11 @@ jobs:
           fi
           source venv/bin/activate
 
+          if [ ! -d "src" ]; then
+          	echo "ERROR: src/ missing"
+          	exit 1
+          fi
+
           if command -v pip3 &> /dev/null; then
             pip3 install --upgrade pip
             pip3 install -e .
