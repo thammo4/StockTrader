@@ -39,6 +39,7 @@ dev=['black', 'ruff', 'mypy', 'pytest', 'pre-commit']
 where=['src']
 
 [tool.pytest.ini_options]
+pythonpath = ["src"]
 testpaths=['tests']
 
 [tool.ruff]
