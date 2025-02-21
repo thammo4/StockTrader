@@ -1,2 +1,2 @@
 # StockTrader
-Automated securities retail trading implementations and analysis
+Financial market data pipeline for analysis of option and equity securities
