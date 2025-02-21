@@ -42,6 +42,11 @@ jobs:
             pip install -e .
             pip install pytest black
           fi
+      - name: Set Env Vars
+        run: |
+          echo "STOCK_TRADER_HOME=/mock/home" >> $GITHUB_ENV
+          echo "STOCK_TRADER_MARKET_DATA=/mock/data" >> $GITHUB_ENV
+          echo "STOCK_TRADER_LOG=/mock/logs" >> $GITHUB_ENV
 
       - name: Run Unit Tests
         run: |
