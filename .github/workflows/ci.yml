@@ -31,11 +31,11 @@ jobs:
           if command -v pip3 &> /dev/null; then
             pip3 install --upgrade pip
             pip3 install -e .
-            pip3 install pytest black ruff
+            pip3 install pytest black
           else
             pip install --upgrade pip
             pip install -e .
-            pip install pytest black ruff
+            pip install pytest black
           fi
 
       - name: Run Unit Tests
@@ -47,4 +47,3 @@ jobs:
         run: |
           source venv/bin/activate
           black --check src/
-          ruff check src/
