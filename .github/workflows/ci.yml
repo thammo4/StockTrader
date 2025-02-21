@@ -1,50 +1,50 @@
 name: StockTrader CI
 
 on:
-	push:
-		branches: [main]
-	pull_request:
-		branches: [main]
-
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-	test:
-		runs-on: ubuntu-latest
+  test:
+    runs-on: ubuntu-latest
 
-	steps:
-		- name: Checkout Repository
-		  uses: actions/checkout@v3
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-		- name: Set Up Python
-		  uses: actions/setup-python@v4
-		  with:
-			python-version: "3.10"
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
 
-		- name: Install Dependencies
-		  run: |
-			if command -v python3 &> /dev/null; then
-				python3 -m venv venv
-			else
-				python -m venv venv
-			fi
-			source venv/bin/activate
+      - name: Install Dependencies
+        run: |
+          if command -v python3 &> /dev/null; then
+            python3 -m venv venv
+          else
+            python -m venv venv
+          fi
+          source venv/bin/activate
 
-			if command -v pip3 &> /dev/null; then
-				pip3 install --upgrade pip
-				pip3 install -e .
-				pip3 install pytest black ruff
-			else
-				pip install --upgrade pip
-				pip install -e .
-				pip install pytest black ruff
-			fi
-		- name: Run Unit Tests
-		  run: |
-			source venv/bin/activate
-			pytest tests/
-		- name: Formatting and Linting Checks
-		  run: |
-			source venv/bin/activate
-			black --check src/
-			ruff check src/
+          if command -v pip3 &> /dev/null; then
+            pip3 install --upgrade pip
+            pip3 install -e .
+            pip3 install pytest black ruff
+          else
+            pip install --upgrade pip
+            pip install -e .
+            pip install pytest black ruff
+          fi
 
+      - name: Run Unit Tests
+        run: |
+          source venv/bin/activate
+          pytest tests/
+
+      - name: Formatting and Linting Checks
+        run: |
+          source venv/bin/activate
+          black --check src/
+          ruff check src/
