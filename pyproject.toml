@@ -40,7 +40,8 @@ where=['src']
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "scripts"]
-testpaths=['tests', 'tests/scripts']
+testpaths = ["tests"]
+# testpaths=['tests', 'tests/scripts']
 
 # [tool.ruff]
 # lint.select = ["E", "F"]
