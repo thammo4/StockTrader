@@ -14,6 +14,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
+      - name: Install Dolt DB
+        run: |
+          wget https://github.com/dolthub/dolt/releases/latest/download/install.sh
+          sudo bash install.sh
+          sudo dolt version
+
       - name: Set Up Python
         uses: actions/setup-python@v4
         with:
