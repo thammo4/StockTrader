@@ -1,6 +1,7 @@
 pnl*
 gitCommits/
-options/LARGE*
+options/
+else/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -17,23 +17,15 @@ def settings ():
 	importlib.reload(StockTrader.settings)
 	return StockTrader.settings
 
-@pytest.fixture(autouse=True)
-def mock_env ():
-	with patch.dict(os.environ, {"STOCK_TRADER_HOME":"/mock/home", "STOCK_TRADER_MARKET_DATA":"/mock/data", "STOCK_TRADER_LOG":"/mock/logs"}):
-		yield
-
 def test_paths ():
 	'''Test that directory paths are correctly specified'''
-	with patch('logging.basicConfig') as mock_log:
-		from StockTrader.settings import (
-			STOCK_TRADER_HOME,
-			STOCK_TRADER_MARKET_DATA,
-			STOCK_TRADER_LOG
-		)
-		assert STOCK_TRADER_HOME == "/mock/home"
-		assert STOCK_TRADER_MARKET_DATA == "/mock/data"
-		assert STOCK_TRADER_LOG == "/mock/logs"
-		mock_log.assert_called()
+	with patch.dict(os.environ, {"STOCK_TRADER_HOME":"/mock/home", "STOCK_TRADER_MARKET_DATA":"/mock/data", "STOCK_TRADER_LOG":"/mock/logs"}, clear=True):
+		import StockTrader.settings
+		importlib.reload(StockTrader.settings)
+
+		assert StockTrader.settings.STOCK_TRADER_HOME == "/mock/home"
+		assert StockTrader.settings.STOCK_TRADER_MARKET_DATA == "/mock/data"
+		assert StockTrader.settings.STOCK_TRADER_LOG == "/mock/logs"
 
 def test_dates (settings):
 	'''Test that dates are correctly defined'''

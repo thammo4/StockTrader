@@ -1,5 +1,5 @@
 #
-# FILE: `StockTrader/tests/scripts/test_dolt_historical_ticker.py` (test: `StockTrader/scripts/dolt_historical_ticker.py`)
+# FILE: `StockTrader/tests/scripts/test_dolt_historical_ticker.py` (test: `StockTrader/scripts/dolt_historical_ticker.sh`)
 # 	• Confirm that the script runs (e.g. is ok to download historical options chain data from DoltHub)
 # 	• Confirm that the script runs with ticker symbol argument
 #

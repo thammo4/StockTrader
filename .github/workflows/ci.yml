@@ -19,6 +19,7 @@ jobs:
           wget https://github.com/dolthub/dolt/releases/latest/download/install.sh
           sudo bash install.sh
           sudo dolt version
+
       - name: Clone Dolt DB
         run: |
           mkdir -p options
