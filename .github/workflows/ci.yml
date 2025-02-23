@@ -50,19 +50,19 @@ jobs:
           fi
       - name: Set Env Vars
         run: |
-          echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE/home" >> $GITHUB_ENV
+          # echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE/home" >> $GITHUB_ENV
           echo "STOCK_TRADER_MARKET_DATA=$GITHUB_WORKSPACE/data" >> $GITHUB_ENV
           echo "STOCK_TRADER_LOG=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
           mkdir -p $GITHUB_WORKSPACE/data $GITHUB_WORKSPACE/logs
 
       - name: Debug Env Vars
         run: |
-          echo "STOCK_TRADER_HOME: $STOCK_TRADER_HOME"
+          # echo "STOCK_TRADER_HOME: $STOCK_TRADER_HOME"
           echo "STOCK_TRADER_MARKET_DATA: $STOCK_TRADER_MARKET_DATA"
           echo "STOCK_TRADER_LOG: $STOCK_TRADER_LOG"
 
-          echo "Home Directory:"
-          ls -lah $STOCK_TRADER_HOME
+          # echo "Home Directory:"
+          # ls -lah $STOCK_TRADER_HOME
           echo "Market Data Directory:"
           ls -lah $STOCK_TRADER_MARKET_DATA
           echo "Log Directory:"
