@@ -63,8 +63,8 @@ jobs:
           echo "STOCK_TRADER_LOG=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
           mkdir -p $GITHUB_WORKSPACE/data $GITHUB_WORKSPACE/logs
 
-      -name: Load and Set API Keys
-       run: |
+      - name: Load and Set API Keys
+        run: |
           echo "tradier_acct=${{ secrets.tradier_acct }}" >> $GITHUB_ENV
           echo "tradier_token=${{ secrets.tradier_token }}" >> $GITHUB_ENV
           echo "tradier_acct_live=${{ secrets.tradier_acct_live }}" >> $GITHUB_ENV
