@@ -10,8 +10,11 @@ import pytest
 
 from ..config import logger
 
-STOCK_TRADER_MARKET_DATA = os.environ.get("STOCK_TRADER_MARKET_DATA", "/data")
+STOCK_TRADER_MARKET_DATA = os.environ.get("STOCK_TRADER_MARKET_DATA", os.path.join(os.getcwd(), "data"))
 SCRIPT_PATH = os.path.abspath("scripts/dolt_historical_ticker.sh")
+
+if not os.path.exists(STOCK_TRADER_MARKET_DATA):
+	os.makedirs(STOCK_TRADER_MARKET_DATA, exist_ok=True)
 
 @pytest.fixture(scope="function", autouse=True)
 def setup_teardown():
