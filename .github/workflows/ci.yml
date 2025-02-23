@@ -19,6 +19,12 @@ jobs:
           wget https://github.com/dolthub/dolt/releases/latest/download/install.sh
           sudo bash install.sh
           sudo dolt version
+      - name: Clone Dolt DB
+        run: |
+          mkdir -p options
+          cd options
+          dolt clone post-no-preference/options .
+          dolt sql -q "SHOW TABLES"
 
       - name: Set Up Python
         uses: actions/setup-python@v4
