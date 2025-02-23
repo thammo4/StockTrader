@@ -57,8 +57,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           source venv/bin/activate
-          export PYTHONPATH=$PWD
-          pytest tests/
+          pytest -v tests/
 
       - name: Formatting and Linting Checks
         run: |
