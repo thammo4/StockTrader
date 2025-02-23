@@ -55,18 +55,28 @@ jobs:
             pip install -e .
             pip install pytest black
           fi
+
       - name: Set Env Vars
         run: |
-          # echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE/home" >> $GITHUB_ENV
+          echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE/home" >> $GITHUB_ENV
           echo "STOCK_TRADER_MARKET_DATA=$GITHUB_WORKSPACE/data" >> $GITHUB_ENV
           echo "STOCK_TRADER_LOG=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
           mkdir -p $GITHUB_WORKSPACE/data $GITHUB_WORKSPACE/logs
 
+      -name: Load/Set API Keys
+       run: |
+          echo "tradier_acct=${{ secrets.tradier_acct }}" >> $GITHUB_ENV
+          echo "tradier_token=${{ secrets.tradier_token }}" >> $GITHUB_ENV
+          echo "tradier_acct_live=${{ secrets.tradier_acct_live }}" >> $GITHUB_ENV
+          echo "tradier_token_live=${{ secrets.tradier_token_live }}" >> $GITHUB_ENV
+
       - name: Debug Env Vars
         run: |
-          # echo "STOCK_TRADER_HOME: $STOCK_TRADER_HOME"
+          echo "STOCK_TRADER_HOME: $STOCK_TRADER_HOME"
           echo "STOCK_TRADER_MARKET_DATA: $STOCK_TRADER_MARKET_DATA"
           echo "STOCK_TRADER_LOG: $STOCK_TRADER_LOG"
+          echo "API KEYS:"
+          echo "tradier_acct, tradier_token, tradier_acct_live, tradier_token_live"
 
           # echo "Home Directory:"
           # ls -lah $STOCK_TRADER_HOME
