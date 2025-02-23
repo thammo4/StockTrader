@@ -16,11 +16,11 @@ from StockTrader.settings import STOCK_TRADER_HOME
 env_path = os.path.join(os.path.join(STOCK_TRADER_HOME, ".env"))
 dotenv.load_dotenv(env_path)
 
-tradier_acct = os.getenv('tradier_acct')
-tradier_token = os.getenv('tradier_token')
+tradier_acct = os.getenv("tradier_acct")
+tradier_token = os.getenv("tradier_token")
 
-tradier_acct_live = os.getenv('tradier_acct_live')
-tradier_token_live = os.getenv('tradier_token_live')
+tradier_acct_live = os.getenv("tradier_acct_live")
+tradier_token_live = os.getenv("tradier_token_live")
 
 acct = Account(tradier_acct, tradier_token)
 quotes = Quotes(tradier_acct, tradier_token)

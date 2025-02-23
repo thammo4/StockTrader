@@ -44,6 +44,9 @@ pythonpath = ["src", "scripts"]
 testpaths = ["tests"]
 # testpaths=['tests', 'tests/scripts']
 
+[tool.black]
+line-length = 120
+
 # [tool.ruff]
 # lint.select = ["E", "F"]
 # lint.ignore = []
