@@ -69,6 +69,7 @@ jobs:
           echo "tradier_token=${{ secrets.tradier_token }}" >> $GITHUB_ENV
           echo "tradier_acct_live=${{ secrets.tradier_acct_live }}" >> $GITHUB_ENV
           echo "tradier_token_live=${{ secrets.tradier_token_live }}" >> $GITHUB_ENV
+          echo "fred_api_key=${{ secrets.fred_api_key }}" >> $GITHUB_ENV
 
       - name: Debug Env Vars
         run: |
