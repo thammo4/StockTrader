@@ -90,7 +90,7 @@ jobs:
           source venv/bin/activate
           pytest -v tests/
 
-      - name: Formatting and Linting Checks
+      - name: Formatting Checks
         run: |
           source venv/bin/activate
-          black --check src/
+          black --check src/ scripts/ tests/
