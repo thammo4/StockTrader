@@ -8,6 +8,14 @@ import dotenv
 from uvatradier import Account, Quotes, EquityOrder, OptionsOrder, OptionsData, Stream
 from StockTrader.settings import STOCK_TRADER_HOME
 
+
+#
+# Define Miscellaneous URL Endpoints Unavailable in uvatradier
+#
+
+# Dividend-Related Fundamentals Data
+TRADIER_DIVIDEND_ENDPOINT = "https://api.tradier.com/beta/markets/fundamentals/dividends"
+
 #
 # Define API Keys Using Local .env File
 #
