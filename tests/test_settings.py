@@ -48,9 +48,11 @@ def test_dates(settings):
     six_months_ago_expected = (dt - timedelta(weeks=26)).strftime("%Y-%m-%d")
     three_months_ago_expected = (dt - timedelta(weeks=13)).strftime("%Y-%m-%d")
     last_month_expected = (dt - timedelta(weeks=4)).strftime("%Y-%m-%d")
+    two_weeks_ago_expected = (dt - timedelta(weeks=2)).strftime("%Y-%m-%d")
 
     assert settings.today == today_expected
     assert settings.today_last_year == last_year_expected
     assert settings.today_six_months_ago == six_months_ago_expected
     assert settings.today_three_months_ago == three_months_ago_expected
     assert settings.today_last_month == last_month_expected
+    assert settings.today_two_weeks_ago == two_weeks_ago_expected
