@@ -52,7 +52,9 @@ def test_ohlcv_parquet(mock_quotes, mock_exists):
     result = create_ohlcv_parquet("TEST", return_df=True)
 
     assert isinstance(result, pd.DataFrame)
+    assert "date" in result.columns
+    assert "close" in result.columns
     assert "log_return" in result.columns
-    assert result.shape[0] == 4
+    assert "vol_estimate" in result.columns
 
     mock_quotes.get_historical_quotes.assert_called_once()

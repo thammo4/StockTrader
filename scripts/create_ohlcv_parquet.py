@@ -5,6 +5,7 @@
 import os
 import pandas as pd
 import numpy as np
+from datetime import timedelta
 from StockTrader.tradier import quotes, quotesL
 from StockTrader.settings import STOCK_TRADER_MARKET_DATA, logger
 
@@ -19,12 +20,14 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
     # Format Tradier OHLCV Historical Bar Data for Subsequent Processing
     # 	• Subset OHLCV columns for just date and close
     # 	• Compute + append column for daily closing log-returns
+    #   • Compute + append column for annualized rolling volatility estimate (see: Chpt 14, Hull's 'Options, Futures and Other Derivatives')
     # 	• Convert date column to int64 for PySpark
     #
 
     def format_ohlcv(df):
         df.drop(["open", "high", "low", "volume"], axis=1, inplace=True)
         df["log_return"] = np.log(df["close"]).diff()
+        df["vol_estimate"] = df["log_return"].rolling(window=9).std() * np.sqrt(252)  # \sqrt(252) annualizes
         df.dropna(inplace=True)
         df["date"] = pd.to_datetime(df["date"]).astype(np.int64)
         return df
@@ -50,6 +53,17 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
 
         start_date = pd.to_datetime(int(lines[0].strip()))
         end_date = pd.to_datetime(int(lines[1].strip()))
+
+        #
+        # Push the start date back two weeks to accommodate rolling volatility calculation
+        # Rolling volatility with window $w$ will produce NaN for the first w-records
+        #
+
+        start_date -= timedelta(weeks=2)
+
+        #
+        # Fetch Data -> Add Necessary Feature Variables -> Create Parquet
+        #
 
         logger.info(f"Running [create_ohlcv_parquet]: symbol={symbol}, start={start_date}, end={end_date}")
 
