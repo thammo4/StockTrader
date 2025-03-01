@@ -88,7 +88,7 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
         #
 
         fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, f"{symbol}_ohlcv_bar_data.parquet")
-        df_bars.to_parquet(fpath_parquet)
+        df_bars.to_parquet(fpath_parquet, index=False)
         logger.info(f"Parquet file: {fpath_parquet}")
 
         if return_df:
