@@ -1,3 +1,6 @@
+Legacy/
+data/*.parquet
+data/*.csv
 pnl*
 gitCommits/
 options/
