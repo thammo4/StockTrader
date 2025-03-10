@@ -43,7 +43,9 @@ def create_fred_parquet(series="TB3MS", start_date=None, end_date=None, return_d
         end_date = today
 
     try:
-        logger.info(f"Running [create_fred_parquet]: seriesid={series}, start={start_date}, end={end_date}")
+        logger.info(
+            f"Creating parquet file: seriesid={series}, start={start_date}, end={end_date} [create_fred_parquet]"
+        )
 
         #
         # Retrieve Data from FRED API
@@ -51,7 +53,7 @@ def create_fred_parquet(series="TB3MS", start_date=None, end_date=None, return_d
 
         df_fred = fred.get_series(series_id=series, observation_start=start_date, observation_end=end_date)
         if df_fred.empty:
-            e_msg = "ERROR [create_fred_parquet]: ghosted by FRED"
+            e_msg = "Ghosted by FRED [create_fred_parquet]"
             logger.error(e_msg)
             raise ValueError(e_msg)
 
@@ -67,7 +69,7 @@ def create_fred_parquet(series="TB3MS", start_date=None, end_date=None, return_d
 
         fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, "fred_data.parquet")
         df_fred.to_parquet(fpath_parquet)
-        logger.info(f"Parquet file: {fpath_parquet}")
+        logger.info(f"Created parquet file: {fpath_parquet} [create_fred_parquet]")
 
         #
         # Ask, and ye shall receive
@@ -81,8 +83,8 @@ def create_fred_parquet(series="TB3MS", start_date=None, end_date=None, return_d
     #
 
     except ValueError as e_val:
-        logger.error(f"ValueError [create_fred_parquet]: {e_val}")
+        logger.error(f"ValueError: {e_val} [create_fred_parquet]")
         raise
     except Exception as e:
-        logger.error(f"ERROR [create_fred_parquet]: {e}")
+        logger.error(f"Exception: {e} [create_fred_parquet]")
         raise

@@ -37,13 +37,13 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
     fpath = os.path.join(STOCK_TRADER_MARKET_DATA, f"{symbol}_date_range.txt")
     try:
         if not os.path.exists(fpath):
-            raise ValueError(f"ERROR [create_ohlcv_parquet]: Missing {symbol}_date_range.txt")
+            raise ValueError(f"Missing file: {symbol}_date_range.txt [create_ohlcv_parquet]")
 
         with open(fpath, "r") as f:
             lines = f.readlines()
 
         if len(lines) < 2:
-            e_msg = f"ERROR [create_ohlcv_parquet]: bad file {fpath}"
+            e_msg = f"Bad file: {fpath} [create_ohlcv_parquet]"
             logger.error(e_msg)
             raise ValueError(e_msg)
 
@@ -65,7 +65,9 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
         # Fetch Data -> Add Necessary Feature Variables -> Create Parquet
         #
 
-        logger.info(f"Running [create_ohlcv_parquet]: symbol={symbol}, start={start_date}, end={end_date}")
+        logger.info(
+            f"Creating ohlcv parquet: symbol={symbol}, start={start_date}, end={end_date} [create_ohlcv_parquet]"
+        )
 
         #
         # Retrieve market data from Tradier Quotes endpoint
@@ -73,7 +75,7 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
 
         df_bars = q.get_historical_quotes(symbol=symbol, start_date=start_date, end_date=end_date)
         if df_bars.empty:
-            e_msg = "ERROR [create_ohlcv_parquet]: no data from tradier"
+            e_msg = "No data from Tradier [create_ohlcv_parquet]"
             logger.error(e_msg)
             raise ValueError(e_msg)
 
@@ -89,13 +91,13 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
 
         fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, f"{symbol}_ohlcv_bar_data.parquet")
         df_bars.to_parquet(fpath_parquet, index=False)
-        logger.info(f"Parquet file: {fpath_parquet}")
+        logger.info(f"Created parquet file: {fpath_parquet} [create_ohlcv_parquet]")
 
         if return_df:
             return df_bars
     except ValueError as e_val:
-        logger.error(f"ValueError [create_ohlcv_parquet]: {e_val}")
+        logger.error(f"ValueError: {e_val} [create_ohlcv_parquet]")
         raise
     except Exception as e:
-        logger.error(f"ERROR [create_ohlcv_parquet]: {e}")
+        logger.error(f"Exception: {e} [create_ohlcv_parquet]")
         raise

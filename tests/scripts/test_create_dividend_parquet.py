@@ -232,7 +232,7 @@ def test_create_dividend_parquet_logger_warning(mock_logger, mock_get, mock_empt
     result = create_dividend_parquet("TEST", return_df=True)
 
     assert result is None
-    mock_logger.warning.assert_any_call("WARNING [create_dividend_parquet]: No data, symbol=TEST")
+    mock_logger.warning.assert_any_call("No data, symbol=TEST [create_dividend_parquet]")
 
 
 @patch("scripts.create_dividend_parquet.requests.get")
@@ -262,4 +262,4 @@ def test_create_dividend_parquet_file_error(mock_logger, mock_to_parquet, mock_g
     result = create_dividend_parquet("TEST", return_df=True)
 
     assert isinstance(result, pd.DataFrame)
-    mock_logger.error.assert_any_call("ERROR [create_dividend_parquet]: Parquet failed: Parquet Write Error")
+    mock_logger.error.assert_any_call("Parquet failed: Parquet Write Error [create_dividend_parquet]")

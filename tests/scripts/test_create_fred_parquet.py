@@ -86,7 +86,7 @@ def test_create_fred_parquet_file(mock_fred_data, tmp_path):
 def test_create_fred_parquet_nofile_error():
     """Test that empty data from FRED raises ValueError"""
     with patch("scripts.create_fred_parquet.fred.get_series", return_value=pd.Series()), pytest.raises(
-        ValueError, match="ERROR \\[create_fred_parquet\\]: ghosted by FRED"
+        ValueError, match="Ghosted by FRED \\[create_fred_parquet\\]"
     ):
         create_fred_parquet()
 

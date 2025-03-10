@@ -24,11 +24,18 @@ def dolt_csv_to_parquet(symbol, return_df=False):
         # Read in the raw CSV downloaded from Dolthub, format date columns, create parquet
         #
 
+        logger.info(f"Converting options csv to parquet, symbol={symbol} [dolt_csv_to_parquet]")
+
         csv_fpath = f"{STOCK_TRADER_MARKET_DATA}/{symbol}_options_data.csv"
+        parquet_fpath = f"{STOCK_TRADER_MARKET_DATA}/{symbol}_options_data.parquet"
+
+        logger.info(f"CSV: {csv_fpath}")
+        logger.info(f"Parquet: {parquet_fpath}")
+
         df_csv = pd.read_csv(csv_fpath)
         df_formatted = format_date_cols(df_csv)
-        df_formatted.to_parquet(f"{STOCK_TRADER_MARKET_DATA}/{symbol}_options_data.parquet")
-        logger.info(f"Parquet: {STOCK_TRADER_MARKET_DATA}/{symbol}_options_data.parquet")
+        df_formatted.to_parquet(f"{parquet_fpath}")
+        logger.info(f"Created parquet: {parquet_fpath}")
 
         #
         # Create local text file with start_date and end_date for use by other processing scripts
@@ -37,11 +44,11 @@ def dolt_csv_to_parquet(symbol, return_df=False):
         start_date = str(df_formatted.iloc[0]["date"])
         end_date = str(df_formatted.iloc[-1]["date"])
 
-        fpath = f"{STOCK_TRADER_MARKET_DATA}/{symbol}_date_range.txt"
-        with open(fpath, "w") as f:
+        txt_date_fpath = f"{STOCK_TRADER_MARKET_DATA}/{symbol}_date_range.txt"
+        with open(txt_date_fpath, "w") as f:
             f.write(start_date + "\n")
             f.write(end_date + "\n")
-        logger.info(f"TS date txt file: {fpath}")
+        logger.info(f"TS date txt file: {txt_date_fpath}")
 
         #
         # Return dataframe for testing purposes
@@ -51,4 +58,4 @@ def dolt_csv_to_parquet(symbol, return_df=False):
             return df_formatted
 
     except Exception as e:
-        logger.error(f"ERROR [dolt_csv_to_parquet]: {e}")
+        logger.error(f"Exception: {e} [dolt_csv_to_parquet]")

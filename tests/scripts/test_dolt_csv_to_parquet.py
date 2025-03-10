@@ -97,10 +97,9 @@ def test_csv_to_parquet(create_test_data):
 def test_csv_to_parquet_file_missing(caplog):
     """
     Test that error is logged when input CSV not available.
-    Use test symbol JUNK because no self-respecting company would use that ticker symbol and it will always be invalid
+    Use test symbol TEST because it's unoccupied (hopefully forever)
     """
 
     with caplog.at_level(logging.ERROR):
-        dolt_csv_to_parquet("JUNK")
-
-    assert "ERROR [dolt_csv_to_parquet]" in caplog.text
+        dolt_csv_to_parquet("TEST")
+    assert any("[dolt_csv_to_parquet]" in record.message for record in caplog.records), "Error tag absent from log"
