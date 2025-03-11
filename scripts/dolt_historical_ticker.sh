@@ -31,7 +31,7 @@ fi
 # Verify dolt is installed
 #
 
-if ! sudo dolt version &> /dev/null; then
+if ! dolt version &> /dev/null; then
 	echo "Error: Dolt either not installed or not in PATH"
 	exit 1
 fi
@@ -49,16 +49,21 @@ echo "output_file: ${output_file}";
 query="SELECT \`date\`, \`expiration\`, DATEDIFF(\`expiration\`, \`date\`) AS ttm, .50*(\`bid\` + \`ask\`) AS midprice, \`strike\`, \`call_put\`, \`act_symbol\`
 FROM \`option_chain\`
 WHERE \`act_symbol\`='$act_symbol'
-AND \`date\` >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)"
+AND \`date\` >= DATE_SUB('$(date +%Y-%m-%d)', INTERVAL 1 YEAR)"
 
 echo -e "Query:\n${query}";
 
 # sudo -E dolt sql -q "$query" | sed '1d;3d;$d' > "$output_file";
-sudo -E dolt sql -r csv -q "$query" > "$output_file"
+dolt sql -r csv -q "$query" > "$output_file"
 # sed -i '' '$d' "$output_file";
 
 is_file_empty() {
 	[ ! -s "$1" ]
+}
+
+is_sufficient_data() {
+	local line_count=$(head -n 5 "$1" | wc -l)
+	[ "$line_count" -gt 1 ]
 }
 
 
@@ -71,6 +76,11 @@ if is_file_empty "$output_file"; then
 	echo "EMPTY: $output_file";
 	echo "REMOVING: $output_file";
 	rm "$output_file";
+	exit 1;
+elif ! is_sufficient_data "$output_file"; then
+	echo "INSUFFICIENT DATA: $output_file header only";
+	echo "REMOVING: $output_file";
+	rm "$output_file"
 	exit 1;
 else
 	echo "SAVED: $output_file";
