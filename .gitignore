@@ -1,6 +1,8 @@
 Legacy/
 data/*.parquet
 data/*.csv
+!data/TEST
+!data/MMM
 pnl*
 gitCommits/
 options/
