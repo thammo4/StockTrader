@@ -31,7 +31,8 @@ dependencies = [
 	'backtrader>=1.9.78.123',
 	'fredapi>=0.5.1',
 	'lxml>=5.2.1',
-	'uvatradier>=0.4.7'
+	'uvatradier>=0.4.7',
+	'apache-airflow[webserver]>=2.10.5'
 ]
 
 [project.optional-dependencies]
