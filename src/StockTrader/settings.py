@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 
 STOCK_TRADER_HOME = os.environ.get("STOCK_TRADER_HOME")
 STOCK_TRADER_MARKET_DATA = os.environ.get("STOCK_TRADER_MARKET_DATA")
+STOCK_TRADER_DWH = os.environ.get("STOCK_TRADER_DWH")
 STOCK_TRADER_LOG = os.environ.get("STOCK_TRADER_LOG")
 
 

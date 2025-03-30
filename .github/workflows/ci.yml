@@ -60,8 +60,9 @@ jobs:
         run: |
           echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE/home" >> $GITHUB_ENV
           echo "STOCK_TRADER_MARKET_DATA=$GITHUB_WORKSPACE/data" >> $GITHUB_ENV
+          echo "STOCK_TRADER_DWH=$GITHUB_WORKSPACE/data/warehouse" >> $GITHUB_ENV
           echo "STOCK_TRADER_LOG=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
-          mkdir -p $GITHUB_WORKSPACE/data $GITHUB_WORKSPACE/logs
+          mkdir -p $GITHUB_WORKSPACE/data/warehouse $GITHUB_WORKSPACE/logs
 
       - name: Load and Set API Keys
         run: |
