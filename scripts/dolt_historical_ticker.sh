@@ -20,7 +20,7 @@ fi
 #
 
 if [ "$#" -lt 1 ]; then
-	echo "Usage: $0 <act_symbol> [output_dir]";
+	echo "Usage: $0 <act_symbol> [output_dir] [past_days]";
 	echo "Example: ./dolt_historical_ticker.sh IBM";
 	echo "Default output_dir: $STOCK_TRADER_MARKET_DATA";
 	exit 1;
@@ -38,9 +38,20 @@ fi
 
 echo "Running...";
 
+#
+# Parse Arguments
+#
+
 act_symbol=$1
 output_dir=${2:-$STOCK_TRADER_MARKET_DATA};
-output_file="$STOCK_TRADER_MARKET_DATA/${act_symbol}_options_data.csv";
+past_days=${3:-365}
+
+
+#
+# Define Output File and Print to Standard Output
+#
+
+output_file="$output_dir/${act_symbol}_options_data.parquet";
 
 echo "act_symbol: $act_symbol";
 echo "output_dir: $output_dir";
@@ -49,47 +60,14 @@ echo "output_file: ${output_file}";
 query="SELECT \`date\`, \`expiration\`, DATEDIFF(\`expiration\`, \`date\`) AS ttm, .50*(\`bid\` + \`ask\`) AS midprice, \`strike\`, \`call_put\`, \`act_symbol\`
 FROM \`option_chain\`
 WHERE \`act_symbol\`='$act_symbol'
-AND \`date\` >= DATE_SUB('$(date +%Y-%m-%d)', INTERVAL 1 YEAR)"
+AND \`date\` >= DATE_SUB('$(date +%Y-%m-%d)', INTERVAL $past_days DAY)"
 
 echo -e "Query:\n${query}";
 
-# sudo -E dolt sql -q "$query" | sed '1d;3d;$d' > "$output_file";
-dolt sql -r csv -q "$query" > "$output_file"
-# sed -i '' '$d' "$output_file";
+dolt sql -r parquet -q "$query" > "$output_file";
 
 is_file_empty() {
 	[ ! -s "$1" ]
 }
 
-is_sufficient_data() {
-	local line_count=$(head -n 5 "$1" | wc -l)
-	[ "$line_count" -gt 1 ]
-}
-
-
-#
-# If the `options_chain` table in DoltHub has no data,
-# delete the empty CSV file created.
-#
-
-if is_file_empty "$output_file"; then
-	echo "EMPTY: $output_file";
-	echo "REMOVING: $output_file";
-	rm "$output_file";
-	exit 1;
-elif ! is_sufficient_data "$output_file"; then
-	echo "INSUFFICIENT DATA: $output_file header only";
-	echo "REMOVING: $output_file";
-	rm "$output_file"
-	exit 1;
-else
-	echo "SAVED: $output_file";
-	echo -e "HEAD\n";
-	nl "$output_file" | head -n 5;
-	echo "";
-	echo -e "TAIL\n";
-	nl "$output_file" | tail -n 5;
-	echo "-----------------------";
-fi
-
-echo "Done.";
+echo -e "\nDone.";
