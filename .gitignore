@@ -1,6 +1,11 @@
+src/.DS_Store
+.DS_Store
+src/.DS_Store
+src/StockTrader/.DS_Store
 Legacy/
 data/*.parquet
 data/*.csv
+data/warehouse
 !data/TEST
 !data/MMM
 pnl*
