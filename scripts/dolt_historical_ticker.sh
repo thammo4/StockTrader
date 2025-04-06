@@ -66,8 +66,39 @@ echo -e "Query:\n${query}";
 
 dolt sql -r parquet -q "$query" > "$output_file";
 
-is_file_empty() {
-	[ ! -s "$1" ]
-}
+#
+# Extract the first and last date from options data parquet using duckdb
+#
+
+date_range=$(duckdb -csv -c "SELECT MIN(date), MAX(date) FROM '${output_file}'" | tail -n +2);
+date_range_txt="$output_dir/${act_symbol}_date_range.txt";
+
+#
+# If the start_date and end_date are valid, then create a text file in the $output_dir whose name is ${act_symbol}_date_range.txt such that:
+# 	1. the first line of ${act_symbol}_date_range.txt is the start_date
+# 	2. the second line of the ${act_symbol}_date_range.txt is the end_date
+#
+start_date=$(echo "$date_range" | cut -d, -f1);
+end_date=$(echo "$date_range" | cut -d, -f2);
+
+#
+# If there does not exist a start_date and end_date, then remove the $output_file and exit
+#
+
+if [ -z "$start_date" ] || [ "$start_date" = "NULL" ] || [ -z "$end_date" ] || [ "$end_date" = "NULL" ]; then
+	echo "JUNK: $output_file";
+	echo "SEEYA: $output_file";
+	rm -f "$output_file";
+	exit 1;
+fi
+
+start_date=$(date -j -f "%Y-%m-%d %H:%M:%S" "$start_date" +"%s")000000000
+end_date=$(date -j -f "%Y-%m-%d %H:%M:%S" "$end_date" +"%s")000000000
+
+echo "Date Range File: $date_range_txt"
+echo "Dates: start=${start_date}, end=${end_date}";
+
+echo "$start_date" > "$date_range_txt";
+echo "$end_date" >> "$date_range_txt";
 
 echo -e "\nDone.";
