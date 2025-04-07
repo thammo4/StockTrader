@@ -62,7 +62,7 @@ query="SELECT
 	CAST(1e9*UNIX_TIMESTAMP(\`expiration\`) AS UNSIGNED) AS expiration,
 	DATEDIFF(\`expiration\`, \`date\`) AS ttm,
 	CAST(.50*(\`bid\` + \`ask\`) AS DOUBLE) AS midprice,
-	\`strike\`,
+	CAST(\`strike\` AS DOUBLE) AS strike,
 	\`call_put\`,
 	\`act_symbol\`
 FROM \`option_chain\`
