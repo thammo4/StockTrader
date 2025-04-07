@@ -57,7 +57,14 @@ echo "act_symbol: $act_symbol";
 echo "output_dir: $output_dir";
 echo "output_file: ${output_file}";
 
-query="SELECT \`date\`, \`expiration\`, DATEDIFF(\`expiration\`, \`date\`) AS ttm, .50*(\`bid\` + \`ask\`) AS midprice, \`strike\`, \`call_put\`, \`act_symbol\`
+query="SELECT
+	CAST(1e9*UNIX_TIMESTAMP(\`date\`) AS UNSIGNED) AS date,
+	CAST(1e9*UNIX_TIMESTAMP(\`expiration\`) AS UNSIGNED) AS expiration,
+	DATEDIFF(\`expiration\`, \`date\`) AS ttm,
+	CAST(.50*(\`bid\` + \`ask\`) AS DOUBLE) AS midprice,
+	\`strike\`,
+	\`call_put\`,
+	\`act_symbol\`
 FROM \`option_chain\`
 WHERE \`act_symbol\`='$act_symbol'
 AND \`date\` >= DATE_SUB('$(date +%Y-%m-%d)', INTERVAL $past_days DAY)"
@@ -91,9 +98,6 @@ if [ -z "$start_date" ] || [ "$start_date" = "NULL" ] || [ -z "$end_date" ] || [
 	rm -f "$output_file";
 	exit 1;
 fi
-
-start_date=$(date -j -f "%Y-%m-%d %H:%M:%S" "$start_date" +"%s")000000000
-end_date=$(date -j -f "%Y-%m-%d %H:%M:%S" "$end_date" +"%s")000000000
 
 echo "Date Range File: $date_range_txt"
 echo "Dates: start=${start_date}, end=${end_date}";
