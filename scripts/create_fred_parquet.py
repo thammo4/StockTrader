@@ -68,7 +68,7 @@ def create_fred_parquet(series="TB3MS", start_date=None, end_date=None, return_d
         #
 
         fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, "fred_data.parquet")
-        df_fred.to_parquet(fpath_parquet)
+        df_fred.to_parquet(fpath_parquet, index=False)
         logger.info(f"Created parquet file: {fpath_parquet} [create_fred_parquet]")
 
         #

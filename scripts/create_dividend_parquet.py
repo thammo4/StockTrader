@@ -107,7 +107,7 @@ def create_dividend_parquet(symbol, return_df=False):
 
     fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, f"{symbol}_dividend_data.parquet")
     try:
-        df_dividends.to_parquet(fpath_parquet)
+        df_dividends.to_parquet(fpath_parquet, index=False)
         logger.info(f"Created parquet file: {fpath_parquet} [create_dividend_parquet]")
     except Exception as e:
         logger.error(f"Parquet failed: {e} [create_dividend_parquet]")
