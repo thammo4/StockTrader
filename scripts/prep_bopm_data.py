@@ -281,10 +281,6 @@ def prep_bopm_data(symbol, return_df=False):
             df_merged.drop(columns=["month_end", "fred_date"], inplace=True)
             df_merged.dropna(inplace=True)
             df_merged.sort_values(by=["date", "expiration", "call_put", "strike"], inplace=True)
-        except AnalysisException as e:
-            logger.error(f"Merge failed symbol={symbol}: {str(e)} [prep_bopm_data]")
-            logger.debug(f"Stack Trace:\n{traceback.format_exc()}")
-            raise
         except Exception as e:
             logger.error(f"Merged failed symbol={symbol}: {str(e)} [prep_bopm_data]")
             logger.debug(f"Stack Trace:\n{traceback.format_exc()}")
