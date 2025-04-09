@@ -27,7 +27,7 @@ def occ_symbol(row):
 #
 
 
-def price_bopm_data(symbol, crr_steps=225, min_price_iv=.05, return_df=False):
+def price_bopm_data(symbol, crr_steps=225, min_price_iv=0.05, return_df=False):
     """
     Price American-style option contracts using QuantLib Cox-Ross-Rubinstein BOPM (BinomialVanillaEngine).
     Computes NPV and Greeks (Δ, Γ, Θ) for each contract (row) and appends values existing BOPM input dataset in place.
@@ -73,7 +73,7 @@ def price_bopm_data(symbol, crr_steps=225, min_price_iv=.05, return_df=False):
     day_count = ql.Actual365Fixed()
     settlement_days = 2
 
-    def price_option (row, eval_date, expiry_date, settlement_date, vol=None):
+    def price_option(row, eval_date, expiry_date, settlement_date, vol=None):
         ql.Settings.instance().evaluationDate = eval_date
 
         #
@@ -83,15 +83,11 @@ def price_bopm_data(symbol, crr_steps=225, min_price_iv=.05, return_df=False):
         σ = vol if vol is not None else row["vol_estimate"]
 
         spotH = ql.QuoteHandle(ql.SimpleQuote(row["close"]))
-        risk_freeTS = ql.YieldTermStructureHandle(
-            ql.FlatForward(settlement_date, row["fred_rate"], day_count)
-        )
+        risk_freeTS = ql.YieldTermStructureHandle(ql.FlatForward(settlement_date, row["fred_rate"], day_count))
         div_yieldTS = ql.YieldTermStructureHandle(
-            ql.FlatForward(settlement_date, row["div_amt"]/row["close"], day_count)
+            ql.FlatForward(settlement_date, row["div_amt"] / row["close"], day_count)
         )
-        σTS = ql.BlackVolTermStructureHandle(
-            ql.BlackConstantVol(settlement_date, calendar, σ, day_count)
-        )
+        σTS = ql.BlackVolTermStructureHandle(ql.BlackConstantVol(settlement_date, calendar, σ, day_count))
 
         bsm_process = ql.BlackScholesMertonProcess(spotH, div_yieldTS, risk_freeTS, σTS)
         option_type = ql.Option.Call if row["call_put"].lower() == "call" else ql.Option.Put
@@ -119,21 +115,27 @@ def price_bopm_data(symbol, crr_steps=225, min_price_iv=.05, return_df=False):
 
             option_contract = price_option(row, eval_date, expiry_date, settlement_date)
 
-            logger.info(f"Priced: {occ_symbol(row)} npv={option_contract.NPV():.2f}, Δ={option_contract.delta():.2f}, Γ={option_contract.gamma():.2f}, Θ={option_contract.theta():.2f}")
+            logger.info(
+                f"Priced: {occ_symbol(row)} npv={option_contract.NPV():.2f}, Δ={option_contract.delta():.2f}, Γ={option_contract.gamma():.2f}, Θ={option_contract.theta():.2f}"
+            )
 
-            df.loc[idx, ["NPV", "Delta", "Gamma", "Theta"]] = np.round([option_contract.NPV(), option_contract.delta(), option_contract.gamma(), option_contract.theta()], 4)
+            df.loc[idx, ["NPV", "Delta", "Gamma", "Theta"]] = np.round(
+                [option_contract.NPV(), option_contract.delta(), option_contract.gamma(), option_contract.theta()], 4
+            )
 
             if row["midprice"] >= min_price_iv:
                 try:
-                    def objectiveIV (vol):
+
+                    def objectiveIV(vol):
                         try:
                             option = price_option(row, eval_date, expiry_date, settlement_date, vol)
                             return option.NPV() - row["midprice"]
                         except Exception:
                             return -69
+
                     # result = root_scalar(objectiveIV, bracket=[.005,50], method="brentq", xtol=1e-4)
                     # result = root_scalar(objectiveIV, bracket=[.005, 50], method="brentq", xtol=1e-4)
-                    result = root_scalar(objectiveIV, bracket=[.005, 25], method="brentq", xtol=1e-4)
+                    result = root_scalar(objectiveIV, bracket=[0.005, 25], method="brentq", xtol=1e-4)
                     σ_iv = result.root
 
                     if 0.0 < σ_iv < 10.0:
@@ -143,7 +145,7 @@ def price_bopm_data(symbol, crr_steps=225, min_price_iv=.05, return_df=False):
                     try:
                         # vol_grid = np.linspace(.005, 50, 250)
                         # vol_grid = np.linspace(.005, 10, 125)
-                        vol_grid = np.linspace(.01, 7.5, 75)
+                        vol_grid = np.linspace(0.01, 7.5, 75)
                         price_diffs = [abs(objectiveIV(vol)) for vol in vol_grid]
                         vol_optimal = vol_grid[np.argmin(price_diffs)]
 
@@ -154,7 +156,6 @@ def price_bopm_data(symbol, crr_steps=225, min_price_iv=.05, return_df=False):
                         logger.debug(f"Failed σ_iv converge occ={occ_symbol(row)}: {str(e)}, {str(e_grid)}")
         except Exception as e:
             logger.warning(f"Failed to price {occ_symbol(row)}: {str(e)}")
-
 
     fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, f"{symbol}_bopm_priced.parquet")
     df.to_parquet(fpath_parquet, index=False, engine="pyarrow")
