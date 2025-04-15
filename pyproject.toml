@@ -39,10 +39,10 @@ dependencies = [
 dev=['black', 'mypy', 'pytest', 'pre-commit', 'pytest-subprocess']
 
 [tool.setuptools.packages.find]
-where=["src", "scripts"]
+where=["src", "scripts", "utils"]
 
 [tool.pytest.ini_options]
-pythonpath = ["src", "scripts"]
+pythonpath = ["src", "scripts", "utils"]
 testpaths = ["tests"]
 # testpaths=['tests', 'tests/scripts']
 
