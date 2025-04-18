@@ -10,88 +10,92 @@ from StockTrader.tradier import options_data
 from StockTrader.settings import STOCK_TRADER_MARKET_DATA, logger
 
 
-
 #
 # Retrieve and Standardize Schema to Match Dolt Options for Current Options Chain
 #
 
-def fetch_active_options (symbol, return_df=False, create_parquet=False, is_live=False):
 
-	#
-	# Reformat DataFrame Returned by Tradier to Match Schema of Historical Options from Dolt
-	#
+def fetch_active_options(symbol, return_df=False, create_parquet=False, is_live=False):
 
-	def standardize_schema (df):
-		df["act_symbol"] = symbol
-		df["option_type"] = df["option_type"].str.capitalize()
-		df["expiry_info"] = df["symbol"].apply(parse_occ)
-		df["expiry_dt"] = df["expiry_info"].apply(
-			lambda x: datetime(x["expiry"]["year"], x["expiry"]["month"], x["expiry"]["day"])
-		)
-		df["date"] = datetime.today()
+    #
+    # Reformat DataFrame Returned by Tradier to Match Schema of Historical Options from Dolt
+    #
 
-		df["ttm"] = (df["expiry_dt"] - df["date"]).dt.days + 1
-		df["midprice"] = .5*(df["bid"] + df["ask"])
+    def standardize_schema(df):
+        df["act_symbol"] = symbol
+        df["option_type"] = df["option_type"].str.capitalize()
+        df["expiry_info"] = df["symbol"].apply(parse_occ)
+        df["expiry_dt"] = df["expiry_info"].apply(
+            lambda x: datetime(x["expiry"]["year"], x["expiry"]["month"], x["expiry"]["day"])
+        )
+        df["date"] = datetime.today()
 
-		df["date"] = df["date"].dt.normalize()
+        df["ttm"] = (df["expiry_dt"] - df["date"]).dt.days + 1
+        df["midprice"] = 0.5 * (df["bid"] + df["ask"])
 
-		df.drop([
-			"symbol",
-			"last",
-			"volume",
-			"change",
-			"open",
-			"high",
-			"low",
-			"close",
-			"bid",
-			"ask",
-			"change_percentage",
-			"last_volume",
-			"trade_date",
-			"prevclose",
-			"bidsize",
-			"bidexch",
-			"bid_date",
-			"asksize",
-			"askexch",
-			"ask_date",
-			"open_interest",
-			"expiry_info"
-		], axis=1, inplace=True)
+        df["date"] = df["date"].dt.normalize()
 
-		df.rename({"expiry_dt":"expiration", "option_type":"call_put"}, axis=1, inplace=True)
-		df = df[["date", "expiration", "ttm", "midprice", "strike", "call_put", "act_symbol"]]
+        df.drop(
+            [
+                "symbol",
+                "last",
+                "volume",
+                "change",
+                "open",
+                "high",
+                "low",
+                "close",
+                "bid",
+                "ask",
+                "change_percentage",
+                "last_volume",
+                "trade_date",
+                "prevclose",
+                "bidsize",
+                "bidexch",
+                "bid_date",
+                "asksize",
+                "askexch",
+                "ask_date",
+                "open_interest",
+                "expiry_info",
+            ],
+            axis=1,
+            inplace=True,
+        )
 
-		return df
+        df.rename({"expiry_dt": "expiration", "option_type": "call_put"}, axis=1, inplace=True)
+        df = df[["date", "expiration", "ttm", "midprice", "strike", "call_put", "act_symbol"]]
 
-	try:
-		df_options = options_data.get_chain_all(symbol)
-		if df_options.empty:
-			e_msg = f"No options data from Tradier symbol={symbol}"
-			logger.error(e_msg)
-			raise ValueError(e_msg)
+        return df
 
-		df_options = standardize_schema(df_options)
-	except ValueError as e_val:
-		logger.error(f"ValueError symbol={symbol}: {str(e_val)} [fetch_active_options]")
-		raise
-	except Exception as e:
-		logger.error(f"Exception symbol={symbol}: {str(e)} [fetch_active_options]")
-		raise
+    try:
+        df_options = options_data.get_chain_all(symbol)
+        if df_options.empty:
+            e_msg = f"No options data from Tradier symbol={symbol}"
+            logger.error(e_msg)
+            raise ValueError(e_msg)
 
-	if create_parquet:
-		try:
-			fname_parquet = f"{symbol}_{datetime.today().strftime('%d%B%Y')}.parquet"
-			fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, "active", fname_parquet)
+        df_options = standardize_schema(df_options)
+    except ValueError as e_val:
+        logger.error(f"ValueError symbol={symbol}: {str(e_val)} [fetch_active_options]")
+        raise
+    except Exception as e:
+        logger.error(f"Exception symbol={symbol}: {str(e)} [fetch_active_options]")
+        raise
 
-			df_options.to_parquet(fpath_parquet, index=False, engine="pyarrow")
-			logger.info(f"Created parquet: {fpath_parquet} [fetch_active_options]")
-		except Exception as e:
-			logger.error(f"Exception symbol={symbol}: {str(e)} [fetch_active_options]")
-			raise
+    if create_parquet:
+        try:
+            fname_parquet = f"{symbol}_{datetime.today().strftime('%d%B%Y')}.parquet"
+            fpath_parquet = os.path.join(STOCK_TRADER_MARKET_DATA, "active", fname_parquet)
 
-	return df_options
+            df_options.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+            logger.info(f"Created parquet: {fpath_parquet} [fetch_active_options]")
+        except Exception as e:
+            logger.error(f"Exception symbol={symbol}: {str(e)} [fetch_active_options]")
+            raise
+
+    return df_options
 
 
 #
@@ -117,7 +121,6 @@ def fetch_active_options (symbol, return_df=False, create_parquet=False, is_live
 # 73  VMC251219C00400000     NaN     NaN       0   NaN   NaN  NaN    NaN    0.2    2.00   400.0                NaN            0              0        NaN        1       D  1744919402000        1       A  1744919403000            0.0        call
 #
 # [344 rows x 23 columns]
-
 
 
 #
