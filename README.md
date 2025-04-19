@@ -15,6 +15,14 @@ StockTrader/
 │   └── warehouse/
 ├── logs/
 ├── scripts/
+│   └── create_dividend_parquet.py
+│   └── create_fred_parquet.py
+│   └── create_ohlcv_parquet.py
+│   └── fetch_active_options.py
+│   └── fetch_active_params.py
+│   └── ingest_options_chain.py
+│   └── prep_bopm_data.py
+│   └── price_bopm_data.py
 ├── src/
 │   └── StockTrader
 │       └── settings.py
