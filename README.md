@@ -29,6 +29,15 @@ StockTrader/
 │       └── tradier.py
 │       └── freddy.py
 └── tests/
+│   └── config.py
+│   └── test_freddy.py
+│   └── test_settings.py
+│   └── test_tradier.py
+│   └── scripts/
+│       └── test_create_dividend_parquet.py
+│       └── test_create_fred_parquet.py
+│       └── test_create_ohlcv_parquet.py
+│       └── test_dolt_historical_ticker.py
 └── utils/
 │   └── dividend_table.py
 |   └── parse_occ.py
