@@ -29,7 +29,8 @@ def mock_fred_data():
 def expected_formatted_data(mock_fred_data):
     df = mock_fred_data.reset_index()
     df.columns = ["fred_date", "fred_rate"]
-    df["fred_date"] = pd.to_datetime(df["fred_date"]).astype(np.int64)
+    # df["fred_date"] = pd.to_datetime(df["fred_date"]).astype(np.int64)
+    df["fred_date"] = pd.to_datetime(df["fred_date"]).dt.normalize()
     df["fred_rate"] /= 100
     return df
 

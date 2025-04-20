@@ -26,7 +26,7 @@ def create_fred_parquet(series="TB3MS", start_date=None, end_date=None, return_d
     def format_fred(df):
         df = df.reset_index()
         df.columns = ["fred_date", "fred_rate"]
-        df["fred_date"] = pd.to_datetime(df["fred_date"]).astype(np.int64)
+        df["fred_date"] = pd.to_datetime(df["fred_date"]).dt.normalize()
         # fred gives units in percents and we need the decimal version for options pricing
         # see: fred.search('TB3MS').iloc[0]
         df["fred_rate"] /= 100
