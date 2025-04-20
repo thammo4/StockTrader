@@ -29,7 +29,7 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
         df["log_return"] = np.log(df["close"]).diff()
         df["vol_estimate"] = df["log_return"].rolling(window=9).std() * np.sqrt(252)  # \sqrt(252) annualizes
         df.dropna(inplace=True)
-        df["date"] = pd.to_datetime(df["date"]).astype(np.int64)
+        df["date"] = pd.to_datetime(df["date"]).dt.normalize()
         return df
 
     q = quotesL if is_live else quotes
@@ -48,11 +48,10 @@ def create_ohlcv_parquet(symbol, return_df=False, is_live=False):
             raise ValueError(e_msg)
 
         #
-        # Reads unix timestamp from text file -> creates timestamp
+        # Read from text file -> create timestamp
         #
 
-        start_date = pd.to_datetime(int(lines[0].strip()))
-        end_date = pd.to_datetime(int(lines[1].strip()))
+        start_date, end_date = [pd.to_datetime(x.strip()) for x in lines]
 
         #
         # Push the start date back two weeks to accommodate rolling volatility calculation
