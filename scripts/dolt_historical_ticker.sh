@@ -57,17 +57,18 @@ echo "act_symbol: $act_symbol";
 echo "output_dir: $output_dir";
 echo "output_file: ${output_file}";
 
-query="SELECT
-	CAST(1e9*UNIX_TIMESTAMP(\`date\`) AS UNSIGNED) AS date,
-	CAST(1e9*UNIX_TIMESTAMP(\`expiration\`) AS UNSIGNED) AS expiration,
-	DATEDIFF(\`expiration\`, \`date\`) AS ttm,
-	CAST(.50*(\`bid\` + \`ask\`) AS DOUBLE) AS midprice,
-	CAST(\`strike\` AS DOUBLE) AS strike,
-	\`call_put\`,
-	\`act_symbol\`
-FROM \`option_chain\`
-WHERE \`act_symbol\`='$act_symbol'
-AND \`date\` >= DATE_SUB('$(date +%Y-%m-%d)', INTERVAL $past_days DAY)"
+query="
+SELECT
+	  CAST(\`date\` AS DATE) AS date,
+	  CAST(\`expiration\` AS DATE) As expiration,
+	  DATEDIFF(\`expiration\`, \`date\`) AS ttm,
+	  CAST(.50*(\`bid\` + \`ask\`) AS DOUBLE) AS midprice,
+	  CAST(\`strike\` AS DOUBLE) AS strike,
+	  \`call_put\`,
+	  \`act_symbol\`
+ FROM \`option_chain\`
+WHERE \`act_symbol\` = '$act_symbol'
+  AND \`date\` >= DATE_SUB('$(date +%Y-%m-%d)', INTERVAL $past_days DAY)"
 
 echo -e "Query:\n${query}";
 
