@@ -44,20 +44,20 @@ def prep_bopm_data(symbol, return_df=False):
                     return None
 
                 #
-                # Caste Date Columns from Nanosec Unix TS -> Date Type
+                # Cast Date Columns from Nanosec Unix TS -> Date Type
                 #
 
-                date_convert_map = {
-                    "ohlcv_bar": [("date", "date")],
-                    "options": [("date", "date"), ("expiration", "expiration")],
-                    "dividend": [("ex_date", "ex_date")],
-                    "fred": [("fred_date", "fred_date")],
-                }
-                date_convert = date_convert_map.get(dataset, [])
+                # date_convert_map = {
+                #     "ohlcv_bar": [("date", "date")],
+                #     "options": [("date", "date"), ("expiration", "expiration")],
+                #     "dividend": [("ex_date", "ex_date")],
+                #     "fred": [("fred_date", "fred_date")],
+                # }
+                # date_convert = date_convert_map.get(dataset, [])
 
-                for col_name, new_name in date_convert:
-                    if col_name in df.columns:
-                        df[new_name] = pd.to_datetime(df[col_name], unit="ns").dt.normalize()
+                # for col_name, new_name in date_convert:
+                #     if col_name in df.columns:
+                #         df[new_name] = pd.to_datetime(df[col_name], unit="ns").dt.normalize()
 
                 return df
 

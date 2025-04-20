@@ -90,6 +90,13 @@ def create_dividend_parquet(symbol, return_df=False):
     df_dividends = create_format_cash_dividends(cash_dividends)
 
     #
+    # Sort Dividend Data By Ex-Date Past->Present
+    # Tradier's market data api (options, ohlcv) returns data in ascending date order, this will conform to that standard
+    #
+
+    df_dividends.sort_values(by=["ex_date"], ascending=True, inplace=True)
+
+    #
     # Fail Safe In Case \not\exists Dividend Data
     #
 
