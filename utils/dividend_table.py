@@ -67,7 +67,11 @@ def dividend_table(symbol, start_date=None, end_date=None, current=False, ex_dat
                 return pd.DataFrame(columns=["cash_amount", "ex_date", "frequency", "symbol"])
             df = pd.json_normalize(div_list)
             df = pd.DataFrame(df, columns=["cash_amount", "ex_date", "frequency"])
-            df["ex_date"] = pd.to_datetime(df["ex_date"]).dt.normalize() if ex_date_dtype == "date" else pd.to_datetime(df["ex_date"]).astype(np.int64)
+            df["ex_date"] = (
+                pd.to_datetime(df["ex_date"]).dt.normalize()
+                if ex_date_dtype == "date"
+                else pd.to_datetime(df["ex_date"]).astype(np.int64)
+            )
             return df
         except (KeyError, ValueError, TypeError) as e:
             logger.error(f"Dividend DF Formatting Error: {str(e)} [dividend_table]")
