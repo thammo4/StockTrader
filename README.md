@@ -8,6 +8,8 @@ StockTrader is a data pipeline for retrieving, processing, and analyzing stock m
 ## Directory Structure
 ```
 StockTrader/
+├── Dockerfile
+├── docker-compose.yml
 ├── airflow/
 │   └── dags/
 │       └── ingest_options_chain_dag.py
@@ -41,4 +43,5 @@ StockTrader/
 └── utils/
 │   └── dividend_table.py
 |   └── parse_occ.py
+|   └── vol_estimate.py
 ```
