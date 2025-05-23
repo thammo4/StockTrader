@@ -1,0 +1,73 @@
+# FILE: `StockTrader/docker-compose.yml`
+# version: '3.8'
+
+services:
+  # PSQL => Airflow Metadata
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    profiles: ["core", "dev", "prod"]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    profiles: ["prod"]
+
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__SECRET_KEY=9cb13ee5b63e82097e7423f852915055b8a8177bf34da73837a3430b8c7eccd8
+      - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
+      - STOCK_TRADER_HOME=/opt/stocktrader
+      - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
+      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
+      - STOCK_TRADER_LOG=/opt/stocktrader/logs
+      - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - .:/opt/stocktrader
+      - /Users/rudi/Desktop/uvatradier:/opt/uvatradier
+    ports:
+      - "8080:8080"
+    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow numpy && airflow webserver"
+    profiles: ["core", "dev", "prod"]
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    depends_on:
+      - postgres
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__SECRET_KEY=9cb13ee5b63e82097e7423f852915055b8a8177bf34da73837a3430b8c7eccd8
+      - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
+      - STOCK_TRADER_HOME=/opt/stocktrader
+      - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
+      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
+      - STOCK_TRADER_LOG=/opt/stocktrader/logs
+      - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - .:/opt/stocktrader
+      - /Users/rudi/Desktop/uvatradier:/opt/uvatradier
+    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow numpy && airflow scheduler"
+    profiles: ["core", "dev", "prod"]
+
+volumes:
+  postgres-data:
+  clickhouse-data:
