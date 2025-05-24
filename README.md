@@ -12,7 +12,7 @@ StockTrader/
 ├── docker-compose.yml
 ├── airflow/
 │   └── dags/
-│       └── ingest_options_chain_dag.py
+│       └── ingest_tradier_options_dag.py
 ├── data/
 │   └── warehouse/
 ├── logs/
@@ -22,7 +22,7 @@ StockTrader/
 │   └── create_ohlcv_parquet.py
 │   └── fetch_active_options.py
 │   └── fetch_active_params.py
-│   └── ingest_options_chain.py
+│   └── ingest_tradier_options.py
 │   └── prep_bopm_data.py
 │   └── price_bopm_data.py
 ├── src/
