@@ -30,7 +30,7 @@ services:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__WEBSERVER__SECRET_KEY=9cb13ee5b63e82097e7423f852915055b8a8177bf34da73837a3430b8c7eccd8
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
       - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
       - STOCK_TRADER_HOME=/opt/stocktrader
       - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
@@ -54,7 +54,7 @@ services:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__WEBSERVER__SECRET_KEY=9cb13ee5b63e82097e7423f852915055b8a8177bf34da73837a3430b8c7eccd8
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
       - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
       - STOCK_TRADER_HOME=/opt/stocktrader
       - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
