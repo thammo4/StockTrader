@@ -15,6 +15,9 @@ StockTrader/
 │       └── ingest_tradier_options_dag.py
 ├── data/
 │   └── warehouse/
+│       └── options/
+│           └── <landing directory for options chain data>
+│           └── <SYMBOL.parquet>
 ├── logs/
 ├── scripts/
 │   └── create_dividend_parquet.py
