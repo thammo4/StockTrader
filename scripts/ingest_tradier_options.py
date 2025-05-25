@@ -32,8 +32,7 @@ def ingest_tradier_options(symbol, subdir="options_af"):
         df = options_data.get_chain_all(symbol=symbol)
         if df.empty:
             logger.warning(f"No options data: {symbol}")
-            raise AirflowSkipException(f"No options data, symbol={symbol}")
-            # return
+            return
         df["created_date"] = today
 
         #
