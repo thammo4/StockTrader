@@ -13,10 +13,14 @@ StockTrader/
 ├── airflow/
 │   └── dags/
 │       └── ingest_tradier_options_dag.py
+│       └── ingest_tradier_quotes_dag.py
 ├── data/
 │   └── warehouse/
 │       └── options/
 │           └── <landing directory for options chain data>
+│           └── <SYMBOL.parquet>
+│       └── quotes/
+│           └── <landing directory for quote data>
 │           └── <SYMBOL.parquet>
 ├── logs/
 ├── scripts/
