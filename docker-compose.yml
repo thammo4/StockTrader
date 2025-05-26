@@ -43,7 +43,7 @@ services:
       - /Users/rudi/Desktop/uvatradier:/opt/uvatradier
     ports:
       - "8080:8080"
-    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow holidays && airflow webserver"
+    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow holidays fredapi && airflow webserver"
     profiles: ["core", "dev", "prod"]
 
   airflow-scheduler:
@@ -65,7 +65,7 @@ services:
       - ./airflow/dags:/opt/airflow/dags
       - .:/opt/stocktrader
       - /Users/rudi/Desktop/uvatradier:/opt/uvatradier
-    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow holidays && airflow scheduler"
+    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow holidays fredapi && airflow scheduler"
     profiles: ["core", "dev", "prod"]
 
 volumes:
