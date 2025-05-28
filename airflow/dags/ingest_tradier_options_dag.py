@@ -33,11 +33,13 @@ def dag_me():
         dag_id="ingest_tradier_options",
         default_args=default_args,
         description="Retrieve current day's options chain data from Tradier for symbols in largecap_all text file",
-        schedule_interval="15 18 * * 1-5",
+        schedule_interval="40 16 * * 1-5",
         start_date=datetime(2025, 5, 1),
         catchup=False,
+        max_active_tasks=20,
         tags=["options_chain", "ingest", "tradier"],
     ) as dag:
+
         #
         # Check for US Holidays Before Ingestion
         #
@@ -57,14 +59,30 @@ def dag_me():
             with TaskGroup(group_id=f"batch_{idx}") as group:
                 for symbol in batch:
                     PythonOperator(
-                        task_id=f"ingest_{symbol}", python_callable=ingest_tradier_options, op_kwargs={"symbol": symbol}
+                        task_id=f"ingest_{symbol}",
+                        python_callable=ingest_tradier_options,
+                        op_kwargs={"symbol": symbol},
+                        trigger_rule="all_done",
+                        pool="tradier_options_api_pool",
                     )
             task_groups.append(group)
 
-        skip_holiday >> task_groups[0]
+        #
+        # Wave-based processing to provide predictable/manageable resource consumption patterns
+        #
 
-        for i in range(1, len(task_groups)):
-            task_groups[i - 1] >> task_groups[i]
+        wave_size = 4
+        for wave_start in range(0, len(task_groups), wave_size):
+            current_wave = task_groups[wave_start : wave_start + wave_size]
+
+            for group in current_wave:
+                skip_holiday >> group
+
+            if wave_start + wave_size < len(task_groups):
+                next_wave = task_groups[wave_start + wave_size : wave_start + 2 * wave_size]
+                for current_group in current_wave:
+                    for next_group in next_wave:
+                        current_group >> next_group
 
     return dag
 
