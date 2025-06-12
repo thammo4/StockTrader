@@ -12,10 +12,18 @@ StockTrader/
 ├── docker-compose.yml
 ├── airflow/
 │   └── dags/
+│       └── ingest_fred_rates_dag.py
+│       └── ingest_tradier_dividends_dag.py
 │       └── ingest_tradier_options_dag.py
 │       └── ingest_tradier_quotes_dag.py
 ├── data/
 │   └── warehouse/
+│       └── fred/
+│           └── <landing directory for FRED interest rate data>
+│           └── <SERIESID.parquet>
+│       └── dividends/
+│           └── <landing directory for dividend data>
+│           └── <SYMBOL.parquet>
 │       └── options/
 │           └── <landing directory for options chain data>
 │           └── <SYMBOL.parquet>
@@ -29,7 +37,10 @@ StockTrader/
 │   └── create_ohlcv_parquet.py
 │   └── fetch_active_options.py
 │   └── fetch_active_params.py
+│   └── ingest_fred_rates.py
+│   └── ingest_tradier_dividends.py
 │   └── ingest_tradier_options.py
+│   └── ingest_tradier_quotes.py
 │   └── prep_bopm_data.py
 │   └── price_bopm_data.py
 ├── src/
