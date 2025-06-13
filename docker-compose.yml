@@ -13,6 +13,22 @@ services:
       - postgres-data:/var/lib/postgresql/data
     profiles: ["core", "dev", "prod"]
 
+  dbt:
+    build:
+      context: .
+      dockerfile: dbt/Dockerfile
+    working_dir: /opt/stocktrader/dbt
+    environment:
+      - STOCK_TRADER_HOME=/opt/stocktrader
+      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
+      - DBT_PROFILES_DIR=/opt/stocktrader/dbt
+      - DBT_PROJECT_DIR=/opt/stocktrader/dbt
+    volumes:
+      - .:/opt/stocktrader
+      - dbt-logs:/opt/stocktrader/dbt/logs
+    command: tail -f /dev/null
+    profiles: ["core", "dev", "prod"]
+
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     ports:
@@ -69,5 +85,6 @@ services:
     profiles: ["core", "dev", "prod"]
 
 volumes:
+  dbt-logs:
   postgres-data:
   clickhouse-data:
