@@ -1,0 +1,60 @@
+#
+# FILE: `StockTrader/dbt/dbt_project.yml`
+#
+
+
+#
+# Project Basic Config
+#
+
+name: 'stocktrader_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'stocktrader_analytics'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  stocktrader_analytics:
+    staging:
+      +materialized: view
+      +schema: staging
+
+    intermediate:
+      +materialized: "{{ 'table' if target.name == 'prod' else 'view' }}"
+      +schema: intermediate
+
+    marts:
+      +materialized: table
+      +file_format: parquet
+
+      pricing:
+        +schema: pricing
+
+      strategies:
+        +schema: strategies
+
+      portfolio_mgmt:
+        +schema: portfolio_mgmt
+
+tests:
+  +store_failures: true
+  +schema: test_failures
+
+vars:
+  risk_free_rate_series: 'TB3MS'
+  vol_window: 9
+  min_expiry_days: 7
+  max_expiry_days: 180
+  trading_days_per_annum: 252
+  # min_open_interest: 10

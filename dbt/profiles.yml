@@ -1,0 +1,24 @@
+#
+# FILE: `StockTrader/dbt/profiles.yml`
+#
+
+stocktrader_analytics:
+  outputs:
+    dev:
+      type: duckdb
+      path: '/opt/stocktrader/data/warehouse/stocktrader_analytics_dev.duckdb'
+      schema: 'main'
+      threads: 4
+      extensions:
+        - parquet
+        # - httpfs
+
+    prod:
+      type: duckdb
+      path: '/opt/stocktrader/data/warehouse/stocktrader_analytics_prod.duckdb'
+      schema: 'main'
+      threads: 8
+      extensions:
+        - parquet
+
+  target: dev
