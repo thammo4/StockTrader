@@ -22,6 +22,9 @@ select
 	close as close_price,
 	prevclose as prev_close_price,
 
+	-- Derived Price/Return Metrics
+	ln(close/nullif(prevclose,0)) as log_return,
+
 	-- Price Changes
 	change as change_price,
 	change_percentage as change_price_pct,
