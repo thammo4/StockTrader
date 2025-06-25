@@ -1,5 +1,5 @@
 #
-# FILE: `StockTrader/dbt/models/staging/_sources.yml`
+# FILE: `StockTrader/dbt/models/staging/sources.yml`
 #
 
 version: 2
@@ -22,54 +22,3 @@ sources:
         meta:
           external_location: "/opt/stocktrader/data/warehouse/dividends_af/*.parquet"
           union_by_name: true
-
-  #     - name: quotes_af
-  #       description: "EOD stock quotes"
-  #       external:
-  #         location: "/opt/stocktrader/data/warehouse/quotes_af/*.parquet"
-  #         format: parquet
-
-  #     - name: dividends_af
-  #       description: "Historical querterly dividend data ingested via Airflow"
-  #       external:
-  #         location: "/opt/stocktrader/data/warehouse/dividends_af/*.parquet"
-  #         format: parquet
-
-  # - name: fred_raw
-  #   description: "Interest rate + macroeconomic time series data from Federal Reserve API (FRED)"
-
-  #   tables:
-  #     - name: fred_af
-  #       description: "Interest rates proxies"
-  #       external:
-  #         location: "/opt/stocktrader/data/warehouse/fred_af/*.parquet"
-  #         format: parquet
-
-# version: 2
-
-# sources:
-#   - name: tradier_raw
-#     description: "Raw market data ingested from Tradier API (uvatradier) via Airflow"
-#     meta:
-#       owner: "deng"
-#       update_frequency: "daily"
-
-#     tables:
-#       - name: options_af
-#         description: "Daily options chain data for large-cap dividend stocks"
-#         meta:
-#           file_pattern: "*.parquet"
-#           directory: "data/warehouse/options_af/"
-#         columns:
-#           - name: symbol
-#             description: "OCC-formatted option symbol"
-
-#       - name: quotes_af
-#         description: "EOD stock quotes"
-#         meta:
-#           file_pattern: "*.parquet"
-#           directory: "data/warehouse/quotes_af/"
-#         columns:
-#           - name: symbol
-#             description: "Stock ticker symbol"
-
