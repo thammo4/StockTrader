@@ -12,13 +12,21 @@ sources:
       - name: options_af
         description: "Daily options chain data for large-cap dividend stocks."
         meta:
-          external_location: "/opt/stocktrader/data/warehouse/options_af/*.parquet"
+          external_location: "../data/warehouse/options_af/*.parquet"
       - name: quotes_af
         description: "Daily EOD stock quotes for large-cap dividend stocks."
         meta:
-          external_location: "/opt/stocktrader/data/warehouse/quotes_af/*.parquet"
+          external_location: "../data/warehouse/quotes_af/*.parquet"
       - name: dividends_af
         description: "Historical dividend data ingested quarterly."
         meta:
-          external_location: "/opt/stocktrader/data/warehouse/dividends_af/*.parquet"
-          union_by_name: true
+          external_location: "../data/warehouse/dividends_af/*.parquet"
+
+  - name: fred_raw
+    description: "Time series interest rate/macroeconomic data from Federal Reserve Data API"
+
+    tables:
+      - name: fred_af
+        description: "Historical monthly interest rate data for use as risk-free proxies"
+        meta:
+          external_location: "../data/warehouse/fred_af/*.parquet"
