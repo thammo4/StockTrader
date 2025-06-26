@@ -21,6 +21,11 @@ sources:
         description: "Historical dividend data ingested quarterly."
         meta:
           external_location: "../data/warehouse/dividends_af/*.parquet"
+      - name: ohlcv_bars
+        description: "Historical OHLCV daily bar data"
+        meta:
+          external_location: "../data/warehouse/ohlcv_bars/*.parquet"
+
 
   - name: fred_raw
     description: "Time series interest rate/macroeconomic data from Federal Reserve Data API"
