@@ -16,8 +16,22 @@ StockTrader/
 │       └── ingest_tradier_dividends_dag.py
 │       └── ingest_tradier_options_dag.py
 │       └── ingest_tradier_quotes_dag.py
+├── dbt/
+│   └── dbt_project.yml
+│   └── profiles.yml
+│   └── models/
+│       └── staging/
+│       	└── sources.yml
+│       	└── fred/
+│           	└── stg_fred__rates.sql
+│       	└── tradier/
+│           	└── stg_tradier__dividends.sql
+│           	└── stg_tradier__ohlcv_bars.sql
+│           	└── stg_tradier__options.sql
+│           	└── stg_tradier__quotes.sql
 ├── data/
 │   └── warehouse/
+│       └── stocktrader_analytics_dev.duckdb
 │       └── fred/
 │           └── <landing directory for FRED interest rate data>
 │           └── <SERIESID.parquet>
