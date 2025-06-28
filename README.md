@@ -23,12 +23,12 @@ StockTrader/
 │       └── staging/
 │       	└── sources.yml
 │       	└── fred/
-│           	└── stg_fred__rates.sql
+│                   └── stg_fred__rates.sql
 │       	└── tradier/
-│           	└── stg_tradier__dividends.sql
-│           	└── stg_tradier__ohlcv_bars.sql
-│           	└── stg_tradier__options.sql
-│           	└── stg_tradier__quotes.sql
+│           	    └── stg_tradier__dividends.sql
+│           	    └── stg_tradier__ohlcv_bars.sql
+│           	    └── stg_tradier__options.sql
+│           	    └── stg_tradier__quotes.sql
 ├── data/
 │   └── warehouse/
 │       └── stocktrader_analytics_dev.duckdb
