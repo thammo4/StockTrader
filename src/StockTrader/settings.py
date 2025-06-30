@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 
 today = datetime.today().strftime("%Y-%m-%d")
 today_last_year = (datetime.today() - timedelta(weeks=52)).strftime("%Y-%m-%d")
+today_eighteen_months_ago = (datetime.today() - timedelta(weeks=78)).strftime("%Y-%m-%d")
 today_six_months_ago = (datetime.today() - timedelta(weeks=26)).strftime("%Y-%m-%d")
 today_three_months_ago = (datetime.today() - timedelta(weeks=13)).strftime("%Y-%m-%d")
 today_last_month = (datetime.today() - timedelta(weeks=4)).strftime("%Y-%m-%d")
