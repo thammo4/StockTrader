@@ -4,7 +4,7 @@
 
 import os
 import pandas as pd
-from StockTrader.settings import STOCK_TRADER_DWH, logger, today, today_last_year
+from StockTrader.settings import STOCK_TRADER_DWH, logger, today, today_eighteen_months_ago
 from utils.dividend_table import dividend_table
 from airflow.exceptions import AirflowSkipException
 
@@ -20,12 +20,13 @@ def get_symbols():
 
 def ingest_tradier_dividends(symbol, subdir="dividends_af"):
     try:
-        df = dividend_table(symbol=symbol, start_date=today_last_year)
+        df = dividend_table(symbol=symbol, start_date=today_eighteen_months_ago)
 
         if df is None or df.empty:
             logger.warning(f"No dividend data, symbol={symbol}")
             raise AirflowSkipException(f"No dividend data, symbol={symbol}")
 
+        df["symbol"] = symbol
         df["created_date"] = today
 
         #
