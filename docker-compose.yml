@@ -47,6 +47,7 @@ services:
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
       - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
+      - AIRFLOW__WEBSERVER__WORKERS=2
       - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
       - STOCK_TRADER_HOME=/opt/stocktrader
       - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
