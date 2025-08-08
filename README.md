@@ -20,6 +20,10 @@ StockTrader/
 │   └── dbt_project.yml
 │   └── profiles.yml
 │   └── models/
+│       └── intermediate/
+│       	└── options_pricing/
+│           	    └── int_ohlcv__rolling_vol.sql
+│           	    └── int_options__calc_ttm.sql
 │       └── staging/
 │       	└── sources.yml
 │       	└── fred/
