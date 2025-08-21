@@ -48,6 +48,14 @@ StockTrader/
 │       └── quotes/
 │           └── <landing directory for quote data>
 │           └── <SYMBOL.parquet>
+├── infrastructure/
+│   └── terraform/
+│       └── main.tf
+│       └── outputs.tf
+│       └── variables.tf
+│       └── versions.tf
+│       └── scripts/
+│           └── gcp_vm_debian.sh
 ├── logs/
 ├── scripts/
 │   └── create_dividend_parquet.py
@@ -62,7 +70,7 @@ StockTrader/
 │   └── prep_bopm_data.py
 │   └── price_bopm_data.py
 ├── src/
-│   └── StockTrader
+│   └── StockTrader/
 │       └── settings.py
 │       └── tradier.py
 │       └── freddy.py
