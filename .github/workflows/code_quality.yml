@@ -1,0 +1,57 @@
+#
+# FILE: `StockTrader/.github/workflows/code_quality.yml`
+#
+
+name: Code Quality Analysis
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+
+env:
+  # PYTHON_VERSION: '3.10'
+  PYTHON_VERSION: "3.10"
+
+jobs:
+  code_quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5	
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+
+      - name: Install Application/Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e .[dev]
+
+      - name: Static Analysis
+        run: python .github/scripts/code_quality/static_analysis.py
+
+      - name: Security Scan
+        run: python .github/scripts/code_quality/security_scan.py
+
+      - name: Test and Coverage
+        run: python .github/scripts/code_quality/test_and_coverage.py
+
+      - name: Coverage Report Artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: code_coverage
+          path: |
+            artifacts/reports/coverage.xml
+            artifacts/reports/htmlcov/
+            artifacts/reports/test-results.xml
+
