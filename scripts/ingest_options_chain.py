@@ -453,6 +453,25 @@ if __name__ == "__main__":
         "CTRA",
         "KVUE",
         "VLTO",
-        "SPY", "XLK", "DGRO", "DIV", "EEM", "FIDI", "KBWY", "MORT", "NOBL", "QQQ", "QYLD", "RDIV", "SDY", "SPYD", "SPYI", "VIG", "XLF", "XSHD", "YYY"]
+        "SPY",
+        "XLK",
+        "DGRO",
+        "DIV",
+        "EEM",
+        "FIDI",
+        "KBWY",
+        "MORT",
+        "NOBL",
+        "QQQ",
+        "QYLD",
+        "RDIV",
+        "SDY",
+        "SPYD",
+        "SPYI",
+        "VIG",
+        "XLF",
+        "XSHD",
+        "YYY",
+    ]
     for s in BIG_LIST:
         ingest_options_chain(s)
