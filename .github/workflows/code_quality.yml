@@ -36,6 +36,12 @@ jobs:
           pip install --upgrade pip
           pip install -e .[dev]
 
+      #
+      # Static Analysis
+      #   • Code style/format linter (flake8)
+      #   • Security linter (bandit [+ pip-audit?])
+      #   • Test suites and code coverage report (pytest)
+
       - name: Static Analysis
         run: python .github/scripts/code_quality/static_analysis.py
 

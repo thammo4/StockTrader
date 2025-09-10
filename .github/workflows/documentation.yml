@@ -1,0 +1,5 @@
+#
+# FILE: `StockTrader/.github/workflows/documentation.yml`
+#
+
+name: Documentation Generation
