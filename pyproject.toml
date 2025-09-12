@@ -1,3 +1,7 @@
+#
+# FILE: `StockTrader/pyproject.toml`
+#
+
 [build-system]
 requires = ["setuptools>=69.2.0"]
 build-backend = "setuptools.build_meta"
@@ -14,7 +18,7 @@ dependencies = [
 	'python-dotenv>=1.0.1',
 	'schedule>=1.2.1',
 	'pandas>=2.2.3',
-	'pyspark>=3.5.4',
+	# 'pyspark>=3.5.4',
 	'numpy>=1.26.4',
 	'pyarrow>=19.0.0',
 	'yfinance>=0.2.37',
@@ -25,18 +29,19 @@ dependencies = [
 	'scipy>=1.14.1',
 	'statsmodels>=0.14.2',
 	'arch>=7.0.0',
-	'hmmlearn>=0.3.2',
-	'filterpy>=1.4.5',
-	'PyWavelets>=1.6.0',
+	# 'hmmlearn>=0.3.2',
+	# 'filterpy>=1.4.5',
+	# 'PyWavelets>=1.6.0',
 	'backtrader>=1.9.78.123',
 	'fredapi>=0.5.1',
-	'lxml>=5.2.1',
+	# 'lxml>=5.2.1',
 	'uvatradier>=0.4.7',
-	'apache-airflow[webserver]>=2.10.5'
+	# 'apache-airflow[webserver]>=2.10.5'
 ]
 
 [project.optional-dependencies]
-dev=['black', 'mypy', 'pytest', 'pre-commit', 'pytest-subprocess']
+# dev=['black', 'mypy', 'pytest', 'pre-commit', 'pytest-subprocess']
+dev = ["black", "flake8", "mypy", "bandit", "pip-audit", "pytest", "pytest-cov"]
 
 [tool.setuptools.packages.find]
 where=["src", "scripts", "utils"]
@@ -44,13 +49,7 @@ where=["src", "scripts", "utils"]
 [tool.pytest.ini_options]
 pythonpath = ["src", "scripts", "utils"]
 testpaths = ["tests"]
-# testpaths=['tests', 'tests/scripts']
 
 [tool.black]
 line-length = 120
 
-# [tool.ruff]
-# lint.select = ["E", "F"]
-# lint.ignore = []
-# lint.mccabe = 10
-# lint.per-file-ignores = {"tests/*" = ["E402", "F401"]}
