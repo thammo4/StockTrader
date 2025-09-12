@@ -137,7 +137,60 @@ def run_mypy () -> tuple[bool, str]:
 
 
 def run_bandit() -> tuple[bool, str]:
-	pass;
+	if not SRC_ROOTS:
+		print("Bandit: no targets, skip.")
+		return True, "no targets"
+
+	ok_text, _ = run(
+		["bandit", "-r", *SRC_ROOTS, "--severity-level", "medium", "-f", "txt"],
+		"bandit security scan",
+		BANDIT_TXT
+	)
+
+	print(f"\n{'='*60}\nRunning Bandit JSON Export\n{'='*60}")
+	try:
+		res_json = subprocess.run(
+			["bandit", "-r", *SRC_ROOTS, "-f", "json", "-o", str(BANDIT_JSON)],
+			check=False,
+			capture_output=True,
+			text=True
+		)
+
+		if res_json.returncode not in (0,1):
+			print(f"Bandit JSON export exited with code {res_json.returncode}")
+			if res_json.stderr:
+				print("STDERR\n", res_json.stderr)
+	except subprocess.CalledProcessError as e:
+		print(f"Bandit JSON export failed (exit {e.returncode})")
+		if e.stderr:
+			print("STDERR:\n", e.stderr)
+
+	ok_sarif, _ = run(
+		["bandit", "-r", *SRC_ROOTS, "-f", "sarif", "-o", str(BANDIT_SARIF)],
+		"Bandit SARIF Export",
+		None,
+	)
+
+	issues_medium_high = 0
+	if BANDIT_JSON.exists():
+		try:
+			data = json.loads(BANDIT_JSON.read_text())
+			for issue in data.get("results", []):
+				severity = (issue.get("issue_severity") or "").upper()
+				if severity in {"MEDIUM", "HIGH"}:
+					issues_medium_high += 1
+		except json.JSONDecodeError as e:
+			print(f"Warning: bad parse json badit: {e}")
+
+	is_pass = ok_text and ok_sarif and issues_medium_high == 0
+	msg = f"{issues_medium_high} medium/high issues"
+
+	if not is_pass:
+		print("Bandit result: FAIL")
+	else:
+		print("Bandit result: PASS")
+
+	return is_pass, msg
 
 
 def write_summary (results: dict[str, dict[str, str|bool]]) -> None:
