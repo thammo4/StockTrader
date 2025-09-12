@@ -52,35 +52,70 @@ def ensure_dirs() -> None:
 	ARTIFACTS.mkdir(parents=True, exist_ok=True)
 
 
-def run(cmd: Iterable[str], label: str, outfile: Path | None=None) -> tuple[bool, str]:
-	print(f"\n{'='*60}\nRunning {label}\n{'='*60}")
+# def run(cmd: Iterable[str], label: str, outfile: Path | None=None) -> tuple[bool, str]:
+# 	print(f"\n{'='*60}\nRunning {label}\n{'='*60}")
+# 	try:
+# 		res = subprocess.run(list(cmd), check=True, capture_output=True, text=True)
+# 		print(f"{label}: PASSED")
+# 		if outfile:
+# 			outfile.write_text(f"{label} Results\n{'='*60}\n{res.stdout}")
+# 		return True, res.stdout
+# 	except subprocess.CalledProcessError as e:
+# 		print(f"{label}: FAILED (exit {e.returncode})")
+# 		if e.stdout:
+# 			print("STDOUT:\n", e.stdout)
+# 		if e.stderr:
+# 			print("STDERR:\n", e.stderr)
+# 		if outfile:
+# 			outfile.write_text(
+# 				f"{label} Results(FAILED)\n{'='*60}\n"
+# 				f"Exit Code: {e.returncode}\n\n"
+# 				f"STDOUT:\n{e.stdout or ''}\n\nSTDERR\n{e.stderr or ''}"
+# 			)
+# 		reason = e.stdout or e.stderr or f"{label} failed"
+# 		return False, reason
+
+def run (cmd:Iterable[str], label:str, outfile:Path|None=None) -> tuple[bool,str]:
+	print(f"\nRUN: {label}\n")
 	try:
 		res = subprocess.run(list(cmd), check=True, capture_output=True, text=True)
-		print(f"{label}: PASSED")
+		print(f"PASS [{label}]")
 		if outfile:
-			outfile.write_text(f"{label} Results\n{'='*60}\n{res.stdout}")
+			outfile.write_text(f"OUTCOME: {res.stdout} [{label}]")
 		return True, res.stdout
 	except subprocess.CalledProcessError as e:
-		print(f"{label}: FAILED (exit {e.returncode})")
+		print(f"FAIL [{label}]")
+		print(f"status={e.returncode}")
 		if e.stdout:
 			print("STDOUT:\n", e.stdout)
 		if e.stderr:
 			print("STDERR:\n", e.stderr)
 		if outfile:
 			outfile.write_text(
-				f"{label} Results(FAILED)\n{'='*60}\n"
-				f"Exit Code: {e.returncode}\n\n"
-				f"STDOUT:\n{e.stdout or ''}\n\nSTDERR\n{e.stderr or ''}"
+				f"OUTCOME: FAIL [{label}]\n",
+				f"EXIT: {e.returncode}\n",
+				f"STDOUT: {e.stdout or ''}\n",
+				f"STDERR: {e.stderr or ''}\n"
 			)
-		reason = e.stdout or e.stderr or f"{label} failed"
-		return False, reason
+		cause = e.stdout or e.stderr or f"fail [{label}]"
+		return False, cause
 
 
-def run_black () -> tuple[bool, str]:
+# def run_black () -> tuple[bool, str]:
+# 	if not LINT_ROOTS:
+# 		print("black: no targets found; skipping")
+# 		return True, "no targets"
+# 	return run(["black", "--check", "--diff", *LINT_ROOTS], "black code formatting", BLACK_REPORT)
+
+def run_black () -> tuple[bool,str]:
 	if not LINT_ROOTS:
-		print("black: no targets found; skipping")
+		print("black: no targets; skip")
 		return True, "no targets"
-	return run(["black", "--check", "--diff", *LINT_ROOTS], "black code formatting", BLACK_REPORT)
+	return run(
+		["black", "--check", "--diff", *LINT_ROOTS],
+		"black",
+		BLACK_REPORT
+	)
 
 
 def run_flake8() -> tuple[bool, str]:
@@ -122,17 +157,33 @@ def run_flake8() -> tuple[bool, str]:
 
 
 
-def run_mypy () -> tuple[bool, str]:
+# def run_mypy () -> tuple[bool, str]:
+# 	if not SRC_ROOTS:
+# 		print("MyPy: no targets found; skip")
+# 		return True, "No targets"
+
+# 	mypy_cmd = ["mypy", *SRC_ROOTS]
+
+# 	if not Path("mypy.ini").exists():
+# 		mypy_cmd+= ["--ignore-missing-imports", "--no-strict-optional", "--show-error-codes"]
+
+# 	return run(mypy_cmd, "MyPy type checking", MYPY_REPORT)
+
+def run_mypy () -> tuple[bool,str]:
 	if not SRC_ROOTS:
-		print("MyPy: no targets found; skip")
-		return True, "No targets"
+		print("mypy: no targets; skip")
+		return True, "no targets"
 
 	mypy_cmd = ["mypy", *SRC_ROOTS]
 
 	if not Path("mypy.ini").exists():
-		mypy_cmd+= ["--ignore-missing-imports", "--no-strict-optional", "--show-error-codes"]
+		mypy_cmd += [
+			"--ignore-missing-imports",
+			"--no-strict-optional",
+			"--show-error-codes"
+		]
 
-	return run(mypy_cmd, "MyPy type checking", MYPY_REPORT)
+	return run(mypy_cmd, "mypy", MYPY_REPORT)
 
 
 
