@@ -244,8 +244,41 @@ def write_summary (results: Dict[str, Dict[str,Any]]) -> None:
 	print("\n"+"\n".join(lines))
 
 
-def main() -> int:
-	pass;
+def main () -> int:
+	print("Static Code Analysis")
+	print("-> Black")
+	print("-> Flake8")
+	print("-> MyPy")
+	print("-> Bandit")
+	print("="*60)
+
+	ensure_dirs()
+
+	results: Dict[str, Dict[str,Any]] = {}
+
+	black_ok, black_msg = run_black()
+	results["black"] = {"success":black_ok, "message":black_msg}
+
+	flake8_ok, flake8_msg = run_flake8()
+	results["flake8"] = {"success":flake8_ok, "message":flake8_msg}
+
+	mypy_ok, mypy_msg = run_mypy()
+	results["mypy"] = {"success":mypy_ok, "message":mypy_msg}
+
+	bandit_ok, bandit_msg = run_bandit()
+	results["bandit"] = {"success":bandit_ok, "message":bandit_msg}
+
+	write_summary(results)
+
+	overall_success = all(v["success"] for v in results.values())
+	print(f"\nOverall Result: {'PASS' if overall_success else 'FAIL'}")
+	print(f"\nArtifacts: {ARTIFACTS.resolve()}")
+
+	return 0 if overall_success else 1
+
+
+# def main() -> int:
+# 	pass;
 	
 
 
