@@ -10,6 +10,9 @@ StockTrader is a data pipeline for retrieving, processing, and analyzing stock m
 StockTrader/
 ├── Dockerfile
 ├── docker-compose.yml
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── airflow/
 │   └── dags/
 │       └── ingest_fred_rates_dag.py
