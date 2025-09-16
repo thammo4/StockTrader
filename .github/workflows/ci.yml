@@ -1,3 +1,7 @@
+#
+# FILE: `StockTrader/.github/workflows/ci.yml`
+#
+
 name: StockTrader CI
 
 on:
@@ -28,7 +32,7 @@ jobs:
           fi
           source venv/bin/activate
 
-          for d in src scripts tests utils; do
+          for d in src/ scripts/ tests/ utils/; do
             [ -d "$d" ] || { echo "ERROR: $d/ missing"; exit 1; }
           done
 
@@ -78,31 +82,30 @@ jobs:
           mkdir -p artifacts/test-reports
           mkdir -p artifacts/code-format-reports
 
-          echo "CI Timestamp: $(date +%Y-%m-%d %H:%M:%S)" >> artifacts/ci_mdata.txt
-          echo "git commit: ${{ github.sha }}" >> artifacts/ci_mdata.txt
-          echo "git reference: ${{ github.ref }}" >> artifacts/ci_mdata.txt
-          echo "workflow run: ${{ github.run_number}}" >> artifacts/ci_mdata.txt
+          echo "ci_ts: $(date -Iseconds)" >> artifacts/ci_mdata.txt
+          echo "git_commit: ${{ github.sha }}" >> artifacts/ci_mdata.txt
+          echo "git_reference: ${{ github.ref }}" >> artifacts/ci_mdata.txt
+          echo "workflow_run: ${{ github.run_number}}" >> artifacts/ci_mdata.txt
 
       - name: Run Unit Tests + Report
         run: |
           source venv/bin/activate
-          pytest -v \
-            --junit-xml=artifacts/test-reports/pytest-results.xml \
-            tests/ | \
+          pytest -v --junit-xml=artifacts/test-reports/test-summary.xml tests/ | \
             tee artifacts/test-reports/test-summary.txt
-          echo "pytest_exit_code: $?" >> artifacts/test-reports/test-summary.txt
-          echo "test_run_ts: $(date +%Y-%m-%d %H:%M:%S)" >> artifacts/test-reports/test-summary.txt
+          echo "pytest_exit_code: ${PIPESTATUS[0]}" >> artifacts/test-reports/test-summary.txt
+          echo "pytest_ts: $(date -Iseconds)" >> artifacts/test-reports/test-summary.txt
 
       - name: Run Code Formatting Checks + Report
         run: |
           source venv/bin/activate
 
-          echo "Run black code format checks" | tee artifacts/code-format-reports/black-format.txt
-          black --check --diff src/ scripts/ tests/ utils 2>&1 | tee artifacts/code-format-reports/black-detailed.txt
+          echo "Run black code format checks" > artifacts/code-format-reports/black-format.txt
+          black --check --diff src/ scripts/ tests/ utils/ 2>&1 | \
+            tee artifacts/code-format-reports/black-detailed.txt
 
-          BLACK_EXIT_CODE=$?
+          BLACK_EXIT_CODE=${PIPESTATUS[0]}
           echo "black_exit_code: $BLACK_EXIT_CODE" >> artifacts/code-format-reports/summary.txt
-          echo "format_check_ts: $(date +%Y-%m-%d %H:%M:%S)" >> artifacts/code-format-reports/summary.txt
+          echo "format_check_ts: $(date -Iseconds)" >> artifacts/code-format-reports/summary.txt
 
           exit $BLACK_EXIT_CODE
 
