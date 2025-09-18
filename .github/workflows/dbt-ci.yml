@@ -1,0 +1,128 @@
+#
+# FILE: `StockTrader/.github/workflows/dbt-ci.yml`
+#
+
+name: dbt CI/CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dbt/**'
+      - '.github/workflows/dbt-ci.yml'
+
+
+jobs:
+  dbt-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Create + Start Virtual Environment
+        run: |
+          if command -v python3 &> /dev/null; then
+            python3 -m venv dbt-venv
+          else
+            python -m venv dbt-venv
+          fi
+          source dbt-venv/bin/activate
+
+      - name: Validate Directory Structure
+        run: |
+          for d in dbt/ src/ scripts/ utils/; do
+            [ -d "$d" ] || { echo "ERROR: $d missing"; exit 1; }
+          done
+
+      - name: Install Dependencies
+        run: |
+          if command -v pip3 &> /dev/null; then
+            pip3 install --upgrade pip
+            pip3 install -e .
+            pip3 install dbt-core dbt-duckdb
+          else
+            pip install --upgrade pip
+            pip install -e .
+            pip install dbt-core dbt-duckdb
+          fi
+
+      - name: Setup Environment Variables
+        run: |
+          echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "STOCK_TRADER_MARKET_DATA=$GITHUB_WORKSPACE/data" >> $GITHUB_ENV
+          echo "STOCK_TRADER_DWH=$GITHUB_WORKSPACE/data/warehouse" >> $GITHUB_ENV
+          echo "STOCK_TRADER_LOG=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
+          echo "DBT_PROFILES_DIR=$GITHUB_WORKSPACE/dbt" >> $GITHUB_ENV
+          # echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+
+      - name: Generate Test Sample
+        run: |
+          source dbt-venv/bin/activate
+          python .github/scripts/dbt-test-sample.py
+
+      - name: Verify StockTrader Package Install
+        run: |
+          source dbt-venv/bin/activate
+          python .github/scripts/dbt-stocktrader-verify.py
+
+      - name: Install dbt Dependencies
+        run: |
+          source dbt-venv/bin/activate
+          cd dbt
+          dbt deps --profiles-dir .
+
+      - name: Run dbt Debug
+        run: |
+          source dbt-venv/bin/activate
+          cd dbt
+          dbt debug --profiles-dir . --target dev 2>&1 | \
+            tee ../artifacts/dbt-reports/dbt-debug.log
+
+      - name: Run dbt Models
+        run: |
+          source dbt-venv/bin/activate
+          cd dbt
+          dbt run --profiles-dir . --target dev 2>&1 | \
+            tee ../artifacts/dbt-reports/dbt-run.log
+
+      - name: Run dbt Tests
+        run: |
+          source dbt-venv/bin/activate
+          cd dbt
+          dbt test --profiles-dir . --target dev --store-failures 2>&1 | \
+            tee ../artifacts/dbt-reports/dbt-test.log
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
