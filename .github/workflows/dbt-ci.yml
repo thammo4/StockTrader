@@ -2,6 +2,16 @@
 # FILE: `StockTrader/.github/workflows/dbt-ci.yml`
 #
 
+#
+# BASIC OUTLINE:
+#   1. Repo/Env Setup
+#   2. dbt debug
+#   3. dbt model build (dbt run)
+#   4. dbt test
+#   5. Generate/Upload Artifact Reports
+#
+
+
 name: dbt CI/CD
 
 on:
@@ -61,42 +71,69 @@ jobs:
           echo "DBT_PROFILES_DIR=$GITHUB_WORKSPACE/dbt" >> $GITHUB_ENV
           # echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
 
-      - name: Generate Test Sample
+      - name: Check dbt Debug/Config
         run: |
-          source dbt-venv/bin/activate
-          python .github/scripts/dbt-test-sample.py
+          # cd dbt
+          # dbt debug
+          # dbt debug --profiles-dir dbt/
+          dbt debug --profiles-dir dbt/ 2>&1 | tee artifacts/dbt-reports/dbt-debug.log
 
-      - name: Verify StockTrader Package Install
+      - name: Generate dbt Data Sample
         run: |
           source dbt-venv/bin/activate
-          python .github/scripts/dbt-stocktrader-verify.py
+          python .github/scripts/dbt-data-sample.py
 
-      - name: Install dbt Dependencies
+      - name: Build dbt Models
         run: |
-          source dbt-venv/bin/activate
-          cd dbt
-          dbt deps --profiles-dir .
+          # cd dbt
+          # dbt run --select state:modified+
+          # dbt run --profiles-dir dbt/ --select state:modified+
+          dbt run --profiles-dir dbt/ --select state:modified+ 2>&1 | tee artifacts/dbt-reports/dbt-run.log
 
-      - name: Run dbt Debug
+      - name: Test dbt Models
         run: |
-          source dbt-venv/bin/activate
-          cd dbt
-          dbt debug --profiles-dir . --target dev 2>&1 | \
-            tee ../artifacts/dbt-reports/dbt-debug.log
+          # cd dbt
+          # dbt test --select state:modified+
+          # dbt test --profiles-dir dbt/ --select state:modified+
+          # dbt test --profiles-dir dbt/ 2>&1 | tee artifacts/dbt-reports/dbt-test.log
+          dbt test --profiles-dir dbt/ --select state:modified+ 2>&1 | tee artifacts/dbt-reports/dbt-test.log
 
-      - name: Run dbt Models
-        run: |
-          source dbt-venv/bin/activate
-          cd dbt
-          dbt run --profiles-dir . --target dev 2>&1 | \
-            tee ../artifacts/dbt-reports/dbt-run.log
+      # - name: Generate Test Sample
+      #   run: |
+      #     source dbt-venv/bin/activate
+      #     python .github/scripts/dbt-test-sample.py
 
-      - name: Run dbt Tests
-        run: |
-          source dbt-venv/bin/activate
-          cd dbt
-          dbt test --profiles-dir . --target dev --store-failures 2>&1 | \
-            tee ../artifacts/dbt-reports/dbt-test.log
+      # - name: Verify StockTrader Package Install
+      #   run: |
+      #     source dbt-venv/bin/activate
+      #     python .github/scripts/dbt-stocktrader-verify.py
+
+      # - name: Install dbt Dependencies
+      #   run: |
+      #     source dbt-venv/bin/activate
+      #     cd dbt
+      #     dbt deps --profiles-dir .
+
+      # - name: Run dbt Debug
+      #   run: |
+      #     source dbt-venv/bin/activate
+      #     cd dbt
+      #     dbt debug --profiles-dir . --target dev 2>&1 | \
+      #       tee ../artifacts/dbt-reports/dbt-debug.log
+
+      # - name: Run dbt Models
+      #   run: |
+      #     source dbt-venv/bin/activate
+      #     cd dbt
+      #     dbt run --profiles-dir . --target dev 2>&1 | \
+      #       tee ../artifacts/dbt-reports/dbt-run.log
+
+      # - name: Run dbt Tests
+      #   run: |
+      #     source dbt-venv/bin/activate
+      #     cd dbt
+      #     dbt test --profiles-dir . --target dev --store-failures 2>&1 | \
+      #       tee ../artifacts/dbt-reports/dbt-test.log
 
 
 
