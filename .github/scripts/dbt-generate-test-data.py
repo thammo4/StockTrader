@@ -50,9 +50,6 @@ def create_fred_test_data():
 	df_fred.to_parquet(output_path, index=False, engine="pyarrow")
 
 	print(f"Data Dir: {data_dir}")
-
-	return 0
-
 	print(f"Generated {len(df_fred)} FRED records -> {output_path}")
 	print(f"Date Range: {dates[0]}...{dates[-1]}")
 	print(f"Sample Dates: {dates[:3]}...{dates[-3:]}")
