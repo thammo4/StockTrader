@@ -4,11 +4,14 @@
 
 #
 # BASIC OUTLINE:
-#   1. Repo/Env Setup
-#   2. dbt debug
-#   3. dbt model build (dbt run)
-#   4. dbt test
-#   5. Generate/Upload Artifact Reports
+#   1. Repo Checkout + Establish Directories
+#   2. Setup Python + Venv
+#   3. Build dbt Docker Container
+#   4. dbt Debug
+#   5. Generate Sample Data For Tests
+#   6. Run dbt Models on Sample Data
+#   7. Run dbt Tests on Sample Data
+#   8. Upload Artifact Reports
 #
 
 
@@ -26,140 +29,80 @@ jobs:
   dbt-test:
     runs-on: ubuntu-latest
 
+    env:
+      STOCK_TRADER_HOME: ${{ github.workspace }}
+      STOCK_TRADER_MARKET_DATA: ${{ github.workspace }}/data
+      STOCK_TRADER_DWH: ${{ github.workspace }}/data/warehouse
+      STOCK_TRADER_LOG: ${{ github.workspace }}/logs
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set Up Python
+      - name: Create Required Directories
+        run: |
+          mkdir -p artifacts/dbt-reports
+          mkdir -p data/warehouse/{dividends_af,fred_af,options_af,quotes_af}
+          mkdir logs
+
+          echo "Created Directories:"
+          find {artifacts,data,logs} -type d
+
+      - name: Validate Directory Structure
+        run: |
+          for d in artifacts/ data/ dbt/ logs/ scripts/ src/ utils/; do
+            [ -d "$d" ] || { echo "ERROR: $d missing"; exit 1 }
+          done
+
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      - name: Create + Start Virtual Environment
+      - name: Create + Start Python Virtual Environment
         run: |
           if command -v python3 &> /dev/null; then
-            python3 -m venv dbt-venv
-          else
-            python -m venv dbt-venv
-          fi
-          source dbt-venv/bin/activate
-
-      - name: Validate Directory Structure
-        run: |
-          for d in dbt/ src/ scripts/ utils/; do
-            [ -d "$d" ] || { echo "ERROR: $d missing"; exit 1; }
-          done
-
-      - name: Install Dependencies
-        run: |
-          if command -v pip3 &> /dev/null; then
-            pip3 install --upgrade pip
-            pip3 install -e .
-            pip3 install dbt-core dbt-duckdb
-          else
-            pip install --upgrade pip
+            python3 -m venv venv
+            source venv/bin/activate
             pip install -e .
-            pip install dbt-core dbt-duckdb
+          else
+            python -m venv venv
+            source venv/bin/activate
+            pip install -e .
           fi
 
-      - name: Setup Environment Variables
-        run: |
-          echo "STOCK_TRADER_HOME=$GITHUB_WORKSPACE" >> $GITHUB_ENV
-          echo "STOCK_TRADER_MARKET_DATA=$GITHUB_WORKSPACE/data" >> $GITHUB_ENV
-          echo "STOCK_TRADER_DWH=$GITHUB_WORKSPACE/data/warehouse" >> $GITHUB_ENV
-          echo "STOCK_TRADER_LOG=$GITHUB_WORKSPACE/logs" >> $GITHUB_ENV
-          echo "DBT_PROFILES_DIR=$GITHUB_WORKSPACE/dbt" >> $GITHUB_ENV
-          # echo "PYTHONPATH=$GITHUB_WORKSPACE:$GITHUB_WORKSPACE/src" >> $GITHUB_ENV
+      - name: Build dbt Container
+        run: docker-compose build dbt
 
       - name: Check dbt Debug/Config
         run: |
-          # cd dbt
-          # dbt debug
-          # dbt debug --profiles-dir dbt/
-          dbt debug --profiles-dir dbt/ 2>&1 | tee artifacts/dbt-reports/dbt-debug.log
+          docker-compose run --rm dbt \
+            dbt debug --profiles-dir /opt/stocktrader/dbt --target dev \
+            2>&1 | tee artifacts/dbt-reports/dbt-debug.log
 
-      - name: Generate dbt Data Sample
+      - name: Generate Test Data
         run: |
-          source dbt-venv/bin/activate
-          python .github/scripts/dbt-data-sample.py
+          source venv/bin/activate
+          python .github/scripts/dbt-generate-sample-data.py
 
-      - name: Build dbt Models
+      - name: Run dbt Models
         run: |
-          # cd dbt
-          # dbt run --select state:modified+
-          # dbt run --profiles-dir dbt/ --select state:modified+
-          dbt run --profiles-dir dbt/ --select state:modified+ 2>&1 | tee artifacts/dbt-reports/dbt-run.log
+          docker-compose run --rm dbt \
+            dbt run --profiles-dir /opt/stocktrader/dbt --target dev \
+            2>&1 | tee artifacts/dbt-reports/dbt-run.log
 
-      - name: Test dbt Models
+      - name: Run dbt Tests
         run: |
-          # cd dbt
-          # dbt test --select state:modified+
-          # dbt test --profiles-dir dbt/ --select state:modified+
-          # dbt test --profiles-dir dbt/ 2>&1 | tee artifacts/dbt-reports/dbt-test.log
-          dbt test --profiles-dir dbt/ --select state:modified+ 2>&1 | tee artifacts/dbt-reports/dbt-test.log
+          docker-compose run --rm dbt \
+            dbt test --profiles-dir /opt/stocktrader/dbt --target dev \
+            2>&1 | tee artifacts/dbt-reports/dbt-test.log
 
-      # - name: Generate Test Sample
-      #   run: |
-      #     source dbt-venv/bin/activate
-      #     python .github/scripts/dbt-test-sample.py
-
-      # - name: Verify StockTrader Package Install
-      #   run: |
-      #     source dbt-venv/bin/activate
-      #     python .github/scripts/dbt-stocktrader-verify.py
-
-      # - name: Install dbt Dependencies
-      #   run: |
-      #     source dbt-venv/bin/activate
-      #     cd dbt
-      #     dbt deps --profiles-dir .
-
-      # - name: Run dbt Debug
-      #   run: |
-      #     source dbt-venv/bin/activate
-      #     cd dbt
-      #     dbt debug --profiles-dir . --target dev 2>&1 | \
-      #       tee ../artifacts/dbt-reports/dbt-debug.log
-
-      # - name: Run dbt Models
-      #   run: |
-      #     source dbt-venv/bin/activate
-      #     cd dbt
-      #     dbt run --profiles-dir . --target dev 2>&1 | \
-      #       tee ../artifacts/dbt-reports/dbt-run.log
-
-      # - name: Run dbt Tests
-      #   run: |
-      #     source dbt-venv/bin/activate
-      #     cd dbt
-      #     dbt test --profiles-dir . --target dev --store-failures 2>&1 | \
-      #       tee ../artifacts/dbt-reports/dbt-test.log
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+      - name: Upload dbt Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-results-${{ github.run_number }}
+          path: |
+            artifacts/
+            dbt/target/
+          retention-days: 5
