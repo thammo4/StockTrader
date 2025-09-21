@@ -8,6 +8,12 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
+def get_rt_env():
+	if os.environ.get("GITHUB_ACTIONS"):
+		return os.environ["STOCK_TRADER_DWH"]
+	else:
+		return os.path.join(os.environ["STOCK_TRADER_HOME"], "test_data", "warehouse")
+
 def create_fred_test_data():
 	"""Generate FED interest rate data for TB3MS series"""
 	print("Generating FRED interest rate data...")
@@ -36,10 +42,16 @@ def create_fred_test_data():
 		"created_date": datetime.now().strftime("%Y-%m-%d")
 	})
 
+	data_dir = get_rt_env()
 	output_dir = os.path.join(os.environ["STOCK_TRADER_DWH"], "fred_af")
+
 	os.makedirs(output_dir, exist_ok=True)
 	output_path = os.path.join(output_dir, "TB3MS.parquet")
 	df_fred.to_parquet(output_path, index=False, engine="pyarrow")
+
+	print(f"Data Dir: {data_dir}")
+
+	return 0
 
 	print(f"Generated {len(df_fred)} FRED records -> {output_path}")
 	print(f"Date Range: {dates[0]}...{dates[-1]}")
