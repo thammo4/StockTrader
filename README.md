@@ -1,4 +1,5 @@
 [![CI Status](https://github.com/thammo4/StockTrader/actions/workflows/ci.yml/badge.svg)](https://github.com/thammo4/StockTrader/actions)
+[![dbt CI](https://github.com/thammo4/StockTrader/actions/workflows/dbt-ci.yml/badge.svg)](https://github.com/thammo4/StockTrader/actions/workflows/dbt-ci.yml)
 # StockTrader
 
 ## Overview

@@ -15,7 +15,7 @@
 #
 
 
-name: dbt CI/CD
+name: dbt CI
 
 on:
   push:
