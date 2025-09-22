@@ -83,7 +83,7 @@ jobs:
       - name: Generate Test Data
         run: |
           source venv/bin/activate
-          python .github/scripts/dbt-generate-sample-data.py
+          python .github/scripts/dbt-generate-test-data.py
 
       - name: Run dbt Models
         run: |
