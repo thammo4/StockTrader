@@ -42,12 +42,12 @@ def create_fred_test_data():
 		"created_date": datetime.now().strftime("%Y-%m-%d")
 	})
 
-	data_dir = get_rt_env()
-	output_dir = os.path.join(os.environ["STOCK_TRADER_DWH"], "fred_af")
-
+	data_dir = get_rt_env() # data/warehouse/ or test_data/warehouse
+	output_dir = os.path.join(data_dir, "fred_af") # data/warehouse/fred_af or test_data/warehouse/fred_af
 	os.makedirs(output_dir, exist_ok=True)
-	output_path = os.path.join(output_dir, "TB3MS.parquet")
-	df_fred.to_parquet(output_path, index=False, engine="pyarrow")
+	fpath_parquet = os.path.join(output_dir, "TB3MS.parquet") # ~/warehouse/fred_af/TB3MS.parquet
+
+	df_fred.to_parquet(fpath_parquet, index=False, engine="pyarrow")
 
 	print(f"Data Dir: {data_dir}")
 	print(f"Generated {len(df_fred)} FRED records -> {output_path}")
