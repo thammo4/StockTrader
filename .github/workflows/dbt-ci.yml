@@ -51,7 +51,7 @@ jobs:
       - name: Validate Directory Structure
         run: |
           for d in artifacts/ data/ dbt/ logs/ scripts/ src/ utils/; do
-            [ -d "$d" ] || { echo "ERROR: $d missing"; exit 1 }
+            [ -d "$d" ] || { echo "ERROR: $d missing"; exit 1; }
           done
 
       - name: Setup Python
