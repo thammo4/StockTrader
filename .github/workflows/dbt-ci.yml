@@ -72,11 +72,11 @@ jobs:
           fi
 
       - name: Build dbt Container
-        run: docker-compose build dbt
+        run: docker compose build dbt
 
       - name: Check dbt Debug/Config
         run: |
-          docker-compose run --rm dbt \
+          docker compose run --rm dbt \
             dbt debug --profiles-dir /opt/stocktrader/dbt --target dev \
             2>&1 | tee artifacts/dbt-reports/dbt-debug.log
 
@@ -87,13 +87,13 @@ jobs:
 
       - name: Run dbt Models
         run: |
-          docker-compose run --rm dbt \
+          docker compose run --rm dbt \
             dbt run --profiles-dir /opt/stocktrader/dbt --target dev \
             2>&1 | tee artifacts/dbt-reports/dbt-run.log
 
       - name: Run dbt Tests
         run: |
-          docker-compose run --rm dbt \
+          docker compose run --rm dbt \
             dbt test --profiles-dir /opt/stocktrader/dbt --target dev \
             2>&1 | tee artifacts/dbt-reports/dbt-test.log
 
