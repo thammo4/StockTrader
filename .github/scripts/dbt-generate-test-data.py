@@ -65,8 +65,58 @@ def create_quotes_test_data():
 	return 0
 
 def create_dividends_test_data():
+	"""Generate dividend data matching airflow-ingested schema"""
 	print("Generating dividends test data...")
-	return 0
+
+	#
+	# Helper Function to map: symbol -> dividend test data dataframe
+	#
+
+	def create_symbol_data (s):
+		data = []
+		base_amt = base_dividend.get(s)
+
+		for yr in [2024,2025]:
+			quarter_dates = [datetime(yr,2,5),datetime(yr,5,6),datetime(yr,8,5),datetime(yr,11,4)]
+			for ex_date in quarter_dates:
+				epsilon = np.random.uniform(.950, 1.05)
+				div_amt = round(base_amt*epsilon, 2)
+				data.append({
+					"cash_amount": div_amt,
+					"ex_date": ex_date,
+					"frequency": 4,
+					"symbol": s,
+					"created_date": datetime.now().strftime("%Y-%m-%d")
+				})
+
+		return pd.DataFrame(data)
+
+	n_records = 0
+
+	symbols = ["AAPL", "KO", "PG", "C", "XOM"]
+	dividends = [0.25*x for x in range(1,6)]
+	base_dividend = dict(zip(symbols, dividends))
+
+	data_dir = get_rt_env()
+	output_dir = os.path.join(data_dir, "dividends_af")
+	os.makedirs(output_dir, exist_ok=True)
+
+	print(f"Data Dir: {data_dir}")
+	print(f"Output Dir: {output_dir}")
+
+	for s in symbols:
+		df_symbol_dividends = create_symbol_data(s)
+
+		fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
+		df_symbol_dividends.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+
+		print(f"symbol={s}, n={len(df_symbol_dividends)}")
+
+		n_records += len(df_symbol_dividends)
+
+	print(f"Generated {n_records} records")
+
+	return n_records
 
 if __name__ == "__main__":
 	print("-"*60)
@@ -77,9 +127,13 @@ if __name__ == "__main__":
 
 	try:
 		total_records = 0
+		print("")
 		total_records += create_fred_test_data()
+		print("")
 		total_records += create_options_test_data()
+		print("")
 		total_records += create_quotes_test_data()
+		print("")
 		total_records += create_dividends_test_data()
 
 	except Exception as e:
