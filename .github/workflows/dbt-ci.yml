@@ -23,6 +23,8 @@ on:
     paths:
       - 'dbt/**'
       - '.github/workflows/dbt-ci.yml'
+      - '.github/scripts/dbt-generate-test-data.py'
+
 
 
 jobs:
