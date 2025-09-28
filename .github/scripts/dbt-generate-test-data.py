@@ -16,8 +16,7 @@ def get_rt_env():
 
 def create_fred_test_data():
 	"""Generate FED interest rate data for TB3MS series"""
-	# print("Generating FRED interest rate data...")
-	print("FRED interest rate proxy data...")
+	print("!!! FRED interest rate proxy data !!!")
 
 	dates = []
 	rates = []
@@ -33,7 +32,6 @@ def create_fred_test_data():
 
 		rate = max(0.1, base_rate+seasonality+trend+epsilon)
 
-		# dates.append(fred_date, strftime("%Y-%m-%d"))
 		dates.append(fred_date.strftime("%Y-%m-%d"))
 		rates.append(round(rate,2))
 
@@ -54,15 +52,16 @@ def create_fred_test_data():
 	print(f"Generated {len(df_fred)} FRED records -> {fpath_parquet}")
 	print(f"Date Range: {dates[0]}...{dates[-1]}")
 	print(f"Sample Dates: {dates[:3]}...{dates[-3:]}")
+	print("Schema:"); df_fred.info()
 
 	return len(df_fred)
 
 def create_options_test_data():
-	print("Daily options chain detailed quote data...")
+	print("!!! Daily options chain detailed quote data !!!")
 	return 0
 
 def create_quotes_test_data():
-	print("Daily detailed quote data...")
+	print("!!! Daily detailed quote data !!!")
 
 
 	def create_symbol_data(s):
@@ -87,10 +86,8 @@ def create_quotes_test_data():
 
 			bid_ask_spread = adjusted_base * np.random.uniform(0.0001,0.0005)
 			price_bid = price_last - 0.5*bid_ask_spread
-			# price_ask = price_last + 0.50+bid_ask_spread
 			price_ask = price_last + 0.5*bid_ask_spread
 
-			# volume = np.random.randit(1000000,10000000)
 			volume = np.random.randint(1000000, 10000000)
 			volume_avg = int(volume*np.random.uniform(0.80,1.20))
 			volume_last = 100 * np.random.randint(100, 1000)
@@ -173,18 +170,22 @@ def create_quotes_test_data():
 		fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
 		df_symbol_quotes.to_parquet(fpath_parquet, index=False, engine="pyarrow")
 
-		print(f"symbol={s}, n={len(df_symbol_quotes)}")
 		n_records += len(df_symbol_quotes)
 
+
 	print(f"Generated {n_records} records")
+
+	print_schema_sample = True
+	if print_schema_sample:
+		print("Schema:"); df_symbol_quotes.info()
+		print_schema_sample = False
 
 	return n_records
 
 
 def create_dividends_test_data():
 	"""Generate dividend data matching airflow-ingested schema"""
-	# print("Generating dividends test data...")
-	print("Dividend payment data...")
+	print("!!! Dividend payment data !!!")
 
 	#
 	# Helper Function to map: symbol -> dividend test data dataframe
@@ -228,11 +229,14 @@ def create_dividends_test_data():
 		fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
 		df_symbol_dividends.to_parquet(fpath_parquet, index=False, engine="pyarrow")
 
-		print(f"symbol={s}, n={len(df_symbol_dividends)}")
-
 		n_records += len(df_symbol_dividends)
 
 	print(f"Generated {n_records} records")
+
+	print_schema_sample = True
+	if print_schema_sample:
+		print("Schema:"); df_symbol_dividends.info()
+		print_schema_sample = False
 
 	return n_records
 
@@ -271,30 +275,80 @@ if __name__ == "__main__":
 # Generating test data for dbt CI Pipeline
 # ------------------------------------------------------------
 
-# FRED interest rate proxy data...
+# !!! FRED interest rate proxy data !!!
 # Data Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse
 # Generated 12 FRED records -> /Users/thammons/Desktop/StockTrader/test_data/warehouse/fred_af/TB3MS.parquet
 # Date Range: 2025-01-31...2025-12-31
 # Sample Dates: ['2025-01-31', '2025-02-28', '2025-03-31']...['2025-10-31', '2025-11-30', '2025-12-31']
+# Schema:
+# <class 'pandas.core.frame.DataFrame'>
+# RangeIndex: 12 entries, 0 to 11
+# Data columns (total 3 columns):
+#  #   Column        Non-Null Count  Dtype  
+# ---  ------        --------------  -----  
+#  0   fred_date     12 non-null     object 
+#  1   fred_rate     12 non-null     float64
+#  2   created_date  12 non-null     object 
+# dtypes: float64(1), object(2)
+# memory usage: 420.0+ bytes
 
-# Daily options chain detailed quote data...
+# !!! Daily options chain detailed quote data !!!
 
-# Daily detailed quote data...
+# !!! Daily detailed quote data !!!
 # Data Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse
 # Output Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse/quotes_af
-# symbol=AAPL, n=5
-# symbol=KO, n=5
-# symbol=PG, n=5
-# symbol=C, n=5
-# symbol=XOM, n=5
 # Generated 25 records
+# Schema:
+# <class 'pandas.core.frame.DataFrame'>
+# RangeIndex: 5 entries, 0 to 4
+# Data columns (total 28 columns):
+#  #   Column             Non-Null Count  Dtype  
+# ---  ------             --------------  -----  
+#  0   symbol             5 non-null      object 
+#  1   description        5 non-null      object 
+#  2   exch               5 non-null      object 
+#  3   type               5 non-null      object 
+#  4   last               5 non-null      float64
+#  5   change             5 non-null      float64
+#  6   volume             5 non-null      int64  
+#  7   open               5 non-null      float64
+#  8   high               5 non-null      float64
+#  9   low                5 non-null      float64
+#  10  close              5 non-null      float64
+#  11  bid                5 non-null      float64
+#  12  ask                5 non-null      float64
+#  13  change_percentage  5 non-null      float64
+#  14  average_volume     5 non-null      int64  
+#  15  last_volume        5 non-null      int64  
+#  16  trade_date         5 non-null      int64  
+#  17  prevclose          5 non-null      float64
+#  18  week_52_high       5 non-null      float64
+#  19  week_52_low        5 non-null      float64
+#  20  bidsize            5 non-null      int64  
+#  21  bidexch            5 non-null      object 
+#  22  bid_date           5 non-null      int64  
+#  23  asksize            5 non-null      int64  
+#  24  askexch            5 non-null      object 
+#  25  ask_date           5 non-null      int64  
+#  26  root_symbols       5 non-null      object 
+#  27  created_date       5 non-null      object 
+# dtypes: float64(12), int64(8), object(8)
+# memory usage: 1.2+ KB
 
-# Dividend payment data...
+# !!! Dividend payment data !!!
 # Data Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse
 # Output Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse/dividends_af
-# symbol=AAPL, n=8
-# symbol=KO, n=8
-# symbol=PG, n=8
-# symbol=C, n=8
-# symbol=XOM, n=8
 # Generated 40 records
+# Schema:
+# <class 'pandas.core.frame.DataFrame'>
+# RangeIndex: 8 entries, 0 to 7
+# Data columns (total 5 columns):
+#  #   Column        Non-Null Count  Dtype         
+# ---  ------        --------------  -----         
+#  0   cash_amount   8 non-null      float64       
+#  1   ex_date       8 non-null      datetime64[ns]
+#  2   frequency     8 non-null      int64         
+#  3   symbol        8 non-null      object        
+#  4   created_date  8 non-null      object        
+# dtypes: datetime64[ns](1), float64(1), int64(1), object(2)
+# memory usage: 452.0+ bytes
