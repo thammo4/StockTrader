@@ -16,7 +16,7 @@ def get_rt_env():
 
 def create_fred_test_data():
 	"""Generate FED interest rate data for TB3MS series"""
-	print("!!! FRED interest rate proxy data !!!")
+	print("!!! FRED DATA !!!")
 
 	dates = []
 	rates = []
@@ -49,19 +49,136 @@ def create_fred_test_data():
 	df_fred.to_parquet(fpath_parquet, index=False, engine="pyarrow")
 
 	print(f"Data Dir: {data_dir}")
-	print(f"Generated {len(df_fred)} FRED records -> {fpath_parquet}")
-	print(f"Date Range: {dates[0]}...{dates[-1]}")
-	print(f"Sample Dates: {dates[:3]}...{dates[-3:]}")
-	print("Schema:"); df_fred.info()
+	print(f"Output Dir: {output_dir}")
+	print(f"Schema:"); df_fred.info()
+
+	print(f"\nGenerated {len(df_fred)} records")
 
 	return len(df_fred)
 
 def create_options_test_data():
-	print("!!! Daily options chain detailed quote data !!!")
-	return 0
+	print("!!! OPTIONS DATA !!!")
+
+	def create_symbol_data (s):
+		data = []
+		base_price = base_prices.get(s)
+
+		base_date = datetime.now()
+		expiry_dates = [base_date+timedelta(days=x) for x in [7,30,60]]
+
+		for expiry in expiry_dates:
+			strike_range = int(0.4 * base_price)
+			strike_step = max(2.5, int(0.025*base_price))
+
+			strikes = []
+			for i in range(-2,2):
+				strike = base_price + strike_step * i
+				strikes.append(2.5*max(1,round(strike/2.5)))
+
+			for strike in strikes:
+				for option_type in ["call", "put"]:
+					expiry_string = expiry.strftime("%y%m%d")
+					option_type_char = "C" if option_type == "call" else "P"
+					strike_str = f"{int(1000*strike):08d}"
+					occ_symbol = f"{s}{expiry_string}{option_type_char}{strike_str}"
+
+					days_to_expiry = (expiry - base_date).days
+					time_factor = np.sqrt(days_to_expiry/365.0)
+
+					intrinsic_value = max(0,base_price-strike) if option_type == "call" else max(0,strike-base_price)
+
+					moneyness = abs(base_price-strike)/base_price
+					time_value = np.random.uniform(0.25,4.0)*time_factor*(1-moneyness)
+
+					theoretical_price = intrinsic_value + time_value
+
+					bid_ask_spread = max(0.01,0.02*theoretical_price)
+					bid_price = max(0.01,theoretical_price - bid_ask_spread/2)
+					ask_price = bid_price + bid_ask_spread
+
+					price_last = np.random.uniform(bid_price,ask_price)
+
+					volume_factor = 1 - min(0.8, moneyness*2)
+					volume = int(np.random.randint(0,500)*volume_factor)
+					open_interest = int(np.random.randint(0,2000)*volume_factor)
+
+					daily_range = price_last * 0.1
+					price_low = max(0.01,price_last-daily_range/2)
+					price_high = price_last + daily_range/2
+					price_open = np.random.uniform(price_low,price_high)
+					price_close = price_last
+
+					price_close_prev = price_last * np.random.uniform(0.9,1.1)
+					price_change = price_last - price_close_prev
+					price_change_pct = 100*(price_change/price_close_prev) if price_close_prev > 0 else 0
+
+					base_time = int(datetime.now().timestamp() * 1000)
+					trade_date = base_time - np.random.randint(0,3600) * 1000
+					bid_date = base_time - np.random.randint(0,300) * 1000
+					ask_date = base_time - np.random.randint(0,300) * 1000
+
+					bid_size = 5 * np.random.randint(1,20)
+					ask_size = 5 * np.random.randint(1,20)
+					volume_last = 100 * np.random.randint(1,10)
+
+					data.append({
+						"symbol": occ_symbol,
+						"last": round(price_last,2),
+						"change": round(price_change,2),
+						"volume": volume,
+						"open": round(price_open,2),
+						"high": round(price_high,2),
+						"low": round(price_low,2),
+						"close": round(price_close,2),
+						"bid": round(bid_price,2),
+						"ask": round(ask_price,2),
+						"strike": strike,
+						"change_percentage": round(price_change_pct,2),
+						"last_volume": volume_last,
+						"trade_date": trade_date,
+						"prevclose": round(price_close_prev,2),
+						"bidsize": bid_size,
+						"bidexch": base_exchanges.get(s),
+						"bid_date": bid_date,
+						"asksize": ask_size,
+						"askexch": base_exchanges.get(s),
+						"ask_date": ask_date,
+						"open_interest": open_interest,
+						"option_type": option_type,
+						"created_date": datetime.now().strftime("%Y-%m-%d")
+					})
+
+		return pd.DataFrame(data)
+
+	n_records = 0
+	symbols = ["AAPL", "KO", "PG", "C","XOM"]
+	prices = [12.5*x for x in range(50,75,5)]
+	exchanges = ["D", "U", "C", "N", "Z"]
+
+	base_prices = dict(zip(symbols, prices))
+	base_exchanges = dict(zip(symbols, exchanges))
+
+
+	data_dir = get_rt_env()
+	output_dir = os.path.join(data_dir, "options_af")
+	os.makedirs(output_dir, exist_ok=True)
+
+	for s in symbols:
+		df_symbol_options = create_symbol_data(s)
+		fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
+		df_symbol_options.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+
+		n_records += len(df_symbol_options)
+
+	if len(df_symbol_options):
+		print("Schema:"); df_symbol_options.info()
+
+	print(f"\nGenerated {n_records} records")
+
+	return n_records
 
 def create_quotes_test_data():
-	print("!!! Daily detailed quote data !!!")
+	print("!!! QUOTE DATA !!!")
 
 
 	def create_symbol_data(s):
@@ -172,20 +289,15 @@ def create_quotes_test_data():
 
 		n_records += len(df_symbol_quotes)
 
-
-	print(f"Generated {n_records} records")
-
-	print_schema_sample = True
-	if print_schema_sample:
+	if len(df_symbol_quotes):
 		print("Schema:"); df_symbol_quotes.info()
-		print_schema_sample = False
+
+	print(f"\nGenerated {n_records} records")
 
 	return n_records
 
-
 def create_dividends_test_data():
-	"""Generate dividend data matching airflow-ingested schema"""
-	print("!!! Dividend payment data !!!")
+	print("!!! DIVIDEND DATA !!!")
 
 	#
 	# Helper Function to map: symbol -> dividend test data dataframe
@@ -231,12 +343,10 @@ def create_dividends_test_data():
 
 		n_records += len(df_symbol_dividends)
 
-	print(f"Generated {n_records} records")
-
-	print_schema_sample = True
-	if print_schema_sample:
+	if len(df_symbol_dividends):
 		print("Schema:"); df_symbol_dividends.info()
-		print_schema_sample = False
+
+	print(f"\nGenerated {n_records} records")
 
 	return n_records
 
@@ -251,104 +361,18 @@ if __name__ == "__main__":
 		total_records = 0
 		print("")
 		total_records += create_fred_test_data()
-		print("")
+		print("-"*40, "\n\n")
 		total_records += create_options_test_data()
-		print("")
+		print("-"*40, "\n\n")
 		total_records += create_quotes_test_data()
-		print("")
+		print("-"*40, "\n\n")
 		total_records += create_dividends_test_data()
+		print("-"*40, "\n\n")
+		print(f"Created {total_records} total test records")
+		print(f"Done")
 
 	except Exception as e:
 		print(f"\nERROR - test data creation: {str(e)}")
 		import traceback
 		traceback.print_exc()
 		exit(1)
-
-
-
-#
-# SAMPLE OUTPUT
-#
-
-# (venv12) thammons@tom StockTrader % python3.12 .github/scripts/dbt-generate-test-data.py
-# ------------------------------------------------------------
-# Generating test data for dbt CI Pipeline
-# ------------------------------------------------------------
-
-# !!! FRED interest rate proxy data !!!
-# Data Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse
-# Generated 12 FRED records -> /Users/thammons/Desktop/StockTrader/test_data/warehouse/fred_af/TB3MS.parquet
-# Date Range: 2025-01-31...2025-12-31
-# Sample Dates: ['2025-01-31', '2025-02-28', '2025-03-31']...['2025-10-31', '2025-11-30', '2025-12-31']
-# Schema:
-# <class 'pandas.core.frame.DataFrame'>
-# RangeIndex: 12 entries, 0 to 11
-# Data columns (total 3 columns):
-#  #   Column        Non-Null Count  Dtype  
-# ---  ------        --------------  -----  
-#  0   fred_date     12 non-null     object 
-#  1   fred_rate     12 non-null     float64
-#  2   created_date  12 non-null     object 
-# dtypes: float64(1), object(2)
-# memory usage: 420.0+ bytes
-
-# !!! Daily options chain detailed quote data !!!
-
-# !!! Daily detailed quote data !!!
-# Data Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse
-# Output Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse/quotes_af
-# Generated 25 records
-# Schema:
-# <class 'pandas.core.frame.DataFrame'>
-# RangeIndex: 5 entries, 0 to 4
-# Data columns (total 28 columns):
-#  #   Column             Non-Null Count  Dtype  
-# ---  ------             --------------  -----  
-#  0   symbol             5 non-null      object 
-#  1   description        5 non-null      object 
-#  2   exch               5 non-null      object 
-#  3   type               5 non-null      object 
-#  4   last               5 non-null      float64
-#  5   change             5 non-null      float64
-#  6   volume             5 non-null      int64  
-#  7   open               5 non-null      float64
-#  8   high               5 non-null      float64
-#  9   low                5 non-null      float64
-#  10  close              5 non-null      float64
-#  11  bid                5 non-null      float64
-#  12  ask                5 non-null      float64
-#  13  change_percentage  5 non-null      float64
-#  14  average_volume     5 non-null      int64  
-#  15  last_volume        5 non-null      int64  
-#  16  trade_date         5 non-null      int64  
-#  17  prevclose          5 non-null      float64
-#  18  week_52_high       5 non-null      float64
-#  19  week_52_low        5 non-null      float64
-#  20  bidsize            5 non-null      int64  
-#  21  bidexch            5 non-null      object 
-#  22  bid_date           5 non-null      int64  
-#  23  asksize            5 non-null      int64  
-#  24  askexch            5 non-null      object 
-#  25  ask_date           5 non-null      int64  
-#  26  root_symbols       5 non-null      object 
-#  27  created_date       5 non-null      object 
-# dtypes: float64(12), int64(8), object(8)
-# memory usage: 1.2+ KB
-
-# !!! Dividend payment data !!!
-# Data Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse
-# Output Dir: /Users/thammons/Desktop/StockTrader/test_data/warehouse/dividends_af
-# Generated 40 records
-# Schema:
-# <class 'pandas.core.frame.DataFrame'>
-# RangeIndex: 8 entries, 0 to 7
-# Data columns (total 5 columns):
-#  #   Column        Non-Null Count  Dtype         
-# ---  ------        --------------  -----         
-#  0   cash_amount   8 non-null      float64       
-#  1   ex_date       8 non-null      datetime64[ns]
-#  2   frequency     8 non-null      int64         
-#  3   symbol        8 non-null      object        
-#  4   created_date  8 non-null      object        
-# dtypes: datetime64[ns](1), float64(1), int64(1), object(2)
-# memory usage: 452.0+ bytes
