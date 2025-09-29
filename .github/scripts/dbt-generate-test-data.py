@@ -350,6 +350,82 @@ def create_dividends_test_data():
 
 	return n_records
 
+def create_ohlcv_bars_test_data():
+	print("!!! OHLCV BARS !!!")
+
+	def create_symbol_data(s):
+		data = []
+		base_price = base_prices.get(s)
+
+		n_trading_days = 45
+		price_current = base_price
+
+		for d in range(n_trading_days):
+			daily_return = np.random.normal(0.0005, 0.015)
+			price_current = price_current * (1 + daily_return)
+			price_current = max(1.0, price_current)
+
+			daily_vol = price_current * np.random.uniform(0.01, 0.03)
+
+			price_open = price_current + np.random.uniform(-daily_vol, daily_vol)
+			price_close = price_current + np.random.uniform(-daily_vol, daily_vol)
+
+			price_high = max(price_open,price_close) + np.random.uniform(0,daily_vol/2)
+			price_low = min(price_open, price_close) - np.random.uniform(0,daily_vol/2)
+
+			price_low = min(price_low, price_open, price_close)
+			price_high = max(price_high, price_open, price_close)
+
+			jitter = abs(price_close-price_open)/price_open
+			base_volume = np.random.randint(500000,3000000)
+			volume = int(base_volume*(1+jitter*10))
+
+			market_date = datetime.now() - timedelta(days=n_trading_days-d-1)
+
+			data.append({
+				"date": market_date,
+				"open": round(price_open,2),
+				"high": round(price_high,2),
+				"low": round(price_low,2),
+				"close": round(price_close,2),
+				"volume": volume,
+				"created_date": datetime.now().strftime("%Y-%m-%d"),
+				"symbol": s
+			})
+
+			price_current = price_close
+
+		return pd.DataFrame(data)
+
+
+	n_records = 0
+	symbols = ["AAPL", "KO", "PG", "C", "XOM"]
+	prices = [12.5*x for x in range(50,75,5)]
+
+	base_prices = dict(zip(symbols,prices))
+
+	data_dir = get_rt_env()
+	output_dir = os.path.join(data_dir, "ohlcv_bars")
+	os.makedirs(output_dir, exist_ok=True)
+
+	print(f"Data Dir: {data_dir}")
+	print(f"Output Dir: {output_dir}")
+
+	for s in symbols:
+		df_symbol_bars = create_symbol_data(s)
+
+		fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
+		df_symbol_bars.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+
+		n_records += len(df_symbol_bars)
+
+	if len(df_symbol_bars):
+		print("Schema:"); df_symbol_bars.info()
+
+	print(f"\nGenerated {n_records} records")
+
+	return n_records
+
 if __name__ == "__main__":
 	print("-"*60)
 	print("Generating test data for dbt CI Pipeline")
@@ -360,13 +436,15 @@ if __name__ == "__main__":
 	try:
 		total_records = 0
 		print("")
+		total_records += create_dividends_test_data()
+		print("-"*40, "\n\n")
 		total_records += create_fred_test_data()
+		print("-"*40, "\n\n")
+		total_records += create_ohlcv_bars_test_data()
 		print("-"*40, "\n\n")
 		total_records += create_options_test_data()
 		print("-"*40, "\n\n")
 		total_records += create_quotes_test_data()
-		print("-"*40, "\n\n")
-		total_records += create_dividends_test_data()
 		print("-"*40, "\n\n")
 		print(f"Created {total_records} total test records")
 		print(f"Done")
