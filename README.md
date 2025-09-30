@@ -12,8 +12,11 @@ StockTrader/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .github/
+│   └── scripts/
+│       └── dbt-generate-test-data.py
 │   └── workflows/
 │       └── ci.yml
+│       └── dbt-ci.yml
 ├── airflow/
 │   └── dags/
 │       └── ingest_fred_rates_dag.py
