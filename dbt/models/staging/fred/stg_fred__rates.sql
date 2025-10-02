@@ -4,9 +4,8 @@
 
 with source as (
 	select
-		*,
-		filename
-	from read_parquet('/opt/stocktrader/data/warehouse/fred_af/*.parquet', filename=true)
+		*
+	from read_parquet('../data/warehouse/fred_af/*.parquet', filename=true)
 )
 
 select
