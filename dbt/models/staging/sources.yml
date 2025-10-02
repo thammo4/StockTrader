@@ -26,12 +26,29 @@ sources:
         meta:
           external_location: "../data/warehouse/ohlcv_bars/*.parquet"
 
-
   - name: fred_raw
     description: "Time series interest rate/macroeconomic data from Federal Reserve Data API"
 
+    loaded_at_field: created_date
+    freshness:
+      warn_after: {count:40, period:day}
+      error_after: {count:60, period:day}
+
     tables:
       - name: fred_af
-        description: "Historical monthly interest rate data for use as risk-free proxies"
+        description: "Historical monthly interest rate data for 3-Month Treasury Bill Securities (TB3MS). Used as risk-free proxy in option pricing model."
         meta:
           external_location: "../data/warehouse/fred_af/*.parquet"
+          columns:
+            - name: fred_date
+              tests:
+                - not_null
+                - unique
+            - name: fred_rate
+              tests:
+                - not_null
+                - dbt_expectations.expect_column_values_to_be_between:
+                    min_value: 0
+                    max_value: 50
+                    config:
+                      severity: error
