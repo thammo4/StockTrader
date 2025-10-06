@@ -24,6 +24,14 @@ clean-targets:
   - "target"
   - "dbt_packages"
 
+seeds:
+  stocktrader_analytics:
+    +quote_columns: false
+    universe:
+      largecap_all:
+        +column_types:
+          symbol: varchar
+
 models:
   stocktrader_analytics:
     staging:
