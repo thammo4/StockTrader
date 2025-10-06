@@ -1,0 +1,8 @@
+#
+# FILE: `StockTrader/dbt/packages.yml`
+#
+
+packages:
+  - package: calogica/dbt_expectations
+    # version: ">=0.10.0,<0.11.0"
+    version: [">=0.10.0", "<0.11.0"]
