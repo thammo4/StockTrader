@@ -26,13 +26,12 @@ with source as (
 		open_interest,
 		option_type,
 		created_date
-	-- from {{ source('tradier_raw', 'options_af') }}
 	from read_parquet("../data/warehouse/options_af/*.parquet", union_by_name=true)
 ),
 parsed_occ as (
 	select
 		*,
-		regexp_extract(symbol, '(^[A-Z]+)', 1) as underlying,
+		{{ occ_parse_underlying('symbol') }} as underlying,
 		regexp_extract(symbol, '^[A-Z]{1,6}\d?([0-9]{6})', 1) as expiry_yymmdd
 	from source
 ),
