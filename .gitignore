@@ -178,3 +178,4 @@ airflow/logs
 venv12
 data/*.txt
 airflow/dags/.DS_Store
+dbt/seeds/universe/largecap_all.csv
