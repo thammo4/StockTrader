@@ -30,6 +30,7 @@ if [ ! -s "$STOCK_SYMBOL_CSV" ]; then
 	exit 1
 fi
 
-command -v dos2unix > /dev/null 2>&1 && dos2unix "$CSV" || true
+# command -v dos2unix > /dev/null 2>&1 && dos2unix "$CSV" || true
+command -v dos2unix > /dev/null 2>&1 && dos2unix "$STOCK_SYMBOL_CSV" || true
 
 echo "Done."
