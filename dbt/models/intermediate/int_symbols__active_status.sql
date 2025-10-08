@@ -55,17 +55,30 @@ symbols_current_options as (
 	inner join global_options_freshness gof on slo.max_options_date = gof.max_options_ingest_date
 ),
 
+-- universe_symbol_dates as (
+-- 	select
+-- 		su.symbol,
+-- 		slq.max_quotes_date,
+-- 		slo.max_options_date,
+-- 		coalesce(scq.has_current_quotes,true) as has_current_quotes,
+-- 		coalesce(sco.has_current_options,true) as has_current_options
+-- 	from symbol_universe su
+-- 	left join symbol_last_quotes slq on su.symbol = slq.symbol
+-- 	left join symbol_last_options slo on su.symbol = slo.symbol
+-- 	left join symbols_current_quotes scq on su.symbol = scq.symbol
+-- 	left join symbols_current_options sco on su.symbol = sco.symbol
+-- ),
 universe_symbol_dates as (
 	select
 		su.symbol,
 		slq.max_quotes_date,
 		slo.max_options_date,
-		coalesce(scq.has_current_quotes,true) as has_current_quotes,
-		coalesce(sco.has_current_options,true) as has_current_options
+		coalesce(scq.has_current_quotes,false) as has_current_quotes,
+		coalesce(sco.has_current_options,false) as has_current_options
 	from symbol_universe su
 	left join symbol_last_quotes slq on su.symbol = slq.symbol
 	left join symbol_last_options slo on su.symbol = slo.symbol
-	left join symbols_current_quotes scq on su.symbol = scq.symbol
+	left join symbols_curretn_quotes scq on su.symbol = scq.symbol
 	left join symbols_current_options sco on su.symbol = sco.symbol
 ),
 
