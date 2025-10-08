@@ -1,5 +1,5 @@
 #
-# FILE: `StockTrader/.github/scripts/dbt-generate-sample-data.py`
+# FILE: `StockTrader/.github/scripts/dbt-generate-test-data.py`
 #
 
 import os
