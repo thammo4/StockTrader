@@ -77,43 +77,11 @@ jobs:
       - name: Build dbt Container
         run: docker compose build dbt
 
-      # - name: Install dbt Dependencies
-      #   run: |
-      #     docker compose run --rm dbt \
-      #       dbt deps --profiles-dir /opt/stocktrader/dbt --target dev \
-      #       2>&1 | tee artifacts/dbt-reports/dbt-deps.log
       - name: Install dbt Dependencies
         run: |
-          echo "PRE DBT DEPS"
-          echo "PWD: $(pwd)"
-          echo "Dir Contents:"
-          ls -lah dbt/ || echo "nope"
-
-          echo "RUN DEPS"
           docker compose run --rm dbt \
-            dbt deps --profiles-dir opt/stocktrader/dbt --target dev \
+            dbt deps --profiles-dir /opt/stocktrader/dbt --target dev \
             2>&1 | tee artifacts/dbt-reports/dbt-deps.log
-
-          echo "deps exit code: ${PIPESTATUS[0]}"
-
-          echo "POST DBT DEPS"
-          ls -lah dbt/
-
-          if [ -d "dbt/dbt_packages" ]; then
-            echo "ok dbt_packages"
-            ls -lah dbt/dbt_packages
-            find dbt/dbt_packages -type f | head -n 12
-            find dbt/dbt_packages -type f | tail -n 12
-          else
-            echo "ERROR: dbt_packages mia"
-          fi
-
-      - name: Verify DBT Container Packages
-        run: |
-          echo "GOT PACKAGES?"
-          docker compose run --rm dbt bash -c "
-            echo 'Container pwd:' && pwd && 'Listing opt/stocktrader/dbt' && ls -lah /opt/stocktrader/dbt
-          "
 
       - name: Check dbt Debug/Config
         run: |
