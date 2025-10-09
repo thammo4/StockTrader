@@ -24,6 +24,7 @@ on:
       - 'dbt/**'
       - '.github/workflows/dbt-ci.yml'
       - '.github/scripts/dbt-generate-test-data.py'
+      - 'scripts/generate_dbt_universe_seed.sh'
 
 
 
@@ -44,7 +45,7 @@ jobs:
       - name: Create Required Directories
         run: |
           mkdir -p artifacts/dbt-reports
-          mkdir -p data/warehouse/{dividends_af,fred_af,options_af,quotes_af}
+          mkdir -p data/warehouse/{dividends_af,fred_af,options_af,quotes_af,ohlcv_bars}
           mkdir logs
 
           echo "Created Directories:"
@@ -76,16 +77,66 @@ jobs:
       - name: Build dbt Container
         run: docker compose build dbt
 
+      # - name: Install dbt Dependencies
+      #   run: |
+      #     docker compose run --rm dbt \
+      #       dbt deps --profiles-dir /opt/stocktrader/dbt --target dev \
+      #       2>&1 | tee artifacts/dbt-reports/dbt-deps.log
+      - name: Install dbt Dependencies
+        run: |
+          echo "PRE DBT DEPS"
+          echo "PWD: $(pwd)"
+          echo "Dir Contents:"
+          ls -lah dbt/ || echo "nope"
+
+          echo "RUN DEPS"
+          docker compose run --rm dbt \
+            dbt deps --profiles-dir opt/stocktrader/dbt --target dev \
+            2>&1 | tee artifacts/dbt-reports/dbt-deps.log
+
+          echo "deps exit code: ${PIPESTATUS[0]}"
+
+          echo "POST DBT DEPS"
+          ls -lah dbt/
+
+          if [ -d "dbt/dbt_packages" ]; then
+            echo "ok dbt_packages"
+            ls -lah dbt/dbt_packages
+            find dbt/dbt_packages -type f | head -n 12
+            find dbt/dbt_packages -type f | tail -n 12
+          else
+            echo "ERROR: dbt_packages mia"
+          fi
+
+      - name: Verify DBT Container Packages
+        run: |
+          echo "GOT PACKAGES?"
+          docker compose run --rm dbt bash -c "
+            echo 'Container pwd:' && pwd && 'Listing opt/stocktrader/dbt' && ls -lah /opt/stocktrader/dbt
+          "
+
       - name: Check dbt Debug/Config
         run: |
           docker compose run --rm dbt \
             dbt debug --profiles-dir /opt/stocktrader/dbt --target dev \
             2>&1 | tee artifacts/dbt-reports/dbt-debug.log
 
-      - name: Generate Test Data
+      - name: Generate Test Data (quotes, options, dividends, ohlcv, fred)
         run: |
           source venv/bin/activate
           python .github/scripts/dbt-generate-test-data.py
+
+      - name: Generate Symbol Universe CSV (largecap_all.csv)
+        run: |
+          bash scripts/generate_dbt_universe_seed.sh
+          ls -l dbt/seeds/universe/largecap_all.csv
+          head -n 12 dbt/seeds/universe/largecap_all.csv || true
+
+      - name: Generate dbt Symbol Universe Seed
+        run: |
+          docker compose run --rm dbt \
+            dbt seed --profiles-dir /opt/stocktrader/dbt --target dev --select largecap_all \
+            2>&1 | tee artifacts/dbt-reports/dbt-seed.log
 
       - name: Run dbt Models
         run: |
