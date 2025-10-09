@@ -1,0 +1,33 @@
+#
+# FILE: `StockTrader/dbt/models/staging/fred/schema.yml`
+#
+
+version: 2
+
+models:
+  - name: stg_fred__rates
+    description: >
+      Standardized interest rate data from FRED.
+      Model contains monthly interest rate observations for use as risk-free rate proxy in option pricing models.
+      Monthly data refresh.
+
+    meta:
+      owner: "deng"
+      refresh_frequency: "monthly"
+      data_source: "FRED_API"
+
+    columns:
+      - name: series_id
+        description: FRED SERIES ID
+        tests:
+          - not_null:
+              config:
+                severity: error
+          - accepted_values:
+              values: ["TB3MS"]
+              quote: true
+              config:
+                severity: error
+                error_if: ">0"
+        meta:
+          valid_values: "TB3MS (3 Month T-BILLs)"
