@@ -31,3 +31,20 @@ models:
                 error_if: ">0"
         meta:
           valid_values: "TB3MS (3 Month T-BILLs)"
+
+      - name: rate_date
+        description: "First day of month on which interest rate becomes applicable."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: error
+                error_if: ">5"
+          - dbt_expectations.expect_condition_to_be_true:
+              condition: "day(rate_date) = 1"
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_increasing:
+              column_name: rate_date
+              strictly: true
