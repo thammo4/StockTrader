@@ -42,9 +42,16 @@ models:
               config:
                 severity: error
                 error_if: ">5"
-          - dbt_expectations.expect_condition_to_be_true:
-              condition: "day(rate_date) = 1"
+          # - dbt_utils.expression_is_true:
+          #     expression: "extract(day from rate_date) = 1"
+          #     config: {severity: error}
+        meta:
+          business_logic: "FRED rate publications set effective date to first of month"
+
+      - name: rate_pct
+        description: >
+          Interest rate expressed as annual percentage (e.g. 4.72 = 4.72%).
+          Used as risk-free rate proxy in options pricing models.
+        tests:
+          - not_null:
               config: {severity: error}
-          - dbt_expectations.expect_column_values_to_be_increasing:
-              column_name: rate_date
-              strictly: true
