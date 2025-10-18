@@ -10,12 +10,10 @@ models:
       Standardized interest rate data from FRED.
       Model contains monthly interest rate observations for use as risk-free rate proxy in option pricing models.
       Monthly data refresh.
-
     meta:
       owner: "deng"
       refresh_frequency: "monthly"
       data_source: "FRED_API"
-
     columns:
       - name: series_id
         description: FRED SERIES ID
@@ -42,9 +40,6 @@ models:
               config:
                 severity: error
                 error_if: ">5"
-          # - dbt_utils.expression_is_true:
-          #     expression: "extract(day from rate_date) = 1"
-          #     config: {severity: error}
         meta:
           business_logic: "FRED rate publications set effective date to first of month"
 
@@ -55,3 +50,36 @@ models:
         tests:
           - not_null:
               config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 25
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: .009
+              max_value: 16
+              config: {severity: warn}
+        meta:
+          unit: "percent"
+          precision: "hundredths"
+          iqr_typical: "(0.38,5.22)"
+
+      - name: created_date
+        description: "Date of ingest"
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_date"
+              config: {severity: error}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - series_id
+            - rate_date
+          config: {severity: error}
+
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 12
+          max_value: 600
+          config: {severity: warn}
