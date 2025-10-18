@@ -1,0 +1,85 @@
+#
+# FILE: `StockTrader/dbt/models/staging/fred/schema.yml`
+#
+
+version: 2
+
+models:
+  - name: stg_fred__rates
+    description: >
+      Standardized interest rate data from FRED.
+      Model contains monthly interest rate observations for use as risk-free rate proxy in option pricing models.
+      Monthly data refresh.
+    meta:
+      owner: "deng"
+      refresh_frequency: "monthly"
+      data_source: "FRED_API"
+    columns:
+      - name: series_id
+        description: FRED SERIES ID
+        tests:
+          - not_null:
+              config:
+                severity: error
+          - accepted_values:
+              values: ["TB3MS"]
+              quote: true
+              config:
+                severity: error
+                error_if: ">0"
+        meta:
+          valid_values: "TB3MS (3 Month T-BILLs)"
+
+      - name: rate_date
+        description: "First day of month on which interest rate becomes applicable."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+          - unique:
+              config:
+                severity: error
+                error_if: ">5"
+        meta:
+          business_logic: "FRED rate publications set effective date to first of month"
+
+      - name: rate_pct
+        description: >
+          Interest rate expressed as annual percentage (e.g. 4.72 = 4.72%).
+          Used as risk-free rate proxy in options pricing models.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 25
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: .009
+              max_value: 16
+              config: {severity: warn}
+        meta:
+          unit: "percent"
+          precision: "hundredths"
+          iqr_typical: "(0.38,5.22)"
+
+      - name: created_date
+        description: "Date of ingest"
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_date"
+              config: {severity: error}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - series_id
+            - rate_date
+          config: {severity: error}
+
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 12
+          max_value: 600
+          config: {severity: warn}
