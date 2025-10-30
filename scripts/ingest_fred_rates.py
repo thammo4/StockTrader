@@ -16,7 +16,7 @@ def ingest_fred_rates(series_id="TB3MS", subdir="fred_af"):
     #
 
     def ingest_fred_rates_initial():
-        df_fred = fred.get_series(series_id=series_id, observation_start=today_last_year)
+        df_fred = fred.get_series(series_id=series_id, observation_start=observation_start_date)
         df_fred = df_fred.reset_index()
         df_fred.columns = ["fred_date", "fred_rate"]
         df_fred["created_date"] = today
@@ -33,6 +33,14 @@ def ingest_fred_rates(series_id="TB3MS", subdir="fred_af"):
         fpath_parquet = os.path.join(dir_landing, f"{series_id}.parquet")
 
         #
+        # Define observation_start_date for past year of rate data
+        # The observation_start_date is always YYYY-MM-01
+        #
+
+        today_last_year_dt = datetime.strptime(today_last_year, "%Y-%m-%d")
+        observation_start_date = today_last_year_dt.replace(day=1).strftime("%Y-%m-%d")
+
+        #
         # If no FRED data exists yet, create the initial upload
         #
 
@@ -41,17 +49,10 @@ def ingest_fred_rates(series_id="TB3MS", subdir="fred_af"):
             logger.info(f"Initial fred load series={series_id}, n={len(df_initial)}")
 
         #
-        # Define observation_start date for newly published rate data
-        # The observation_start date is always YYYY-MM-01
-        #
-
-        current_month_start = datetime.today().replace(day=1).strftime("%Y-%m-%d")
-
-        #
         # Retrieve new FRED rate for the current month
         #
 
-        df_rate = fred.get_series(series_id=series_id, observation_start=current_month_start)
+        df_rate = fred.get_series(series_id=series_id, observation_start=observation_start_date)
 
         if df_rate.empty:
             logger.info(f"No new FRED data, series={series_id}")
