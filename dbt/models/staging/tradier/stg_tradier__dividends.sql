@@ -12,3 +12,4 @@ select
 	ex_date::date as ex_dividend_date,
 	frequency
 from source
+order by ex_dividend_date
