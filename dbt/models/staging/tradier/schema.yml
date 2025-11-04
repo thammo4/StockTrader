@@ -1,0 +1,18 @@
+#
+# FILE: `StockTrader/dbt/models/staging/tradier/schema.yml`
+#
+
+version: 2
+
+models:
+  - name: stg_tradier__dividends
+    description: >
+      Standardized historical dividend payments from Tradier API.
+      For each symbol, contains dividends paid over past 18 months.
+      Quarterly data refresh.
+    columns:
+      - name: symbol
+        description: "Exchange-listed traded-as ticker symbol."
+        tests:
+          - not_null:
+              config: {severity: error}
