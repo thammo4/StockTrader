@@ -38,3 +38,4 @@ select
 	market_date,
 	created_date
 from with_lag
+order by symbol, market_date
