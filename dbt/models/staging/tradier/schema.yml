@@ -12,6 +12,11 @@ models:
       For each symbol, contains dividends paid over past 18 months.
       Quarterly data refresh.
 
+    meta:
+      owner: "deng"
+      refresh_frequency: "daily"
+      data_source: "TRADIER_API"
+
     columns:
       - name: symbol
         description: "Exchange-listed traded-as ticker symbol."
@@ -21,7 +26,6 @@ models:
           - dbt_expectations.expect_column_values_to_match_regex:
               regex: "^[A-Z]{1,5}$"
               config: {severity: warn}
-
       - name: cash_amount
         description: "Dividend amount paid out in USD"
         tests:
@@ -36,7 +40,6 @@ models:
           unit: "USD"
           precision: "hundredths"
           iqr_typical: "(0.27,0.94)"
-
       - name: ex_dividend_date
         description: "Ex-dividend date on which stock trades without dividend."
         tests:
@@ -45,7 +48,6 @@ models:
               min_value: "'2024-01-01'"
               max_value: "current_date + interval '1 year'"
               config: {severity: warn}
-
       - name: frequency
         description: "Number of dividends paid per year."
         tests:
@@ -62,7 +64,6 @@ models:
             2: "Semi-Annual"
             4: "Quarterly"
             12: "Monthly"
-
       - name: dividend_type
         description: "Human-readable dividend type derived from frequency"
         tests:
@@ -71,7 +72,6 @@ models:
           - accepted_values:
               values: ['special', 'annual', 'semi_annual', 'quarterly', 'monthly', 'unknown']
               config: {severity: error}
-
       - name: is_regular_dividend
         description: >
           Boolean Flag to indicate regular dividneds.
@@ -82,7 +82,6 @@ models:
           - accepted_values:
               values: [true, false]
               config: {severity: error}
-
       - name: created_date
         description: "Date of ingest into system."
         tests:
@@ -105,3 +104,144 @@ models:
           min_value: 1000
           max_value: 10000
           config: {severity: warn}
+
+
+  - name: stg_tradier__ohlcv_bars
+    description: >
+      Standardized daily OHLCV (Open, High, Low, Close, Volume) bar data from Tradier market data API.
+      Contains historical daily price action and volume for equities.
+      Model also computes daily log-returns and previous closing prices of time-series.
+      Weekly data refresh at end of trading week.
+    meta:
+      owner: "deng"
+      refresh_frequency: "weekly"
+      data_source: "TRADIER_API"
+    columns:
+      - name: symbol
+        description: "Exchange-listed traded-as ticker symbol."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[A-Z]{1,5}$"
+              config: {severity: warn}
+      - name: open_price
+        description: "Open price for the trading day."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "open_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(58.66,221.99)"
+      - name: high_price
+        description: "Highest trading price of security during trading session (e.g. day)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "high_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(59.35,224.49)"
+      - name: low_price
+        description: "Lowest trading price of security during trading session (e.g. day)."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "low_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(57.93,219.30)"
+      - name: close_price
+        description: >
+          Closing price for the trading day.
+          Used as basis for log-return calculation.
+          Generally used in options pricing models to represent the price of equity during the trading day.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(58.69,221.96)"
+      - name: prev_close_price
+        description: >
+          Previous trading day closing price.
+          Lag window function partitioned by symbol and ordered by market_date.
+          NULL for first observation in dataset (roughly 1 year in past apropos current date).
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(58.69,221.96)"
+      - name: log_return
+        description: >
+          Natural logarithm of price ratio: ln(close_price/prev_close_price).
+          Denotes continuous compounding return for trading day.
+          NULL if prev_close_price = NULL or 0.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -0.50
+              max_value: 0.50
+              config:
+                severity: warn
+                warn_if: ">5"
+        meta:
+          unit: "ratio"
+          precision: "ten-thousandths"
+          nullable: true
+          iqr_typical: "(0.0086,0.0093)"
+      - name: volume
+        description: >
+          Total number of shares traded during the day.
+          Proxy for liquidity and market activity.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+              config: {severity: error}
+        meta:
+          unit: "shares"
+          iqr_typical: "(1170882, 5658518)"
+      - name: market_date
+        description: "Trading date (M-F) of the OHLCV bar data."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2024-01-01'"
+              max_value: "current_date"
+              config: {severity: error}
+      - name: created_date
+        description: "Date of ingest."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2024-01-01'"
+              max_value: "current_date"
+              config: {severity: error}
