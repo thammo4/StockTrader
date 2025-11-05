@@ -6,10 +6,12 @@ version: 2
 
 models:
   - name: stg_tradier__dividends
+
     description: >
       Standardized historical dividend payments from Tradier API.
       For each symbol, contains dividends paid over past 18 months.
       Quarterly data refresh.
+
     columns:
       - name: symbol
         description: "Exchange-listed traded-as ticker symbol."
@@ -80,3 +82,16 @@ models:
           - accepted_values:
               values: [true, false]
               config: {severity: error}
+
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - symbol
+            - ex_dividend_date
+            - cash_amount
+          config: {severity: warn}
+
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1000
+          max_value: 10000
+          config: {severity: warn}
