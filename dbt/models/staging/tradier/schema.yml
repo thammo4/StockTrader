@@ -69,7 +69,7 @@ models:
           - not_null:
               config: {severity: error}
           - accepted_values:
-              values: ['special', 'annual', 'semi_annual', 'quarterly', 'monthly']
+              values: ['special', 'annual', 'semi_annual', 'quarterly', 'monthly', 'unknown']
               config: {severity: error}
 
       - name: is_regular_dividend
@@ -82,6 +82,16 @@ models:
           - accepted_values:
               values: [true, false]
               config: {severity: error}
+
+      - name: created_date
+        description: "Date of ingest into system."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_date"
+              config: {severity: warn}
 
     tests:
       - dbt_utils.unique_combination_of_columns:
