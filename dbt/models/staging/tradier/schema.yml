@@ -16,3 +16,67 @@ models:
         tests:
           - not_null:
               config: {severity: error}
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[A-Z]{1,5}$"
+              config: {severity: warn}
+
+      - name: cash_amount
+        description: "Dividend amount paid out in USD"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.0099
+              max_value: 105.0
+              config:
+                severity: warn
+                warn_if: ">25"
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          iqr_typical: "(0.27,0.94)"
+
+      - name: ex_dividend_date
+        description: "Ex-dividend date on which stock trades without dividend."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2024-01-01'"
+              max_value: "current_date + interval '1 year'"
+              config: {severity: warn}
+
+      - name: frequency
+        description: "Number of dividends paid per year."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - accepted_values:
+              values: [0, 1, 2, 4, 12]
+              config: {severity: error}
+              quote: false
+        meta:
+          frequency_mapping:
+            0: "Special (ad-hoc)"
+            1: "Annual"
+            2: "Semi-Annual"
+            4: "Quarterly"
+            12: "Monthly"
+
+      - name: dividend_type
+        description: "Human-readable dividend type derived from frequency"
+        tests:
+          - not_null:
+              config: {severity: error}
+          - accepted_values:
+              values: ['special', 'annual', 'semi_annual', 'quarterly', 'monthly']
+              config: {severity: error}
+
+      - name: is_regular_dividend
+        description: >
+          Boolean Flag to indicate regular dividneds.
+          True=regular, False=special.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - accepted_values:
+              values: [true, false]
+              config: {severity: error}
