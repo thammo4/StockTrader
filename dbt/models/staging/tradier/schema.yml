@@ -245,3 +245,76 @@ models:
               min_value: "'2024-01-01'"
               max_value: "current_date"
               config: {severity: error}
+
+
+  - name: stg_tradier__quotes
+    description: >
+      Standardized EOD quote snapshots from Tradier market API.
+      Daily refresh during M-F trading week.
+    meta:
+      owner: "deng"
+      refresh_frequency: "daily"
+      data_source: "TRADIER_API"
+    columns:
+      - name: symbol
+        description: "Exchange-listed traded-as ticker symbol."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[A-Z]{1,5}$"
+              config: {severity: warn}
+      - name: company_name
+        description: "Full legal name or marketing name or doing-business-as name of the issuing company/fund."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">12"
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 1
+              max_value: 150
+              where: "company_name is not null"
+              config: {severity: warn}
+        meta:
+          nullable: true
+
+      - name: exchange
+        description: >
+          Exchange code on which security primarily trades.
+          Single character identifier.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[A-Z]$"
+              config: {severity: error}
+      - name: security_type
+        description: "Classification of security (e.g. stock, etf)."
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['stock', 'etf']
+              config: {severity: warn}
+
+      - name: root_symbols
+        description: "Comma-separated list of related ticker symbols which trade under the primary 'symbol'."
+        meta:
+          nullable: true
+          format: "Comma-delimited string"
+
+      - name: last_price
+        description: "Most recent trade mid price."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">25"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "last_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(62.07,226.98)"
