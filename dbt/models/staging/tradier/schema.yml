@@ -251,6 +251,7 @@ models:
     description: >
       Standardized EOD quote snapshots from Tradier market API.
       Daily refresh during M-F trading week.
+      Information from this table used primarily for downstream dimensions/attributes.
     meta:
       owner: "deng"
       refresh_frequency: "daily"
@@ -277,7 +278,6 @@ models:
               config: {severity: warn}
         meta:
           nullable: true
-
       - name: exchange
         description: >
           Exchange code on which security primarily trades.
@@ -294,13 +294,11 @@ models:
           - accepted_values:
               values: ['stock', 'etf']
               config: {severity: warn}
-
       - name: root_symbols
         description: "Comma-separated list of related ticker symbols which trade under the primary 'symbol'."
         meta:
           nullable: true
           format: "Comma-delimited string"
-
       - name: last_price
         description: "Most recent trade mid price."
         tests:
@@ -318,3 +316,256 @@ models:
           precision: "hundredths"
           nullable: true
           iqr_typical: "(62.07,226.98)"
+      - name: open_price
+        description: "Open price for the trading day."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "open_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(62.14,227.15)"
+      - name: high_price
+        description: "Highest trading price of security during trading session."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "high_price is not null"
+              config: {config: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(62.85,229.42)"
+      - name: low_price
+        description: "Lowest trading price of security during trading session."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "low_price is not null"
+              config: {severity: warn}
+      - name: close_price
+        description: "Closing price for trading day"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "close_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(62.1,227.21)"
+      - name: prev_close_price
+        description: >
+          Previous trading day closing price.
+          Used for computing daily price change and log return.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "prev_close_price is not null"
+              config: {severity: error}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(62.1,227.21)"
+      - name: log_return
+        description: >
+          Natural logarithm of price ratio: ln(close_price/prev_close_price).
+          Continuous compounding return for trading day.
+          NULL when prev_close_price or close_price undefined.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -0.50
+              max_value: 0.50
+              where: "log_return is not null"
+              config:
+                severity: warn
+                warn_if: ">5"
+        meta:
+          unit: "ratio"
+          precision: "ten-thousandths"
+          nullable: true
+          iqr_typical: "(-0.0077,0.0089)"
+      - name: change_price
+        description: "Signed price change from previous close."
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -500.00
+              max_value: 500.00
+              where: "change_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(-0.78,0.98)"
+      - name: change_price_pct
+        description: >
+          Percentage change in price from prev_close_price to close_price.
+          Computed as 100 * (close_price - prev_close_price) / prev_close_price.
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -25.00
+              max_value: 25.00
+              where: "change_price_pct is not null"
+              config:
+                severity: warn
+                warn_if: ">5"
+        meta:
+          unit: "percent"
+          precision: "hundredths"
+          nullable: true
+          iqr_typical: "(-0.76,0.89)"
+      - name: bid_price
+        description: >
+          Highest price at which market participants willing to buy.
+          Represents top of order book bid size at EOD.
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "bid_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          iqr_typical: "(61.29,220.63)"
+      - name: ask_price
+        description: >
+          Lowest price at which market participants willing to sell.
+          Represents top of order book ask size at EOD.
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "ask_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          iqr_typical: "(62.78,232.0)"
+      - name: mid_price
+        description: >
+          Midpoint price between bid and ask.
+          Calculated as: (bid_price + ask_price)/2.
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              where: "mid_price is not null"
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          iqr_typical: "(62.05,226.20)"
+      - name: bid_ask_spread
+        description: >
+          Absolute difference between ask and bid.
+          Represents transaction cost of immediate round-trip trade.
+          Magnitude of spread inversely proportional with liquidity of security.
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000.00
+              where: "bid_ask_spread is not null"
+              config:
+                severity: warn
+                warn_if: ">10"
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+          iqr_typical: "(0.48,6.60)"
+      - name: volume
+        description: >
+          Total number of shares traded during the day.
+          Proxy for liquidity and market activity.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000000000
+              config: {severity: error}
+        meta:
+          unit: "shares"
+          iqr_typical: "(1170882, 5658518)"
+      - name: average_volume
+        description: "90-day average volume of the security."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000000
+              config: {severity: warn}
+      - name: last_price_volume
+        description: "Volume at the time of the last_price."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000000
+              config:
+                severity: warn
+                warn_if: ">10"
+      - name: trade_date
+        description: "Most recent trade date."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_timestamp"
+              where: "trade_date is not null"
+              config: {severity: warn}
+      - name: bid_date
+        description: "Date of bid_price."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_timestamp"
+              where: "bid_date is not null"
+              config: {severity: warn}
+      - name: ask_date
+        description: "Date of ask price."
+        tests:
+          - not_null:
+              config:
+                severity: warn
+                warn_if: ">20"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_timestamp"
+              where: "ask_date is not null"
+              config: {severity: warn}
