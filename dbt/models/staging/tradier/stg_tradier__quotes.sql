@@ -51,9 +51,18 @@ select
 	week_52_low as week52_low_price,
 
 	-- Timestamps
-	to_timestamp(trade_date/1000) as trade_date,
-	to_timestamp(bid_date/1000) as bid_date,
-	to_timestamp(ask_date/1000) as ask_date,
+	case
+		when trade_date is not null and trade_date > 0 then to_timestamp(trade_date/1000)
+		else null
+	end as trade_date,
+	case
+		when bid_date is not null and bid_date > 0 then to_timestamp(bid_date/1000)
+		else null
+	end as bid_date,
+	case
+		when ask_date is not null and ask_date > 0 then to_timestamp(ask_date/1000)
+		else null
+	end as ask_date,
 	created_date::date as created_date,
 
 	-- Data Quality Indicators
