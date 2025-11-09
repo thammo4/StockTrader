@@ -523,6 +523,9 @@ models:
               min_value: 0
               max_value: 100000000
               config: {severity: warn}
+        meta:
+          unit: "shares"
+          iqr_typical: "(1024350,4626107)"
       - name: last_price_volume
         description: "Volume at the time of the last_price."
         tests:
@@ -533,6 +536,58 @@ models:
               config:
                 severity: warn
                 warn_if: ">10"
+        meta:
+          unit: "shares"
+          iqr_typical: "(211751,1088543)"
+          zero_proportion: "25%"
+      - name: bid_size
+        description: "Size of bid (hundreds)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+              config: {severity: warn}
+        meta:
+          units: "orders"
+          precision: "hundreds"
+          iqr_typical: "(1.0,3.0)"
+      - name: bid_exchange
+        description: "Ask exchange code."
+      - name: ask_size
+        description: "Size of ask (hundreds)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 100000
+              config: {severity: warn}
+        meta:
+          units: "orders"
+          precision: "hundreds"
+          iqr_typical: "(1.0,4.0)"
+      - name: ask_exchange
+        description: "Bid exchange code"
+      - name: week52_high_price
+        description: "52-week high price"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              config:
+                severity: warn
+                warn_if: ">10"
+      - name: week52_low_price
+        description: "52-week low price"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 1.00
+              max_value: 15000.00
+              config:
+                severity: warn
+                warn_if: ">40"
       - name: trade_date
         description: "Most recent trade date."
         tests:
