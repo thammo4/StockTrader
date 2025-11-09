@@ -6,17 +6,14 @@ version: 2
 
 models:
   - name: stg_tradier__dividends
-
     description: >
       Standardized historical dividend payments from Tradier API.
       For each symbol, contains dividends paid over past 18 months.
       Quarterly data refresh.
-
     meta:
       owner: "deng"
       refresh_frequency: "daily"
       data_source: "TRADIER_API"
-
     columns:
       - name: symbol
         description: "Exchange-listed traded-as ticker symbol."
@@ -91,7 +88,6 @@ models:
               min_value: "'2025-01-01'"
               max_value: "current_date"
               config: {severity: warn}
-
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
