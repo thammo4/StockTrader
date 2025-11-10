@@ -6,13 +6,13 @@ import os
 import sys
 import pandas as pd
 from datetime import datetime, timedelta
-from StockTrader.tradier import options_data
+from StockTrader.tradier import options_dataL
 from StockTrader.settings import STOCK_TRADER_DWH, logger, today
 
 
 def ingest_options_chain(symbol):
     try:
-        df = options_data.get_chain_all(symbol=symbol)
+        df = options_dataL.get_chain_all(symbol=symbol)
 
         if df.empty:
             logger.warning(f"No options chain data, symbol={symbol} [ingest_options_chain]")
