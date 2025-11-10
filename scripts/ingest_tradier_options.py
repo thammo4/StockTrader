@@ -4,7 +4,7 @@
 
 import os
 import pandas as pd
-from StockTrader.tradier import options_data
+from StockTrader.tradier import options_dataL
 from StockTrader.settings import STOCK_TRADER_DWH, logger, today
 from airflow.exceptions import AirflowSkipException
 
@@ -29,7 +29,7 @@ def ingest_tradier_options(symbol, subdir="options_af"):
         # Retrieve the day's options chain data from Tradier
         #
 
-        df = options_data.get_chain_all(symbol=symbol)
+        df = options_dataL.get_chain_all(symbol=symbol)
         if df.empty:
             logger.warning(f"No options data: {symbol}")
             return

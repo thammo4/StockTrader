@@ -4,7 +4,7 @@
 
 import os
 import pandas as pd
-from StockTrader.tradier import quotes
+from StockTrader.tradier import quotesL
 from StockTrader.settings import STOCK_TRADER_DWH, logger, today
 from airflow.exceptions import AirflowSkipException
 
@@ -37,7 +37,7 @@ def ingest_tradier_quotes(subdir="quotes_af"):
         # Retrieve the day's quote data from Tradier
         #
 
-        df = quotes.get_quote_data(symbol_list)
+        df = quotesL.get_quote_data(symbol_list)
         if df.empty:
             logger.warning(f"No quote data, |symbols|={len(symbol_list)}")
             return
