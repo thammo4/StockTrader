@@ -1,6 +1,7 @@
 --
 -- FILE: `StockTrader/dbt/models/staging/tradier/stg_tradier__options.sql`
 --
+
 with source as (
 	select
 		symbol,
@@ -52,40 +53,57 @@ with_expiry_date as (
 
 select
 	-- Contract/ID
-	underlying,
+	underlying as symbol,
 	symbol as occ,
-	expiry_date,
 	option_type,
+	expiry_date,
 	strike as strike_price,
 
-	-- Market Data
-	bid as bid_price,
-	ask as ask_price,
-	round((bid+ask)/2.0, 2) as mid_price,
-	bidexch as bid_exchange,
-	askexch as ask_exchange,
-
-	-- Trading Activity
-	volume,
-	last_volume as last_price_volume,
-	bidsize as bid_size,
-	asksize as ask_size,
-	open_interest,
-
-	-- OHLCV Snapshot
+	-- Price/OHLCV
 	open as open_price,
 	high as high_price,
 	low as low_price,
 	last as close_price,
-	change as change_price,
-	change_percentage as change_price_pct,
 	prevclose as prev_close_price,
 
+	-- Derived Price/Return Metrics
+	round(ln(last/nullif(prevclose,0)),4) as log_return,
+
+	-- Price Changes
+	change as change_price,
+	change_percentage as change_price_pct,
+
+	-- Market Data
+	bid as bid_price,
+	ask as ask_price,
+	round((bid+ask)/2.0,2) as mid_price,
+	round(ask-bid, 2) as bid_ask_spread,
+
+	-- Volume/Activity
+	volume,
+	last_volume as last_price_volume,
+	open_interest,
+
+	-- Market Depth
+	bidsize as bid_size,
+	bidexch as bid_exchange,
+	asksize as ask_size,
+	askexch as ask_exchange,
+
 	-- Timestamps
-	to_timestamp(trade_date/1000) as trade_date,
-	to_timestamp(bid_date/1000) as bid_date,
-	to_timestamp(ask_date/1000) as ask_date,
-	cast(created_date as date) as created_date,
+	case
+		when trade_date is not null and trade_date > 0 then to_timestamp(trade_date/1000)
+		else null
+	end as trade_date,
+	case
+		when bid_date is not null and bid_date > 0 then to_timestamp(bid_date/1000)
+		else null
+	end as bid_date,
+	case
+		when ask_date is not null and ask_date > 0 then to_timestamp(ask_date/1000)
+		else null
+	end as ask_date,
+	created_date::date as created_date,
 
 	-- Data Quality Indicators
 	case
