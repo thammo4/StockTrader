@@ -89,6 +89,11 @@ quality_indicators as (
 		sum(case when ask_size is null then 1 else 0 end) as n_ask_size_null,
 		sum(case when ask_size < 0 then 1 else 0 end) as n_ask_size_negative,
 
+		-- Timestamps
+		sum(case when trade_date is null then 1 else 0 end) as n_trade_date_null,
+		sum(case when bid_date is null then 1 else 0 end) as n_bid_date_null,
+		sum(case when ask_date is null then 1 else 0 end) as n_ask_date_null
+
 
 
 	from options_data
@@ -120,7 +125,10 @@ select
 	n_bid_size_null,
 	n_bid_size_negative,
 	n_ask_size_null,
-	n_ask_size_negative
+	n_ask_size_negative,
+	n_trade_date_null,
+	n_bid_date_null,
+	n_ask_date_null
 
 from quality_indicators
 order by market_date desc
