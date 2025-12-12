@@ -45,7 +45,52 @@ quality_indicators as (
 
 		-- Strike Prices
 		sum(case when strike_price is null then 1 else 0 end) as n_strike_null,
-		sum(case when strike_price <= 0 then 1 else 0 end) as n_strike_negative
+		sum(case when strike_price <= 0 then 1 else 0 end) as n_strike_negative,
+
+		-- OHLC Prices
+		sum(case when open_price <=0 or high_price <=0 or low_price <= 0 or close_price <= 0 then 1 else 0 end) as n_ohlc_negative,
+		sum(
+			case
+				when high_price is not null and low_price is not null and (high_price - low_price < 0) then 1
+				else 0
+			end
+		) as n_high_lt_low,
+		sum(
+			case
+				when open_price is not null and high_price is not null and low_price is not null and (open_price < low_price or open_price > high_price) then 1
+				else 0
+			end
+		) as n_open_range_invalid,
+		sum(
+			case
+				when close_price is not null and high_price is not null and low_price is not null and (close_price < low_price or open_price > high_price) then 1
+				else 0
+			end
+		) as n_close_range_invalid,
+
+		-- Bid/Ask Prices
+		sum(case when bid_price is null then 1 else 0 end) as n_bid_price_null,
+		sum(case when ask_price is null then 1 else 0 end) as n_ask_price_null,
+		sum(
+			case
+				when bid_price is not null and ask_price is not null and (ask_price - bid_price < 0) then 1
+				else 0
+			end
+		) as n_ask_lt_bid,
+
+		-- Volume/Open Interest
+		sum(case when volume is null then 1 else 0 end) as n_volume_null,
+		sum(case when volume < 0 then 1 else 0 end) as n_volume_negative,
+		sum(case when open_interest is null then 1 else 0 end) as n_open_interest_null,
+
+		-- Bid/Ask Sizes
+		sum(case when bid_size is null then 1 else 0 end) as n_bid_size_null,
+		sum(case when bid_size < 0 then 1 else 0 end) as n_bid_size_negative,
+		sum(case when ask_size is null then 1 else 0 end) as n_ask_size_null,
+		sum(case when ask_size < 0 then 1 else 0 end) as n_ask_size_negative,
+
+
+
 	from options_data
 	group by created_date
 )
@@ -62,6 +107,20 @@ select
 	n_type_invalid,
 	n_expiry_null,
 	n_strike_null,
-	n_strike_negative
+	n_strike_negative,
+	n_high_lt_low,
+	n_open_range_invalid,
+	n_close_range_invalid,
+	n_bid_price_null,
+	n_ask_price_null,
+	n_ask_lt_bid,
+	n_volume_null,
+	n_volume_negative,
+	n_open_interest_null,
+	n_bid_size_null,
+	n_bid_size_negative,
+	n_ask_size_null,
+	n_ask_size_negative
+
 from quality_indicators
 order by market_date desc
