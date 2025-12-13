@@ -40,8 +40,9 @@ quality_indicators as (
 		sum(case when option_type is null then 1 else 0 end) as n_type_null,
 		sum(case when option_type not in ('call', 'put') then 1 else 0 end) as n_type_invalid,
 
-		-- Expiry Dates
+		-- Expiry Dates/TTM
 		sum(case when expiry_date is null then 1 else 0 end) as n_expiry_null,
+		sum(case when ttm_days < 0 then 1 else 0 end) as n_ttm_days_negative,
 
 		-- Strike Prices
 		sum(case when strike_price is null then 1 else 0 end) as n_strike_null,
@@ -111,6 +112,7 @@ select
 	n_type_null,
 	n_type_invalid,
 	n_expiry_null,
+	n_ttm_days_negative,
 	n_strike_null,
 	n_strike_negative,
 	n_high_lt_low,
