@@ -57,6 +57,7 @@ select
 	symbol as occ,
 	option_type,
 	expiry_date,
+	(expiry_date - created_date::date) as ttm_days,
 	strike as strike_price,
 
 	-- Price/OHLCV
