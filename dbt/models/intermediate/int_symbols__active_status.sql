@@ -3,7 +3,7 @@
 --
 
 {{ config(
-	materialized='table',
+	materialized='view',
 	description='Symbol universe with active/inactive trading status metadata'
 ) }}
 
@@ -31,12 +31,12 @@ symbol_last_quotes as (
 
 symbol_last_options as (
 	select
-		underlying as symbol,
+		symbol,
 		max(created_date)::date as max_options_date
 	from {{ ref('stg_tradier__options') }}
-	where underlying is not null
+	where symbol is not null
 	and is_valid_price = true
-	group by underlying
+	group by symbol
 ),
 
 symbols_current_quotes as (
