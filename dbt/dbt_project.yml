@@ -42,19 +42,6 @@ models:
       +materialized: "{{ 'table' if target.name == 'prod' else 'view' }}"
       +schema: intermediate
 
-    marts:
-      +materialized: table
-      +file_format: parquet
-
-      pricing:
-        +schema: pricing
-
-      strategies:
-        +schema: strategies
-
-      portfolio_mgmt:
-        +schema: portfolio_mgmt
-
 tests:
   +store_failures: true
   +schema: test_failures
