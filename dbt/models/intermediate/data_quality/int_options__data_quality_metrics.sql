@@ -3,9 +3,9 @@
 --
 
 {{ config(
-	materialization='incremental',
+	materialized='incremental',
 	incremental_strategy='append',
-	unique_key='created_date',
+	unique_key='market_date',
 	on_schema_change='fail',
 	description='Per-diem aggregated data quality metrics for options data'
 ) }}
@@ -15,7 +15,7 @@ with options_data as (
 	from {{ ref('stg_tradier__options') }}
 
 	{% if is_incremental() %}
-	where created_date > (select max(created_date) from {{ this }})
+	where created_date > (select max(market_date) from {{ this }})
 	{% endif %}
 ),
 
