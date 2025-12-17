@@ -15,4 +15,3 @@ from {{ ref('int_options__data_quality_metrics') }}
 where
 	n_occ_null > 0
 	or n_occ_invalid > 0
-
