@@ -34,6 +34,8 @@ StockTrader/
 │   └── models/
 │       └── intermediate/
 │       	  └── int_symbols__active_status.sql
+│       	  └── data_quality/
+│           	  └── int_options__data_quality_metrics.sql
 │       	  └── options_pricing/
 │           	  └── int_ohlcv__rolling_vol.sql
 │           	  └── int_options__calc_ttm.sql
@@ -45,10 +47,17 @@ StockTrader/
 │                  └── schema.yml
 │                  └── stg_fred__rates.sql
 │       	  └── tradier/
+│               └── schema.yml
 │           	  └── stg_tradier__dividends.sql
 │           	  └── stg_tradier__ohlcv_bars.sql
 │           	  └── stg_tradier__options.sql
 │           	  └── stg_tradier__quotes.sql
+│   └── tests/
+│       └── assert_options_market_prices_consistent.sql
+│       └── assert_options_market_prices_sufficient.sql
+│       └── assert_options_occ_id_valid.sql
+│       └── assert_options_pricing_inputs_valid.sql
+│       └── assert_options_underlying_map_valid.sql
 ├── data/
 │   └── warehouse/
 │       └── stocktrader_analytics_dev.duckdb
