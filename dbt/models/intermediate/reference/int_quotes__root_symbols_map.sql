@@ -2,7 +2,10 @@
 -- FILE: `StockTrader/dbt/models/intermediate/reference/int_quotes__root_symbols_map.sql`
 --
 
-{{ config(materialized='table', description='Maps root symbols to their current trading symbol via quotes root_symbols field') }}
+{{ config(
+	materialized='view',
+	description='Maps root symbols to their current trading symbol via quotes root_symbols field'
+) }}
 
 with quotes_root_symbols as (
 	select

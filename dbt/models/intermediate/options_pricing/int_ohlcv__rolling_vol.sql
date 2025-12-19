@@ -2,7 +2,10 @@
 -- FILE: `StockTrader/dbt/models/intermediate/options_pricing/int_ohlcv__rolling_vol.sql`
 --
 
-{{ config(materialized='view') }}
+{{ config(
+	materialized='view',
+	description='Enhanced OHLCV data with historical rolling window volatility (std dev) added per vol_window var'
+) }}
 
 with rolling_vol as (
 	select
