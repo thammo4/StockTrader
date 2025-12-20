@@ -43,7 +43,8 @@ models:
       +schema: intermediate
 
 tests:
-  +store_failures: true
+  # +store_failures: true
+  +store_failures: false
   +schema: test_failures
 
 vars:
