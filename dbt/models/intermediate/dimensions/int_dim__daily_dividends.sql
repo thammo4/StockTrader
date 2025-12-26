@@ -54,7 +54,29 @@ agg_dividends as (
 		sc.market_date,
 		sc.symbol,
 		sc.spot_price
+),
+
+dataset as (
+	select
+		market_date,
+		symbol,
+		prev_ex_dividend_date,
+		prev_cash_amount,
+		prev_frequency,
+		dividend_cash_ttm,
+		case
+			when spot_price is null then null
+			else dividend_cash_ttm / spot_price
+		end as dividend_yield_ttm,
+		case
+			when spot_price is null then null
+			when prev_cash_amount is null then 0.0
+			when prev_frequency is null then null
+			else (prev_cash_amount*prev_frequency)/spot_price
+		end as dividend_yield_annualized
+	from agg_dividends
 )
+
 
 select
 	market_date,
@@ -63,18 +85,9 @@ select
 	prev_cash_amount,
 	prev_frequency,
 	dividend_cash_ttm,
-	case
-		when spot_price is null then null
-		else dividend_cash_ttm / spot_price
-	end as dividend_yield_ttm,
-	case
-		when spot_price is null then null
-		when prev_cash_amount is null then 0.0
-		when prev_frequency is null then null
-		else (prev_cash_amount*prev_frequency)/spot_price
-	end as dividend_yield_annualized
-from agg_dividends
-
+	round(dividend_yield_ttm, 4) as dividend_yield_ttm,
+	round(dividend_yield_annualized,4) as dividend_yield_annualized
+from dataset
 
 
 
