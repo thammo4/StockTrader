@@ -23,4 +23,4 @@ select
 	r.risk_free_rate,
 	r.rate_date as rate_date_ref
 from market_calendar m
-asof left join rates_of_interest r on date_trunc('month', m.market_date) > r.rate_date
+asof left join rates_of_interest r on date_trunc('month', m.market_date) >= r.rate_date
