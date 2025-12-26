@@ -10,6 +10,7 @@
 with source as (
 	select
 		created_date as market_date,
+		market_date,
 		symbol,
 		occ,
 		option_type,
