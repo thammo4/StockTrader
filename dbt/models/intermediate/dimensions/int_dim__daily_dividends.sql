@@ -12,7 +12,7 @@ with symbol_calendar as (
 		market_date,
 		symbol,
 		spot_price
-	from {{ ref('int_options__joins_spot_price') }}
+	from {{ ref('int_options__joins_spots_and_vols') }}
 	{% if is_incremental() %}
 	where market_date > (select max(market_date) from {{ this }})
 	{% endif %}
@@ -41,7 +41,7 @@ agg_dividends as (
 		arg_max(d.frequency, d.ex_dividend_date) as prev_frequency,
 		sum(
 			case
-				when d.ex_dividend_date > sc.market_date - interval '365 days'
+				when d.ex_dividend_date >= sc.market_date - interval '365 days'
 				then d.cash_amount
 				else 0
 			end
@@ -49,7 +49,7 @@ agg_dividends as (
 	from symbol_calendar sc
 	left join dividends d
 		on d.symbol = sc.symbol
-		and d.ex_dividend_date < sc.market_date
+		and d.ex_dividend_date <= sc.market_date
 	group by
 		sc.market_date,
 		sc.symbol,
