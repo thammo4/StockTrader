@@ -1,17 +1,110 @@
 # FILE: `StockTrader/docker-compose.yml`
 # version: '3.8'
 
+
+#
+# SERVICES
+#
+
 services:
-  # PSQL => Airflow Metadata
-  postgres:
-    image: postgres:15
+
+
+  #
+  # AIRFLOW SCHEDULER
+  #
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    depends_on:
+      - postgres
+      - redis
+      - minio
     environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
+      - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
+      - STOCK_TRADER_HOME=/opt/stocktrader
+      - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
+      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
+      - STOCK_TRADER_LOG=/opt/stocktrader/logs
+      - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - REDIS_URL=redis://redis:6379/0
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ./airflow/dags:/opt/airflow/dags
+      - .:/opt/stocktrader
+      - ${HOME}/Desktop/uvatradier:/opt/uvatradier
+    command: >
+      bash -c "
+        pip install -e /opt/uvatradier && \
+        pip install pandas pyarrow holidays fredapi minio redis && \
+        airflow scheduler
+      "
     profiles: ["core", "dev", "prod"]
+
+
+  #
+  # AIRFLOW WEBSERVER
+  #
+
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    depends_on:
+      - postgres
+      - minio
+      - redis
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
+      - AIRFLOW__WEBSERVER__WORKERS=2
+      - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
+      - STOCK_TRADER_HOME=/opt/stocktrader
+      - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
+      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
+      - STOCK_TRADER_LOG=/opt/stocktrader/logs
+      - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - REDIS_URL=redis://redis:6379/0
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - .:/opt/stocktrader
+      - ${HOME}/Desktop/uvatradier:/opt/uvatradier
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+        pip install -e /opt/uvatradier && \
+        pip install pandas pyarrow holidays fredapi minio redis && \
+        airflow webserver
+      "
+    profiles: ["core", "dev", "prod"]
+
+
+  #
+  # CLICKHOUSE (currently unused)
+  #
+
+  # clickhouse:
+  #   image: clickhouse/clickhouse-server:latest
+  #   ports:
+  #     - "8123:8123"
+  #     - "9000:9000"
+  #   volumes:
+  #     - clickhouse-data:/var/lib/clickhouse
+  #   profiles: ["prod"]
+
+
+  #
+  # DBT
+  #
 
   dbt:
     build:
@@ -29,63 +122,93 @@ services:
     command: tail -f /dev/null
     profiles: ["core", "dev", "prod"]
 
-  clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    ports:
-      - "8123:8123"
-      - "9000:9000"
-    volumes:
-      - clickhouse-data:/var/lib/clickhouse
-    profiles: ["prod"]
 
-  airflow-webserver:
-    image: apache/airflow:2.9.1
-    depends_on:
-      - postgres
+  #
+  # MINIO
+  #
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
     environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
-      - AIRFLOW__WEBSERVER__WORKERS=2
-      - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
-      - STOCK_TRADER_HOME=/opt/stocktrader
-      - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
-      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
-      - STOCK_TRADER_LOG=/opt/stocktrader/logs
-      - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - .:/opt/stocktrader
-      - ${HOME}/Desktop/uvatradier:/opt/uvatradier
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
-      - "8080:8080"
-    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow holidays fredapi && airflow webserver"
+      - "9000:9000" # s3 api endpoint
+      - "9001:9001" # web server ui
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
     profiles: ["core", "dev", "prod"]
 
-  airflow-scheduler:
-    image: apache/airflow:2.9.1
+  #
+  # MINIO INIT
+  #
+
+  minio-init:
+    image: minio/mc:latest
     depends_on:
-      - postgres
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set stocktrader http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}
+        mc mb --ignore-existing stocktrader/pricing-inputs;
+        mc mb --ignore-existing stocktrader/pricing-outputs;
+        mc mb --ignore-existing stocktrader/pricing-archive
+        mc anonymous set download stocktrader/pricing-outputs;
+        echo 'MinIO buckets initalized'."
     environment:
-      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
-      - AIRFLOW__CORE__LOAD_EXAMPLES=false
-      - AIRFLOW__WEBSERVER__SECRET_KEY=${AIRFLOW_SECRET_KEY}
-      - AIRFLOW__CORE__DEFAULT_TIMEZONE=America/New_York
-      - STOCK_TRADER_HOME=/opt/stocktrader
-      - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
-      - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
-      - STOCK_TRADER_LOG=/opt/stocktrader/logs
-      - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src
-    volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - .:/opt/stocktrader
-      - ${HOME}/Desktop/uvatradier:/opt/uvatradier
-    command: bash -c "pip install -e /opt/uvatradier && pip install pandas pyarrow holidays fredapi && airflow scheduler"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     profiles: ["core", "dev", "prod"]
+
+
+  #
+  # POSTGRES (airflow metadata db)
+  #
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    profiles: ["core", "dev", "prod"]
+
+
+  #
+  # REDIS
+  #
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 15s
+      retries: 3
+    profiles: ["core", "dev", "prod"]
+
+
+#
+# VOLUMES
+#
 
 volumes:
+  # clickhouse-data:
   dbt-logs:
   postgres-data:
-  clickhouse-data:
+  minio-data:
+  redis-data:
