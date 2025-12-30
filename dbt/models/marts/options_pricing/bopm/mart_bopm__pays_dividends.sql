@@ -12,6 +12,7 @@ select
 	market_date,
 	symbol,
 	occ,
+	option_type,
 	expiry_date,
 
 	-- Options Pricing Model Parameters (S, K, r, q, σ, T)
