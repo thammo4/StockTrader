@@ -137,7 +137,7 @@ services:
       - "9000:9000" # s3 api endpoint
       - "9001:9001" # web server ui
     volumes:
-      - minio-data:/data
+      - /Volumes/HDD_SPARE_MAC/minio:/data
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
