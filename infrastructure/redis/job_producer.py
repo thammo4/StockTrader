@@ -77,12 +77,12 @@ class JobProducer:
 		prefixS3 = "batch_" if batch_id is None else f"batch_{batch_id}"
 		objects = self.minio.list_objects(self.input_bucket, prefix=prefixS3, recursive=True)
 		seen_jobs = set() # counting unique combinations of (batch, date, shard)
-		path_pattern = re.compile(r"batch_(?P<batch_id>[^/]+)/market_date=(?P<market_date>[^/]+)/shard=(?P<shard>\d+)/"
+		path_pattern = re.compile(r"batch_(?P<batch_id>[^/]+)/market_date=(?P<market_date>[^/]+)/shard=(?P<shard>\d+)/")
 
 		for obj in objects:
 			m = path_pattern.match(obj.object_name)
 			if m:
-				key = (m.group("batch_id"), m.group("match_date"), int(m.group("shard")))
+				key = (m.group("batch_id"), m.group("market_date"), int(m.group("shard")))
 				if key not in seen_jobs:
 					seen_jobs.add(key)
 					jobs.append(
@@ -99,7 +99,7 @@ class JobProducer:
 
 		jobs_potential = self.discover_jobs(batch_id)
 		jobs_existing  = set() if force else self.get_job_ids_existing()
-		jobs_new = [j for j in jobs_potential if j.job_id is not in jobs_existing]
+		jobs_new = [j for j in jobs_potential if j.job_id not in jobs_existing]
 
 		if not jobs_new:
 			logger.info("No new jobs to enqueue")
@@ -114,7 +114,7 @@ class JobProducer:
 
 		return len(jobs_new)
 
-	def get_queue_status (self) -> dict:
+	def get_queue_stats (self) -> dict:
 		return {
 			"pending": self.redis.llen(Q_PENDING),
 			"processing": self.redis.llen(Q_PROCESSING),
@@ -124,8 +124,26 @@ class JobProducer:
 
 def main():
 	import argparse
-	pass
 
+	parser = argparse.ArgumentParser(description="Enqueue pricing jobs to Redis")
+	parser.add_argument("--batch-id", help="Specify particular batch to process")
+	parser.add_argument("--force", action="store_true", help="Re-enqueue previously run job")
+	parser.add_argument("--stats", action="store_true", help="Show queue stats only")
+
+	args = parser.parse_args()
+	producer = JobProducer()
+
+	if args.stats:
+		stats = producer.get_queue_stats()
+		print(f"Q Stats:")
+		for q, count in stats.items():
+			print(f"  {q}:{count}")
+	else:
+		count = producer.enqueue_jobs(batch_id=args.batch_id, force=args.force)
+		print(f"Enqueued {count} jobs")
+
+		stats = producer.get_queue_stats()
+		print(f"Q pending jobs count now: {stats['pending']}")
 
 if __name__ == "__main__":
 	main()
