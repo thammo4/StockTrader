@@ -31,9 +31,9 @@ class PricingJob:
 		if self.created_at is None:
 			self.created_at = datetime.utcnow().isoformat()
 		if self.prefixS3_input is None:
-			self.prefixS3_input = f"batch_{self.batch_id}/market_date={self.market_date}/shard={self.shard}"
+			self.prefixS3_input = f"batch_{self.batch_id}/market_date={self.market_date}/shard={self.shard}/"
 		if self.prefixS3_output is None:
-			self.prefixS3_output = f"batch_{self.batch_id}/market_date={self.market_date}/shard={self.shard}"
+			self.prefixS3_output = f"batch_{self.batch_id}/market_date={self.market_date}/shard={self.shard}/"
 
 	def to_json (self) -> str:
 		return json.dumps(asdict(self))
