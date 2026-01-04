@@ -100,7 +100,7 @@ jobs:
           source venv/bin/activate
 
           echo "Run black code format checks" > artifacts/code-format-reports/black-format.txt
-          black --check --diff src/ scripts/ tests/ utils/ 2>&1 | \
+          black --check --diff infrastructure/redis/ src/ scripts/ tests/ utils/ 2>&1 | \
             tee artifacts/code-format-reports/black-detailed.txt
 
           BLACK_EXIT_CODE=${PIPESTATUS[0]}
