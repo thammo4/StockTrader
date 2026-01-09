@@ -11,67 +11,62 @@ from typing import Any, Dict, Optional
 
 from StockTrader.pricing.types import OptionRow, PricingResult
 
-class BasePricingModel (ABC):
-	"""
-	Abstract interface for options pricing models.
-	Required:
-		- name: Unique identifier for registry lookup.
-		- price(): Core pricer.
-		- validate_inputs(): Parameter validator.
-	"""
 
-	def __init__ (self, **kwargs):
-		"""
-		Initialize model.
+class BasePricingModel(ABC):
+    """
+    Abstract interface for options pricing models.
+    Required:
+            - name: Unique identifier for registry lookup.
+            - price(): Core pricer.
+            - validate_inputs(): Parameter validator.
+    """
 
-		Subclass to call super().__init__(**kwargs) -> apply specific config.
-		"""
+    def __init__(self, **kwargs):
+        """
+        Initialize model.
 
-		self._config = kwargs
-		self.configure(**kwargs)
+        Subclass to call super().__init__(**kwargs) -> apply specific config.
+        """
 
-	def configure (self, **kwargs) -> None:
-		"""
-		Apply model-specific config.
-		"""
+        self._config = kwargs
+        self.configure(**kwargs)
 
-		pass
+    def configure(self, **kwargs) -> None:
+        """
+        Apply model-specific config.
+        """
 
-	@abstractmethod
-	def price (
-		self,
-		option: OptionRow,
-		compute_greeks: bool = True,
-		compute_iv: bool = True
-	) -> PricingResult:
-		"""
-		Compute theoretical option price (and Greeks, IV).
+        pass
 
-		Args:
-			- option: Immutable container with pricing inputs.
-			- compute_greeks: compute delta, gamma, theta, vega, rho.
-			- compute_iv: solve for implied volatility.
+    @abstractmethod
+    def price(self, option: OptionRow, compute_greeks: bool = True, compute_iv: bool = True) -> PricingResult:
+        """
+        Compute theoretical option price (and Greeks, IV).
 
-		Returns:
-			- PricingResult with computed values and error information.
-		"""
+        Args:
+                - option: Immutable container with pricing inputs.
+                - compute_greeks: compute delta, gamma, theta, vega, rho.
+                - compute_iv: solve for implied volatility.
 
-		pass
+        Returns:
+                - PricingResult with computed values and error information.
+        """
 
-	@abstractmethod
-	def validate_inputs (self, option: OptionRow) -> Optional[str]:
-		"""Validate input ranges"""
-		pass
+        pass
 
-	def get_config (self) -> Dict[str, Any]:
-		"""Return current config for logging/debugging."""
-		return {
-			"name": self.name,
-			"supports_greeks": self.supports_greeks,
-			"supports_iv": self.supports_iv,
-			**self._config
-		}
+    @abstractmethod
+    def validate_inputs(self, option: OptionRow) -> Optional[str]:
+        """Validate input ranges"""
+        pass
 
-	def __repr__ (self) -> str:
-		return f"{self.__class__.__name__}(name='{self.name}')"
+    def get_config(self) -> Dict[str, Any]:
+        """Return current config for logging/debugging."""
+        return {
+            "name": self.name,
+            "supports_greeks": self.supports_greeks,
+            "supports_iv": self.supports_iv,
+            **self._config,
+        }
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name='{self.name}')"
