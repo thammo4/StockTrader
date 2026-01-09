@@ -20,7 +20,7 @@ from typing import Callable, List, Optional
 from StockTrader.pricing.types import BatchResult, OptionRow, PricingResult
 from StockTrader.pricing.base import BasePricingModel
 from StockTrader.pricing.registry import get_model #, get_default_model_name
-from StockTrader.pricing.errors import InputValidationError, PricingError
+# from StockTrader.pricing.errors import InputValidationError, PricingError
 from StockTrader.settings import logger
 
 
@@ -30,7 +30,7 @@ def price_df (
 	# model_name: Optional[str] = None,
 	# model: BasePricingModel = None,
 	model: BasePricingModel,
-	model_name: str,
+	# model_name: Optional[str] = None,
 	compute_greeks: bool = True,
 	compute_iv: bool = True,
 	progress_callback: Optional[Callable[[int,int], None]] = None,
