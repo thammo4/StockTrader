@@ -38,7 +38,7 @@ class PricingError(Exception):
 
 class ModelNotFoundError (PricingError):
 	"""Raised when stupid enough to request nonexistent pricing model"""
-	error_code = "MODEL_NOT_FOUND"
+	error_code = "MODEL_NOT_FOUND_ERROR"
 
 class ModelConfigurationError (PricingError):
 	"""Raised when careless enough to let model contain invalid config"""
@@ -49,7 +49,7 @@ class InputValidationError (PricingError):
 	Raised when input parameters fail validation.
 	Recoverable - e.g. batch processor to log and move on.
 	"""
-	error_code = "INPUT_VALIDATION"
+	error_code = "INPUT_VALIDATION_ERROR"
 
 class NPVCalculationError (PricingError):
 	"""
