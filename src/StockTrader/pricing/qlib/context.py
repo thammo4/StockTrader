@@ -2,6 +2,16 @@
 # FILE: `StockTrader/src/StockTrader/pricing/qlib/context.py`
 #
 
+
+"""
+QuantLib Context Management.
+
+Functionality/Purpose:
+	1. Map string dates to QuantLib date objects (e.g. ql.Date)
+	2. Define global QuantLib evaluation dates prior to pricing
+	3. Construct shared calendar and day counter QuantLib objects
+"""
+
 import QuantLib as ql
 from typing import Tuple
 from functools import lru_cache
