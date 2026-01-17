@@ -8,11 +8,6 @@ QuantLib Object Builders
 Provides standardized interface to implement QuantLib objects commonly employed during options pricing.
 """
 
-# import QuantLib as ql
-# from typing import Tuple
-
-# from StockTrader.pricing.qlib.context import get_context
-
 import QuantLib as ql
 from datetime import date
 from typing import Tuple
@@ -54,7 +49,8 @@ def build_bsm_process (spotH: ql.QuoteHandle, rateH: ql.YieldTermStructureHandle
 def build_crr_binom_engine (process: ql.BlackScholesMertonProcess, n_steps: int) -> ql.BinomialVanillaEngine:
 	return ql.BinomialVanillaEngine(process, "crr", n_steps)
 
-def build_option_with_engine(option_type:str, S: float, K: float, r: float, q: float, σ: float, market_date: str, expiry_date: str, n_steps: int=225) -> Tuple[ql.VanillaOption, ql.BlackScholesMertonProcess]:
+# def build_option_with_engine(option_type:str, S: float, K: float, r: float, q: float, σ: float, market_date: str, expiry_date: str, n_steps: int=225) -> Tuple[ql.VanillaOption, ql.BlackScholesMertonProcess]:
+def build_option_with_engine (option_type: str, S: float, K: float, r: float, q: float, σ: float, market_date: date, expiry_date: date, n_steps: int=225) -> Tuple[ql.VanillaOption, ql.BlackScholesMertonProcess]:
 	ctx = get_context()
 
 	eval_date = ctx.set_eval_date(market_date)
