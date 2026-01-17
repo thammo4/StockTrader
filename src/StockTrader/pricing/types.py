@@ -8,13 +8,32 @@ Define dataclass containers for pricing inputs/outputs.
 Enforce consistent relationship between batch processor + pricing models.
 """
 
-from dataclasses import dataclass, field, asdict
+
+#
+# Note - dataclasses
+#
+# Provides decorator + functions to user-defined classes.
+# Imports used:
+#   dataclass method - adds special methods to user-def class
+#   field def - class var with type annotation
+#   asdict method - maps each dataclass object into a key-value dict of its fields
+
+# from dataclasses import dataclass, field, asdict
 
 # from typing import Optional, Dict, Any, List
+# from typing import Any, Dict, List, Optional
+# from typing import Any, Dict, List, Optional, Union
+# from datetime import date
+
+# DateField = Union[str, date]
+
+
+from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 from datetime import date
 
 import math
+
 
 
 @dataclass(frozen=True)
@@ -28,11 +47,19 @@ class OptionRow:
     # Contract Identifiers
     #
 
-    market_date: str
+    # market_date: str
+    # symbol: str
+    # occ: str
+    # option_type: str
+    # expiry_date: str
+
+    market_date: date
     symbol: str
     occ: str
     option_type: str
-    expiry_date: str
+    expiry_date: date
+
+
 
     S: float
     K: float
@@ -63,16 +90,18 @@ class OptionRow:
     def from_series(cls, row) -> "OptionRow":
         """Construct dataframe row from pandas series"""
 
-        σ_val = row.get("σ")
-        if σ_val is None:
-            raise ValueError(f"Missing σ, occ={row.get('occ')}")
+        # σ_val = row.get("σ")
+        # if σ_val is None:
+        #     raise ValueError(f"Missing σ, occ={row.get('occ')}")
 
         return cls(
-            market_date=str(row["market_date"]),
+            # market_date=str(row["market_date"]),
+            market_date=row["market_date"],
             symbol=str(row["symbol"]),
             occ=str(row["occ"]),
             option_type=str(row["option_type"]).lower(),
-            expiry_date=str(row["expiry_date"]),
+            # expiry_date=str(row["expiry_dat'e"]),
+            expiry_date=row["expiry_date"],
             S=float(row["S"]),
             K=float(row["K"]),
             r=float(row["r"]),
@@ -185,7 +214,13 @@ class BatchResult:
     elapsed_sec: float = 0.0
     model_name: str = ""
 
-    # results: list = field(default_factory=list)
+    #
+    # Note - dataclasses field(default_factory)
+    #
+    # Specifies default value for mutable field (e.g. list, dict)
+    # Ensures every instance keeps its own mutable type
+    #
+
     results: List[PricingResult] = field(default_factory=list)
 
     @property
