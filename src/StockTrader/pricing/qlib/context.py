@@ -23,16 +23,26 @@ class QLibContext:
 		self.day_counter = ql.Actual365Fixed()
 		self._date_cache = {}
 
-	def parse_date (self, date_str: str) -> ql.Date:
-		if date_str not in self._date_cache:
-			year, month, day = map(int, date_str.split("-"))
-			self._date_cache[date_str] = ql.Date(day, month, year)
-		return self._date_cache[date_str]
+	def to_ql_date (self, d: date) -> ql.Date:
+		"""Convert datetime.date  obj to QuantLib ql.Date (+cache)"""
+		if d not in self._date_cache:
+			self._date_cache[d] = ql.Date(d.day, m.month, d.year)
+		return self._date_cache[d]
 
-	def set_eval_date (self, date_str: str) -> ql.Date:
-		eval_date = self.parse_date(date_str)
+	def set_eval_date (self, d: date) -> ql.Date:
+		eval_date = self.to_ql_date(d)
 		ql.Settings.instance().evaluationDate = eval_date
 		return eval_date
+	# def parse_date (self, date_str: str) -> ql.Date:
+	# 	if date_str not in self._date_cache:
+	# 		year, month, day = map(int, date_str.split("-"))
+	# 		self._date_cache[date_str] = ql.Date(day, month, year)
+	# 	return self._date_cache[date_str]
+
+	# def set_eval_date (self, date_str: str) -> ql.Date:
+	# 	eval_date = self.parse_date(date_str)
+	# 	ql.Settings.instance().evaluationDate = eval_date
+	# 	return eval_date
 
 _context: QLibContext = None
 
