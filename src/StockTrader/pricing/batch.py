@@ -21,26 +21,17 @@ from StockTrader.pricing.types import BatchResult, OptionRow, PricingResult
 from StockTrader.pricing.base import BasePricingModel
 from StockTrader.pricing.registry import get_model  # , get_default_model_name
 
-# from StockTrader.pricing.errors import InputValidationError, PricingError
 from StockTrader.settings import logger
 
 
 def price_df(
     df: pd.DataFrame,
-    # model: Optional[BasePricingModel] = None,
-    # model_name: Optional[str] = None,
-    # model: BasePricingModel = None,
     model: BasePricingModel,
-    # model_name: Optional[str] = None,
     compute_greeks: bool = True,
     compute_iv: bool = True,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     **model_kwargs,
 ) -> pd.DataFrame:
-
-    # 	if model is None:
-    # 		model_name = model_name or get_default_model_name()
-    # 		model = get_model(model_name, **model_kwargs)
 
     logger.info(f"Starting batch pricing: n={len(df)} contracts")
     logger.info(f"model={model.name}, greeks={compute_greeks}, iv={compute_iv}")
