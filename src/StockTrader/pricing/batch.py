@@ -78,7 +78,7 @@ def process_job_shard(
     df: pd.DataFrame,
     job_id: str,
     batch_id: str,
-    market_date: str,
+    market_date: date,
     shard: int,
     model_name: str,
     compute_greeks: bool = True,
