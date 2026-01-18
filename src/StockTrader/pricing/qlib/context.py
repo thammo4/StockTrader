@@ -14,7 +14,6 @@ Functionality/Purpose:
 
 import QuantLib as ql
 from typing import Tuple
-from functools import lru_cache
 
 
 class QLibContext:
@@ -33,16 +32,6 @@ class QLibContext:
 		eval_date = self.to_ql_date(d)
 		ql.Settings.instance().evaluationDate = eval_date
 		return eval_date
-	# def parse_date (self, date_str: str) -> ql.Date:
-	# 	if date_str not in self._date_cache:
-	# 		year, month, day = map(int, date_str.split("-"))
-	# 		self._date_cache[date_str] = ql.Date(day, month, year)
-	# 	return self._date_cache[date_str]
-
-	# def set_eval_date (self, date_str: str) -> ql.Date:
-	# 	eval_date = self.parse_date(date_str)
-	# 	ql.Settings.instance().evaluationDate = eval_date
-	# 	return eval_date
 
 _context: QLibContext = None
 
