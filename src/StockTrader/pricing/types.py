@@ -87,7 +87,7 @@ class OptionRow:
         return {k: v for k, v in asdict(self).items()}
 
     @classmethod
-    def from_series(cls, row) -> "OptionRow":
+    def from_series(cls, row: Any) -> "OptionRow":
         """Construct dataframe row from pandas series"""
 
         # σ_val = row.get("σ")
