@@ -47,12 +47,6 @@ class OptionRow:
     # Contract Identifiers
     #
 
-    # market_date: str
-    # symbol: str
-    # occ: str
-    # option_type: str
-    # expiry_date: str
-
     market_date: date
     symbol: str
     occ: str
@@ -95,12 +89,10 @@ class OptionRow:
         #     raise ValueError(f"Missing σ, occ={row.get('occ')}")
 
         return cls(
-            # market_date=str(row["market_date"]),
             market_date=row["market_date"],
             symbol=str(row["symbol"]),
             occ=str(row["occ"]),
             option_type=str(row["option_type"]).lower(),
-            # expiry_date=str(row["expiry_dat'e"]),
             expiry_date=row["expiry_date"],
             S=float(row["S"]),
             K=float(row["K"]),
@@ -203,7 +195,7 @@ class BatchResult:
 
     job_id: str
     batch_id: str
-    market_date: str
+    market_date: date
     shard: int
 
     n_total: int = 0
