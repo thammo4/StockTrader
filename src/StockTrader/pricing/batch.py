@@ -40,7 +40,6 @@ def price_df(
     results: List[dict] = []
     n_total = len(df)
 
-
     #
     # Note - including additional i-counter to accommodate progress_callback in the event of non-numeric index
     #

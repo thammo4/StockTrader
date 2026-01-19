@@ -94,7 +94,7 @@ class OptionRow:
             mnys=row.get("mnys"),
             mnys_cat=row.get("mnys_cat"),
             volume=row.get("volume"),
-            oi=row.get("oi")
+            oi=row.get("oi"),
         )
 
 
