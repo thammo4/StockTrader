@@ -16,6 +16,7 @@ Designed to integrate with Redis job schema for distributed compute.
 import time
 import pandas as pd
 from typing import Callable, List, Optional
+from datetime import date
 
 from StockTrader.pricing.types import BatchResult, OptionRow, PricingResult
 from StockTrader.pricing.base import BasePricingModel
@@ -45,7 +46,7 @@ def price_df(
     #
 
     for i, (idx, row) in enumerate(df.iterrows()):
-        if progress_callback and idx % 100 == 0:
+        if progress_callback and i % 100 == 0:
             progress_callback(idx, n_total)
 
         try:
