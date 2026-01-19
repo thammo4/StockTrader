@@ -14,6 +14,7 @@ Functionality/Purpose:
 
 import QuantLib as ql
 from typing import Tuple
+from datetime import date
 
 
 class QLibContext:
@@ -25,7 +26,7 @@ class QLibContext:
 	def to_ql_date (self, d: date) -> ql.Date:
 		"""Convert datetime.date  obj to QuantLib ql.Date (+cache)"""
 		if d not in self._date_cache:
-			self._date_cache[d] = ql.Date(d.day, m.month, d.year)
+			self._date_cache[d] = ql.Date(d.day, d.month, d.year)
 		return self._date_cache[d]
 
 	def set_eval_date (self, d: date) -> ql.Date:
@@ -33,7 +34,13 @@ class QLibContext:
 		ql.Settings.instance().evaluationDate = eval_date
 		return eval_date
 
-_context: QLibContext = None
+
+#
+# Singleton Pattern ~ Module-Level Variable
+#
+
+# _context: QLibContext = None
+_context: Optional[QlibContext] = None
 
 def get_context() -> QLibContext:
 	global _context
