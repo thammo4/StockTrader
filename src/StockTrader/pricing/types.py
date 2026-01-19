@@ -26,7 +26,6 @@ from datetime import date
 import math
 
 
-
 @dataclass(frozen=True)
 class OptionRow:
     """
@@ -43,8 +42,6 @@ class OptionRow:
     occ: str
     option_type: str
     expiry_date: date
-
-
 
     S: float
     K: float
@@ -75,10 +72,6 @@ class OptionRow:
     def from_series(cls, row: Any) -> "OptionRow":
         """Construct dataframe row from pandas series"""
 
-        # σ_val = row.get("σ")
-        # if σ_val is None:
-        #     raise ValueError(f"Missing σ, occ={row.get('occ')}")
-
         return cls(
             market_date=row["market_date"],
             symbol=str(row["symbol"]),
@@ -88,20 +81,20 @@ class OptionRow:
             S=float(row["S"]),
             K=float(row["K"]),
             r=float(row["r"]),
-            q=float(row["q"]),
+            q=float(row.get("q", 0.0)),
             σ=float(row["σ"]),
             T=float(row["T"]),
             p_m=float(row["p_m"]),
             p_b=float(row["p_b"]),
             p_a=float(row["p_a"]),
-            p_i=float(row["p_i"]),
-            p_tm=float(row["p_tm"]),
-            p_tb=float(row["p_tb"]),
-            p_ta=float(row["p_ta"]),
-            mnys=float(row["mnys"]),
-            mnys_cat=str(row["mnys_cat"]),
+            p_i=row.get("p_i"),
+            p_tm=row.get("p_tm"),
+            p_tb=row.get("p_tb"),
+            p_ta=row.get("p_ta"),
+            mnys=row.get("mnys"),
+            mnys_cat=row.get("mnys_cat"),
             volume=row.get("volume"),
-            oi=row.get("oi"),
+            oi=row.get("oi")
         )
 
 
@@ -116,7 +109,6 @@ class PricingResult:
     occ: str
 
     npv: Optional[float] = None
-
     Δ: Optional[float] = None
     Γ: Optional[float] = None
     Θ: Optional[float] = None
@@ -183,8 +175,8 @@ class BatchResult:
 
     job_id: str
     batch_id: str
-    market_date: date
     shard: int
+    market_date: date
 
     n_total: int = 0
     n_success: int = 0
