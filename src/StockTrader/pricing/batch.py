@@ -19,7 +19,7 @@ from typing import Callable, List, Optional
 
 from StockTrader.pricing.types import BatchResult, OptionRow, PricingResult
 from StockTrader.pricing.base import BasePricingModel
-from StockTrader.pricing.registry import get_model  # , get_default_model_name
+from StockTrader.pricing.registry import get_model
 
 from StockTrader.settings import logger
 
@@ -39,7 +39,12 @@ def price_df(
     results: List[dict] = []
     n_total = len(df)
 
-    for idx, row in df.iterrows():
+
+    #
+    # Note - including additional i-counter to accommodate progress_callback in the event of non-numeric index
+    #
+
+    for i, (idx, row) in enumerate(df.iterrows()):
         if progress_callback and idx % 100 == 0:
             progress_callback(idx, n_total)
 
@@ -109,7 +114,6 @@ def process_job_shard(
 
             if result.is_valid:
                 batch_result.n_success += 1
-                # if result.has_iv():
                 if result.has_iv:
                     batch_result.n_iv_solved += 1
                 else:
