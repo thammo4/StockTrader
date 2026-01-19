@@ -3,9 +3,9 @@
 #
 
 """
-Define dataclass containers for pricing inputs/outputs.
-
-Enforce consistent relationship between batch processor + pricing models.
+Implements dataclass containers for pricing inputs/outputs.
+Defines schema of input data (OptionRow), output data (PricingResult) and reporting/process data (BatchResult)
+to provide standardized interface.
 """
 
 
@@ -17,15 +17,6 @@ Enforce consistent relationship between batch processor + pricing models.
 #   dataclass method - adds special methods to user-def class
 #   field def - class var with type annotation
 #   asdict method - maps each dataclass object into a key-value dict of its fields
-
-# from dataclasses import dataclass, field, asdict
-
-# from typing import Optional, Dict, Any, List
-# from typing import Any, Dict, List, Optional
-# from typing import Any, Dict, List, Optional, Union
-# from datetime import date
-
-# DateField = Union[str, date]
 
 
 from dataclasses import dataclass, field, asdict
@@ -144,8 +135,6 @@ class PricingResult:
     @property
     def is_valid(self) -> bool:
         """Returns True if NPV compute ok"""
-        # return self.npv is not None and self.npv_err is not None
-        # return self.npv is not None and self.npv_err is None and math.isfinite(self.npv)
         if self.npv is None:
             return False
         if self.npv_err is not None:
@@ -185,7 +174,6 @@ class PricingResult:
             "compute_ms",
         ]
         d = asdict(self)
-        # return {k: d[k] for k in output_fields if d.get(k) is not None}
         return {k: d.get(k) for k in output_fields}
 
 
@@ -210,7 +198,8 @@ class BatchResult:
     # Note - dataclasses field(default_factory)
     #
     # Specifies default value for mutable field (e.g. list, dict)
-    # Ensures every instance keeps its own mutable type
+    # Ensures every instance keeps its own mutable type.
+    # This means each BatchResult instance will have its own result set list (opposed to a shared/common one amongst all BatchResults)
     #
 
     results: List[PricingResult] = field(default_factory=list)
