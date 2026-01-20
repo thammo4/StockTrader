@@ -43,7 +43,7 @@ dependencies = [
 dev=['black==25.1.0', 'mypy', 'pytest', 'pre-commit', 'pytest-subprocess']
 
 [tool.setuptools.packages.find]
-where=["src", "scripts", "utils"]
+where=["infrastructure/redis", "src", "scripts", "utils"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "scripts", "utils"]
