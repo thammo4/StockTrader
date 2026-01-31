@@ -7,7 +7,7 @@
 QuantLib Context Management.
 
 Functionality/Purpose:
-        1. Map string dates to QuantLib date objects (e.g. ql.Date)
+        1. Map dates to QuantLib date objects (e.g. ql.Date)
         2. Define global QuantLib evaluation dates prior to pricing
         3. Construct shared calendar and day counter QuantLib objects
 """
