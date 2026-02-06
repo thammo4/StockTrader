@@ -190,6 +190,8 @@ services:
     volumes:
       - .:/opt/stocktrader
       - dbt-logs:/opt/stocktrader/dbt/logs
+    ports:
+      - "8081:8081"
     command: tail -f /dev/null
     profiles: ["core", "dev", "prod"]
 
