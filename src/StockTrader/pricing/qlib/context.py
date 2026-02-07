@@ -13,7 +13,7 @@ Functionality/Purpose:
 """
 
 import QuantLib as ql
-from typing import Tuple
+from typing import Optional, Tuple
 from datetime import date
 
 
@@ -40,7 +40,7 @@ class QLibContext:
 #
 
 # _context: QLibContext = None
-_context: Optional[QlibContext] = None
+_context: Optional[QLibContext] = None
 
 
 def get_context() -> QLibContext:
