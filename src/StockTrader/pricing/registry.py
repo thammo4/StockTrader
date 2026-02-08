@@ -79,18 +79,23 @@ def get_model(name: str, **kwargs) -> BasePricingModel:
 def list_models() -> List[Dict[str, Any]]:
     """List registered models + model metadata"""
 
+    # models = []
+    # for name, cls in _MODEL_REGISTRY.items():
+    #     models.append(
+    #         {
+    #             "name": name,
+    #             "class": cls.__name__,
+    #             "description": getattr(cls, "description", ""),
+    #             "supports_greeks": getattr(cls, "supports_greeks", True),
+    #             "supports_iv": getattr(cls, "supports_iv", True),
+    #         }
+    #     )
+
+    # return models
+
     models = []
     for name, cls in _MODEL_REGISTRY.items():
-        models.append(
-            {
-                "name": name,
-                "class": cls.__name__,
-                "description": getattr(cls, "description", ""),
-                "supports_greeks": getattr(cls, "supports_greeks", True),
-                "supports_iv": getattr(cls, "supports_iv", True),
-            }
-        )
-
+        models.append({"name":name, "class":cls.__name__})
     return models
 
 
