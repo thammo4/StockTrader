@@ -18,8 +18,11 @@ class BasePricingModel(ABC):
     Required:
             - name: Unique identifier for registry lookup.
             - price(): Core pricer.
-            - validate_inputs(): Parameter validator.
     """
+
+    name: str
+    description: str = ""
+
 
     def __init__(self, **kwargs):
         """
@@ -31,12 +34,8 @@ class BasePricingModel(ABC):
         self._config = kwargs
         self.configure(**kwargs)
 
-    def configure(self, **kwargs) -> None:
-        """
-        Apply model-specific config.
-        """
-
-        pass
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(name='{self.name}')"
 
     @abstractmethod
     def price(self, option: OptionRow, compute_greeks: bool = True, compute_iv: bool = True) -> PricingResult:
@@ -54,9 +53,15 @@ class BasePricingModel(ABC):
 
         pass
 
-    @abstractmethod
-    def validate_inputs(self, option: OptionRow) -> Optional[str]:
-        """Validate input ranges"""
+
+    def configure(self, **kwargs) -> None:
+        """
+        Apply model-specific config.
+
+        EX:
+            def configure (self, **kwargs) -> None:
+                self.n_steps = kwargs.get("n_steps", 225)
+        """
         pass
 
     def get_config(self) -> Dict[str, Any]:
@@ -66,12 +71,23 @@ class BasePricingModel(ABC):
         # Note - Undefined ABC var references (name, supports_greeks, supports_iv)
         # In subsequent subclass implementations, these must be deefined.
         #
+
+        # return {
+        #     "name": self.name,
+        #     "supports_greeks": self.supports_greeks,
+        #     "supports_iv": self.supports_iv,
+        #     **self._config,
+        # }
+
         return {
             "name": self.name,
-            "supports_greeks": self.supports_greeks,
-            "supports_iv": self.supports_iv,
-            **self._config,
+            "description": self.description
         }
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(name='{self.name}')"
+    # @abstractmethod
+    # def validate_inputs(self, option: OptionRow) -> Optional[str]:
+    #     """Validate input ranges"""
+    #     pass
+
+    def validate_inputs(self, option: OptionRow) -> Optional[str]:
+        return None
