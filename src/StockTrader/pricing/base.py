@@ -38,14 +38,13 @@ class BasePricingModel(ABC):
         return f"{self.__class__.__name__}(name='{self.name}')"
 
     @abstractmethod
-    def price(self, option: OptionRow, compute_greeks: bool = True, compute_iv: bool = True) -> PricingResult:
+    # def price(self, option: OptionRow, compute_greeks: bool = True, compute_iv: bool = True) -> PricingResult:
+    def price (self, option: OptionRow) -> PricingResult:
         """
         Compute theoretical option price (and Greeks, IV).
 
         Args:
                 - option: Immutable container with pricing inputs.
-                - compute_greeks: compute delta, gamma, theta, vega, rho.
-                - compute_iv: solve for implied volatility.
 
         Returns:
                 - PricingResult with computed values and error information.
@@ -81,7 +80,8 @@ class BasePricingModel(ABC):
 
         return {
             "name": self.name,
-            "description": self.description
+            "description": self.description,
+            **self._config
         }
 
     # @abstractmethod
