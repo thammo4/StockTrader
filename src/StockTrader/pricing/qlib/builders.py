@@ -32,13 +32,9 @@ def build_market_date_handles(
     eval_date: ql.Date, S: float, r: float, q: float, σ: float
 ) -> Tuple[ql.QuoteHandle, ql.YieldTermStructureHandle, ql.YieldTermStructureHandle, ql.BlackVolTermStructureHandle]:
     ctx = get_context()
-
     spotH = ql.QuoteHandle(ql.SimpleQuote(S))
-
     rateH = ql.YieldTermStructureHandle(ql.FlatForward(eval_date, r, ctx.day_counter))
-
     divH = ql.YieldTermStructureHandle(ql.FlatForward(eval_date, q, ctx.day_counter))
-
     volH = ql.BlackVolTermStructureHandle(ql.BlackConstantVol(eval_date, ctx.calendar, σ, ctx.day_counter))
 
     return spotH, rateH, divH, volH
