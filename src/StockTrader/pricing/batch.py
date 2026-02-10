@@ -28,14 +28,13 @@ from StockTrader.settings import logger
 def price_df(
     df: pd.DataFrame,
     model: BasePricingModel,
-    compute_greeks: bool = True,
-    compute_iv: bool = True,
     progress_callback: Optional[Callable[[int, int], None]] = None,
     **model_kwargs,
 ) -> pd.DataFrame:
 
     logger.info(f"Starting batch pricing: n={len(df)} contracts")
-    logger.info(f"model={model.name}, greeks={compute_greeks}, iv={compute_iv}")
+    # logger.info(f"model={model.name}, greeks={compute_greeks}, iv={compute_iv}")
+    logger.info(f"model={model.name}")
 
     results: List[dict] = []
     n_total = len(df)
@@ -50,13 +49,7 @@ def price_df(
 
         try:
             option_row = OptionRow.from_series(row)
-
-            validation_error = model.validate_inputs(option_row)
-            if validation_error:
-                results.append(PricingResult(occ=option_row.occ, npv_err=f"VALIDATION: {validation_error}").to_dict())
-                continue
-
-            result = model.price(option_row, compute_greeks=compute_greeks, compute_iv=compute_iv)
+            result = model.price(option_row)
             results.append(result.to_dict())
 
         except Exception as e:
@@ -86,8 +79,6 @@ def process_job_shard(
     market_date: date,
     shard: int,
     model_name: str,
-    compute_greeks: bool = True,
-    compute_iv: bool = True,
     **model_kwargs,
 ) -> BatchResult:
 
@@ -103,14 +94,8 @@ def process_job_shard(
 
     for idx, row in df.iterrows():
         try:
-            option = OptionRow.from_series(row)
-            validation_error = model.validate_inputs(option)
-            if validation_error:
-                batch_result.n_failed += 1
-                batch_result.results.append(PricingResult(occ=option.occ, npv_err=f"VALIDATION: {validation_error}"))
-                continue
-
-            result = model.price(option, compute_greeks=compute_greeks, compute_iv=compute_iv)
+            option_row = OptionRow.from_series(row)
+            result = model.price(option_row)
 
             if result.is_valid:
                 batch_result.n_success += 1
