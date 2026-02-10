@@ -71,23 +71,11 @@ class BasePricingModel(ABC):
         # In subsequent subclass implementations, these must be deefined.
         #
 
-        # return {
-        #     "name": self.name,
-        #     "supports_greeks": self.supports_greeks,
-        #     "supports_iv": self.supports_iv,
-        #     **self._config,
-        # }
-
         return {
             "name": self.name,
             "description": self.description,
             **self._config
         }
-
-    # @abstractmethod
-    # def validate_inputs(self, option: OptionRow) -> Optional[str]:
-    #     """Validate input ranges"""
-    #     pass
 
     def validate_inputs(self, option: OptionRow) -> Optional[str]:
         return None
