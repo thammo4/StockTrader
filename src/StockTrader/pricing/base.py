@@ -23,7 +23,6 @@ class BasePricingModel(ABC):
     name: str
     description: str = ""
 
-
     def __init__(self, **kwargs):
         """
         Initialize model.
@@ -38,7 +37,6 @@ class BasePricingModel(ABC):
         return f"{self.__class__.__name__}(name='{self.name}')"
 
     @abstractmethod
-    # def price(self, option: OptionRow, compute_greeks: bool = True, compute_iv: bool = True) -> PricingResult:
     def price (self, option: OptionRow) -> PricingResult:
         """
         Compute theoretical option price (and Greeks, IV).
@@ -51,7 +49,6 @@ class BasePricingModel(ABC):
         """
 
         pass
-
 
     def configure(self, **kwargs) -> None:
         """
@@ -76,6 +73,3 @@ class BasePricingModel(ABC):
             "description": self.description,
             **self._config
         }
-
-    def validate_inputs(self, option: OptionRow) -> Optional[str]:
-        return None
