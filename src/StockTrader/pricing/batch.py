@@ -64,6 +64,7 @@ def process_job_shard(
             occ = row.get("occ", f"row_{idx}")
             logger.error(f"Error processing occ={occ}: {e}")
             batch_result.n_failed += 1
+            batch_result.n_iv_failed += 1
             batch_result.results.append(PricingResult(occ=str(occ), npv_err=f"UNEXPECTED: {str(e)[:100]}"))
 
     batch_result.elapsed_sec = time.time() - start_time
