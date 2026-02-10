@@ -26,6 +26,11 @@ from datetime import date
 import math
 
 
+
+#
+# Batch Processing Input
+#
+
 @dataclass(frozen=True)
 class OptionRow:
     """
@@ -98,6 +103,10 @@ class OptionRow:
         )
 
 
+#
+# Batch Processing Output
+#
+
 @dataclass
 class PricingResult:
     """
@@ -168,6 +177,10 @@ class PricingResult:
         d = asdict(self)
         return {k: d.get(k) for k in output_fields}
 
+
+#
+# Batch Processing Summary
+#
 
 @dataclass
 class BatchResult:
