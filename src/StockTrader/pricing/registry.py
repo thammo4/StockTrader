@@ -71,7 +71,8 @@ def get_model(name: str, **kwargs) -> BasePricingModel:
     try:
         return model_class(**kwargs)
     except Exception as e:
-        raise ModelConfigurationError(f"Failed model instantiate: '{name}': {e}")
+        # raise ModelConfigurationError(f"Failed model instantiate: '{name}': {e}")
+        raise ModelConfigurationError(f"Failed model instantiate: '{name}':{e}") from e
 
 
 def list_models() -> List[Dict[str, Any]]:
