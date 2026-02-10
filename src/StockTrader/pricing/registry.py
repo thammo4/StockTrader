@@ -45,7 +45,6 @@ def register_model(cls: Type[BasePricingModel]) -> Type[BasePricingModel]:
             class BigBadPricingModel(BasePricingModel):
                     name = "big_bad_pricing_model"
     """
-
     if not hasattr(cls, "name") or not cls.name:
         raise ModelConfigurationError(f"Model class {cls.__name__} requires 'name' attribute")
 
@@ -63,7 +62,6 @@ def register_model(cls: Type[BasePricingModel]) -> Type[BasePricingModel]:
 
 def get_model(name: str, **kwargs) -> BasePricingModel:
     """Factory function to instantiate existing registered pricing model"""
-
     if name not in _MODEL_REGISTRY:
         model_list = list(_MODEL_REGISTRY.keys())
         raise ModelNotFoundError(f"Model '{name}' not found. Models: {model_list}")
@@ -78,7 +76,6 @@ def get_model(name: str, **kwargs) -> BasePricingModel:
 
 def list_models() -> List[Dict[str, Any]]:
     """List registered models + model metadata"""
-
     models = []
     for name, cls in _MODEL_REGISTRY.items():
         models.append({"name":name, "class":cls.__name__})
@@ -87,5 +84,4 @@ def list_models() -> List[Dict[str, Any]]:
 
 def is_registered(name: str) -> bool:
     """Check if model already registered."""
-
     return name in _MODEL_REGISTRY

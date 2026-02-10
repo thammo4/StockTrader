@@ -26,7 +26,6 @@ from datetime import date
 import math
 
 
-
 #
 # Batch Processing Input
 #
@@ -75,7 +74,7 @@ class OptionRow:
 
     @classmethod
     def from_series(cls, row: Any) -> "OptionRow":
-        """Construct dataframe row from pandas series"""
+        """Construct OptionRow from pandas series"""
 
         return cls(
             market_date=row["market_date"],
