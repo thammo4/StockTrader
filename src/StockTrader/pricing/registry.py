@@ -20,7 +20,7 @@ Example:
 """
 
 
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, List, Type
 
 from StockTrader.pricing.base import BasePricingModel
 from StockTrader.pricing.errors import ModelNotFoundError, ModelConfigurationError
@@ -79,20 +79,6 @@ def get_model(name: str, **kwargs) -> BasePricingModel:
 def list_models() -> List[Dict[str, Any]]:
     """List registered models + model metadata"""
 
-    # models = []
-    # for name, cls in _MODEL_REGISTRY.items():
-    #     models.append(
-    #         {
-    #             "name": name,
-    #             "class": cls.__name__,
-    #             "description": getattr(cls, "description", ""),
-    #             "supports_greeks": getattr(cls, "supports_greeks", True),
-    #             "supports_iv": getattr(cls, "supports_iv", True),
-    #         }
-    #     )
-
-    # return models
-
     models = []
     for name, cls in _MODEL_REGISTRY.items():
         models.append({"name":name, "class":cls.__name__})
@@ -103,9 +89,3 @@ def is_registered(name: str) -> bool:
     """Check if model already registered."""
 
     return name in _MODEL_REGISTRY
-
-
-# def get_default_model_name () -> str:
-# 	"""Return default model name for system"""
-#
-# 	return "crr_bopm_amr_divs"
