@@ -78,7 +78,7 @@ def build_option_with_engine(
     exercise = build_amr_exercise(eval_date, expr_date)
     option = build_vanilla_option(payoff, exercise)
 
-    spotH, rateH, divH, volH = build_market_date_handles(eval_date, S, r, q, σ)
+    spotH, rateH, divH, volH = build_market_data_handles(eval_date, S, r, q, σ)
 
     bsm_process = build_bsm_process(spotH, rateH, divH, volH)
 
