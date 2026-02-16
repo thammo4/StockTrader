@@ -3,6 +3,8 @@
 #
 
 """
+Defines Data Transfer Objects (DTO)
+
 Implements dataclass containers for pricing inputs/outputs.
 Defines schema of input data (OptionRow), output data (PricingResult) and reporting/process data (BatchResult)
 to provide standardized interface.
@@ -24,6 +26,11 @@ from typing import Any, Dict, List, Optional
 from datetime import date
 
 import math
+
+
+#
+# Batch Processing Input
+#
 
 
 @dataclass(frozen=True)
@@ -70,7 +77,7 @@ class OptionRow:
 
     @classmethod
     def from_series(cls, row: Any) -> "OptionRow":
-        """Construct dataframe row from pandas series"""
+        """Construct OptionRow from pandas series"""
 
         return cls(
             market_date=row["market_date"],
@@ -96,6 +103,11 @@ class OptionRow:
             volume=row.get("volume"),
             oi=row.get("oi"),
         )
+
+
+#
+# Batch Processing Output
+#
 
 
 @dataclass
@@ -167,6 +179,11 @@ class PricingResult:
         ]
         d = asdict(self)
         return {k: d.get(k) for k in output_fields}
+
+
+#
+# Batch Processing Summary
+#
 
 
 @dataclass

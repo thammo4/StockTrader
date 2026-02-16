@@ -15,68 +15,13 @@ Designed to integrate with Redis job schema for distributed compute.
 
 import time
 import pandas as pd
-from typing import Callable, List, Optional
+from typing import List
 from datetime import date
 
 from StockTrader.pricing.types import BatchResult, OptionRow, PricingResult
-from StockTrader.pricing.base import BasePricingModel
 from StockTrader.pricing.registry import get_model
 
 from StockTrader.settings import logger
-
-
-def price_df(
-    df: pd.DataFrame,
-    model: BasePricingModel,
-    compute_greeks: bool = True,
-    compute_iv: bool = True,
-    progress_callback: Optional[Callable[[int, int], None]] = None,
-    **model_kwargs,
-) -> pd.DataFrame:
-
-    logger.info(f"Starting batch pricing: n={len(df)} contracts")
-    logger.info(f"model={model.name}, greeks={compute_greeks}, iv={compute_iv}")
-
-    results: List[dict] = []
-    n_total = len(df)
-
-    #
-    # Note - including additional i-counter to accommodate progress_callback in the event of non-numeric index
-    #
-
-    for i, (idx, row) in enumerate(df.iterrows()):
-        if progress_callback and i % 100 == 0:
-            progress_callback(idx, n_total)
-
-        try:
-            option_row = OptionRow.from_series(row)
-
-            validation_error = model.validate_inputs(option_row)
-            if validation_error:
-                results.append(PricingResult(occ=option_row.occ, npv_err=f"VALIDATION: {validation_error}").to_dict())
-                continue
-
-            result = model.price(option_row, compute_greeks=compute_greeks, compute_iv=compute_iv)
-            results.append(result.to_dict())
-
-        except Exception as e:
-            occ = row.get("occ", f"row_{idx}")
-            logger.error(f"Unexpected pricing error, occ={occ}: {e}")
-            results.append(
-                PricingResult(occ=str(occ), npv_err=f"UNEXPECTED: {type(e).__name__}: {str(e)[:100]}").to_dict()
-            )
-
-    df_results = pd.DataFrame(results)
-
-    df_output = df.merge(df_results, on="occ", how="left", suffixes=("", "_result"))
-
-    n_success = df_results["npv"].notna().sum()
-    n_iv = df_results["σ_iv"].notna().sum() if "σ_iv" in df_results else 0
-
-    logger.info(f"Batch done: {n_success}/{n_total} priced ok.")
-    logger.info(f"{n_iv} σ_iv solved.")
-
-    return df_output
 
 
 def process_job_shard(
@@ -86,8 +31,6 @@ def process_job_shard(
     market_date: date,
     shard: int,
     model_name: str,
-    compute_greeks: bool = True,
-    compute_iv: bool = True,
     **model_kwargs,
 ) -> BatchResult:
 
@@ -103,30 +46,26 @@ def process_job_shard(
 
     for idx, row in df.iterrows():
         try:
-            option = OptionRow.from_series(row)
-            validation_error = model.validate_inputs(option)
-            if validation_error:
-                batch_result.n_failed += 1
-                batch_result.results.append(PricingResult(occ=option.occ, npv_err=f"VALIDATION: {validation_error}"))
-                continue
+            option_row = OptionRow.from_series(row)
+            pricing_result = model.price(option_row)
 
-            result = model.price(option, compute_greeks=compute_greeks, compute_iv=compute_iv)
-
-            if result.is_valid:
+            if pricing_result.is_valid:
                 batch_result.n_success += 1
-                if result.has_iv:
+                if pricing_result.has_iv:
                     batch_result.n_iv_solved += 1
                 else:
                     batch_result.n_iv_failed += 1
             else:
                 batch_result.n_failed += 1
+                batch_result.n_iv_failed += 1  # cant compute implied volatility without first having model price
 
-            batch_result.results.append(result)
+            batch_result.results.append(pricing_result)
 
         except Exception as e:
             occ = row.get("occ", f"row_{idx}")
             logger.error(f"Error processing occ={occ}: {e}")
             batch_result.n_failed += 1
+            batch_result.n_iv_failed += 1
             batch_result.results.append(PricingResult(occ=str(occ), npv_err=f"UNEXPECTED: {str(e)[:100]}"))
 
     batch_result.elapsed_sec = time.time() - start_time

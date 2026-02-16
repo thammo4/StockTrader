@@ -28,17 +28,14 @@ def build_vanilla_option(payoff: ql.PlainVanillaPayoff, exercise: ql.Exercise) -
     return ql.VanillaOption(payoff, exercise)
 
 
-def build_market_date_handles(
+# def build_market_date_handles(
+def build_market_data_handles(
     eval_date: ql.Date, S: float, r: float, q: float, σ: float
 ) -> Tuple[ql.QuoteHandle, ql.YieldTermStructureHandle, ql.YieldTermStructureHandle, ql.BlackVolTermStructureHandle]:
     ctx = get_context()
-
     spotH = ql.QuoteHandle(ql.SimpleQuote(S))
-
     rateH = ql.YieldTermStructureHandle(ql.FlatForward(eval_date, r, ctx.day_counter))
-
     divH = ql.YieldTermStructureHandle(ql.FlatForward(eval_date, q, ctx.day_counter))
-
     volH = ql.BlackVolTermStructureHandle(ql.BlackConstantVol(eval_date, ctx.calendar, σ, ctx.day_counter))
 
     return spotH, rateH, divH, volH
@@ -77,7 +74,7 @@ def build_option_with_engine(
     exercise = build_amr_exercise(eval_date, expr_date)
     option = build_vanilla_option(payoff, exercise)
 
-    spotH, rateH, divH, volH = build_market_date_handles(eval_date, S, r, q, σ)
+    spotH, rateH, divH, volH = build_market_data_handles(eval_date, S, r, q, σ)
 
     bsm_process = build_bsm_process(spotH, rateH, divH, volH)
 

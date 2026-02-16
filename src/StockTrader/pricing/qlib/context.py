@@ -7,13 +7,13 @@
 QuantLib Context Management.
 
 Functionality/Purpose:
-        1. Map string dates to QuantLib date objects (e.g. ql.Date)
+        1. Map dates to QuantLib date objects (e.g. ql.Date)
         2. Define global QuantLib evaluation dates prior to pricing
         3. Construct shared calendar and day counter QuantLib objects
 """
 
 import QuantLib as ql
-from typing import Tuple
+from typing import Optional
 from datetime import date
 
 
@@ -40,7 +40,7 @@ class QLibContext:
 #
 
 # _context: QLibContext = None
-_context: Optional[QlibContext] = None
+_context: Optional[QLibContext] = None
 
 
 def get_context() -> QLibContext:
