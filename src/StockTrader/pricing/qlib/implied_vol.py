@@ -34,11 +34,6 @@ class BrentIVConfig:
 	objective_atol: float = 1e-6
 
 
-# def _require_scipy() -> None:
-# 	if brentq is None:
-# 		raise ImportError("need scipy", "install scipy in pricing worker env with pip")
-
-
 def _is_finite (x: float) -> bool:
 	return x is not None and isinstance(x, (int,float)) and math.isfinite(float(x))
 
