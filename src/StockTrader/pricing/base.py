@@ -37,7 +37,7 @@ class BasePricingModel(ABC):
         return f"{self.__class__.__name__}(name='{self.name}')"
 
     @abstractmethod
-    def price (self, option: OptionRow) -> PricingResult:
+    def price(self, option: OptionRow) -> PricingResult:
         """
         Compute theoretical option price (and Greeks, IV).
 
@@ -63,8 +63,4 @@ class BasePricingModel(ABC):
     def get_config(self) -> Dict[str, Any]:
         """Return current config for logging/debugging."""
 
-        return {
-            "name": self.name,
-            "description": self.description,
-            **self._config
-        }
+        return {"name": self.name, "description": self.description, **self._config}

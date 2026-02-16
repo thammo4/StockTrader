@@ -32,6 +32,7 @@ import math
 # Batch Processing Input
 #
 
+
 @dataclass(frozen=True)
 class OptionRow:
     """
@@ -108,6 +109,7 @@ class OptionRow:
 # Batch Processing Output
 #
 
+
 @dataclass
 class PricingResult:
     """
@@ -182,6 +184,7 @@ class PricingResult:
 #
 # Batch Processing Summary
 #
+
 
 @dataclass
 class BatchResult:

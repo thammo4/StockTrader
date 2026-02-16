@@ -23,6 +23,7 @@ from StockTrader.pricing.registry import get_model
 
 from StockTrader.settings import logger
 
+
 def process_job_shard(
     df: pd.DataFrame,
     job_id: str,
@@ -56,7 +57,7 @@ def process_job_shard(
                     batch_result.n_iv_failed += 1
             else:
                 batch_result.n_failed += 1
-                batch_result.n_iv_failed += 1 # cant compute implied volatility without first having model price
+                batch_result.n_iv_failed += 1  # cant compute implied volatility without first having model price
 
             batch_result.results.append(pricing_result)
 

@@ -30,11 +30,7 @@ def build_vanilla_option(payoff: ql.PlainVanillaPayoff, exercise: ql.Exercise) -
 
 # def build_market_date_handles(
 def build_market_data_handles(
-    eval_date: ql.Date,
-    S: float,
-    r: float,
-    q: float,
-    σ: float
+    eval_date: ql.Date, S: float, r: float, q: float, σ: float
 ) -> Tuple[ql.QuoteHandle, ql.YieldTermStructureHandle, ql.YieldTermStructureHandle, ql.BlackVolTermStructureHandle]:
     ctx = get_context()
     spotH = ql.QuoteHandle(ql.SimpleQuote(S))
