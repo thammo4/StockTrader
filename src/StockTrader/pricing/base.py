@@ -63,11 +63,6 @@ class BasePricingModel(ABC):
     def get_config(self) -> Dict[str, Any]:
         """Return current config for logging/debugging."""
 
-        #
-        # Note - Undefined ABC var references (name, supports_greeks, supports_iv)
-        # In subsequent subclass implementations, these must be deefined.
-        #
-
         return {
             "name": self.name,
             "description": self.description,
