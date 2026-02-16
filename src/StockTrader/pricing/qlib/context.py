@@ -13,7 +13,6 @@ Functionality/Purpose:
 """
 
 import QuantLib as ql
-# from typing import Optional, Tuple
 from typing import Optional
 from datetime import date
 

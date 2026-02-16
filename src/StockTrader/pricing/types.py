@@ -3,6 +3,8 @@
 #
 
 """
+Defines Data Transfer Objects (DTO)
+
 Implements dataclass containers for pricing inputs/outputs.
 Defines schema of input data (OptionRow), output data (PricingResult) and reporting/process data (BatchResult)
 to provide standardized interface.
