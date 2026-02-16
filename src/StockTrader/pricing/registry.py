@@ -5,8 +5,6 @@
 """
 Pricing model registry with decorator based object registration.
 
-Factory Pattern.
-
 Oks models to self-register by decorating class definitions for ez new model addition.
 
 Example:
@@ -34,6 +32,10 @@ from StockTrader.settings import logger
 _MODEL_REGISTRY: Dict[str, Type[BasePricingModel]] = {}
 
 
+#
+# Add New Model to Registry
+#
+
 def register_model(cls: Type[BasePricingModel]) -> Type[BasePricingModel]:
     """
     Register-a-Pricing-Model Decorator.
@@ -60,6 +62,10 @@ def register_model(cls: Type[BasePricingModel]) -> Type[BasePricingModel]:
     return cls
 
 
+#
+# Retrieve Model from Registry Using Model Name
+#
+
 def get_model(name: str, **kwargs) -> BasePricingModel:
     """Factory function to instantiate existing registered pricing model"""
     if name not in _MODEL_REGISTRY:
@@ -75,13 +81,16 @@ def get_model(name: str, **kwargs) -> BasePricingModel:
         raise ModelConfigurationError(f"Failed model instantiate: '{name}':{e}") from e
 
 
+#
+# Get Information about Registry State
+#
+
 def list_models() -> List[Dict[str, Any]]:
     """List registered models + model metadata"""
     models = []
     for name, cls in _MODEL_REGISTRY.items():
         models.append({"name":name, "class":cls.__name__})
     return models
-
 
 def is_registered(name: str) -> bool:
     """Check if model already registered."""
