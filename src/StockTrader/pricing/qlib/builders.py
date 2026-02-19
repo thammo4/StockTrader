@@ -15,6 +15,7 @@ from typing import Tuple
 
 from StockTrader.pricing.qlib.context import get_context
 
+
 @dataclass
 class MarketQuoteHandles:
     spotQ: ql.SimpleQuote
@@ -38,18 +39,12 @@ def build_crr_binom_engine(process: ql.BlackScholesMertonProcess, n_steps: int) 
     return ql.BinomialVanillaEngine(process, "crr", n_steps)
 
 
-def build_market_data_handles(
-    eval_date: ql.Date,
-    S:float,
-    r: float,
-    q: float,
-    σ: float
-) -> Tuple[
+def build_market_data_handles(eval_date: ql.Date, S: float, r: float, q: float, σ: float) -> Tuple[
     ql.QuoteHandle,
     ql.YieldTermStructureHandle,
     ql.YieldTermStructureHandle,
     ql.BlackVolTermStructureHandle,
-    MarketQuoteHandles
+    MarketQuoteHandles,
 ]:
     ctx = get_context()
 
@@ -61,15 +56,10 @@ def build_market_data_handles(
     rateH = ql.YieldTermStructureHandle(ql.FlatForward(eval_date, r, ctx.day_counter))
     divH = ql.YieldTermStructureHandle(ql.FlatForward(eval_date, q, ctx.day_counter))
 
-    volTS = ql.BlackConstantVol(
-        eval_date,
-        ctx.calendar,
-        ql.QuoteHandle(volQ),
-        ctx.day_counter
-    )
+    volTS = ql.BlackConstantVol(eval_date, ctx.calendar, ql.QuoteHandle(volQ), ctx.day_counter)
     volH = ql.BlackVolTermStructureHandle(volTS)
 
-    return spotH, rateH, divH, volH, MarketQuoteHandles(spotQ=spotQ,volQ=volQ)
+    return spotH, rateH, divH, volH, MarketQuoteHandles(spotQ=spotQ, volQ=volQ)
 
 
 def build_option_with_engine(
@@ -85,7 +75,7 @@ def build_option_with_engine(
 ) -> Tuple[
     ql.VanillaOption,
     # ql.BlackScholesMertonProcess,
-    MarketQuoteHandles
+    MarketQuoteHandles,
 ]:
     ctx = get_context()
 
