@@ -36,11 +36,23 @@ StockTrader/
 │       	  └── int_symbols__active_status.sql
 │       	  └── data_quality/
 │           	  └── int_options__data_quality_metrics.sql
+│       	  └── dimensions/
+│           	  └── int_dim__daily_dividends.sql
+│           	  └── int_dim__daily_risk_free.sql
+│           	  └── int_dim__market_dates.sql
+│           	  └── int_dim__symbols_market_dates.sql
 │       	  └── options_pricing/
 │           	  └── int_ohlcv__rolling_vol.sql
-│           	  └── int_options__calc_ttm.sql
+│           	  └── int_options__calcs_moneyness.sql
+│           	  └── int_options__filters_bad_prices.sql
+│           	  └── int_options__joins_dividends.sql
+│           	  └── int_options__joins_spots_and_vols.sql
 │       	  └── reference/
 │           	  └── int_quotes__root_symbols_map.sql
+│       └── marts/
+│       	  └── options_pricing/
+│                  └── bopm/
+│                       └── mart_bopm_pays_dividends.sql
 │       └── staging/
 │       	  └── sources.yml
 │       	  └── fred/
@@ -74,6 +86,10 @@ StockTrader/
 │           └── <landing directory for quote data>
 │           └── <SYMBOL.parquet>
 ├── infrastructure/
+│   └── redis/
+│       └── job_producer.py
+│       └── job_schema.py
+│       └── job_worker.py
 │   └── terraform/
 │       └── main.tf
 │       └── outputs.tf
@@ -86,8 +102,10 @@ StockTrader/
 │   └── create_dividend_parquet.py
 │   └── create_fred_parquet.py
 │   └── create_ohlcv_parquet.py
+│   └── ddb_minio_batch_export.sh
 │   └── fetch_active_options.py
 │   └── fetch_active_params.py
+│   └── generate_dbt_universe_seed.sh
 │   └── ingest_fred_rates.py
 │   └── ingest_tradier_dividends.py
 │   └── ingest_tradier_options.py
@@ -99,6 +117,18 @@ StockTrader/
 │       └── settings.py
 │       └── tradier.py
 │       └── freddy.py
+│       └── pricing/
+│           └── base.py
+│           └── batch.py
+│           └── errors.py
+│           └── registry.py
+│           └── types.py
+│           └── qlib/
+│               └── builders.py
+│               └── context.py
+│               └── implied_vol.py
+│               └── models/
+│               	└── crr_bopm_amr_divs.py
 └── tests/
 │   └── config.py
 │   └── test_freddy.py
