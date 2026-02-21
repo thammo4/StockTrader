@@ -45,9 +45,13 @@ while [[ $# -gt 0 ]]; do
 			BATCH_ID="$2"
 			shift 2
 			;;
+		--n-shards)
+			N_SHARDS="$2"
+			shift 2
+			;;
 		*)
 			echo "Unknown option: $1"
-			echo "Usage: $0 [--dry-run] [--last-run-date YYYY-MM-DD] [--verbose]"
+			echo "Usage: $0 [--n-shards N] [--batch-id ID] [--last-run-date YYYY-MM-DD] [--dry-run] [--verbose]"
 			exit 1
 			;;
 	esac
