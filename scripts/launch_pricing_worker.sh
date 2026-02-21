@@ -54,10 +54,17 @@ log "Launching $N_WORKERS workers, model=$MODEL"
 log "redis=$REDIS_URL, minio=$MINIO_ENDPOINT"
 
 
+# PIDS=()
+# for i in $(seq 1 "$N_WORKERS"); do
+# 	python3.12 -m infrastructure.redis.job_worker --model "$MODEL" --max-jobs "$MAX_JOBS" --timeout 10 & PIDS+=($!)
+# 	log "Worker $i started (pid=${PIDS[-1]})"
+# done
+
 PIDS=()
 for i in $(seq 1 "$N_WORKERS"); do
-	python3.12 -m infrastructure.redis.job_worker --model "$MODEL" --max-jobs "$MAX_JOBS" --timeout 10 & PIDS+=($!)
-	log "Worker $i started (pid=${PIDS[-1]})"
+	python3.12 -m infrastructure.redis.job_worker --model "$MODEL" --max-jobs "$MAX_JOBS" --timeout 10 & pid=$!
+	PIDS+=("$pid")
+	log "Worker $i started, pid=$pid"
 done
 
 log "All $N_WORKERS workers running..."
