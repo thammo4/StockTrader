@@ -200,7 +200,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Pricing Job Worker")
     parser.add_argument("--model", help="Registered pricing model name")
-    parser.add_argument("--n-steps", type=int, help="BOPM tree steps")
+    parser.add_argument("--n-steps", type=int, default=225, help="BOPM tree steps")
     parser.add_argument("--max-jobs", type=int, default=0, help="Exit after max_jobs")
     parser.add_argument("--timeout", type=int, default=5, help="Q poll timeout sec")
 
