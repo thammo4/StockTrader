@@ -68,11 +68,11 @@ DDB_CREATE_TARGET_SQL=$(cat << EOF
 		market_date 	DATE,
 		occ 			VARCHAR,
 		npv 			DOUBLE,
-		Δ 				DOUBLE,
-		Γ 				DOUBLE,
-		Θ 				DOUBLE,
-		ν 				DOUBLE,
-		ρ 				DOUBLE,
+		Δ 			DOUBLE,
+		Γ 			DOUBLE,
+		Θ 			DOUBLE,
+		ν 			DOUBLE,
+		ρ 			DOUBLE,
 		σ_iv 			DOUBLE,
 		npv_err 		VARCHAR,
 		greek_err 		VARCHAR,
@@ -117,7 +117,7 @@ DDB_SELECT_S3_SQL=$(cat << EOF
 		model_name::VARCHAR,
 		n_steps::INT,
 		compute_ms::DOUBLE,
-		'${BATCH_ID}' AS batch_id,
+		'batch_${BATCH_ID}' AS batch_id,
 		shard::INT,
 		CURRENT_TIMESTAMP::TIMESTAMPTZ AS ingest_ts
 	FROM read_parquet('${S3_PREFIX_GLOB}')
@@ -148,11 +148,31 @@ EOF
 )
 
 
+#
+# DDB EXECUTION HELPER FUNCTIONS
+#
+
+run_ddb () { duckdb "$DDB_PATH" -c "$1"; }
+run_ddb_s3 () { duckdb "$DDB_PATH" -c "${S3_CONFIG_SQL} $1"; }
+
+
 echo "ddb: path=${DDB_PATH}, target=${DDB_TARGET_TABLE}"
 echo "minio: endpoint=${MINIO_ENDPOINT}, access=${MINIO_ACCESS_KEY}, secret=${MINIO_SECRET_KEY}"
 echo "s3 prefix glob: ${S3_PREFIX_GLOB}"
 
-echo -e "s3 config:\n${S3_CONFIG_SQL}"
+echo -e "s3 config:\n${S3_CONFIG_SQL}";
+echo "-------"
+echo -e "create target:\n${DDB_CREATE_TARGET_SQL}";
+echo "-------"
+echo -e "dup check:\n${DDB_DUPLICATE_CHECK_SQL}";
+echo "-------"
+echo -e "select s3:\n${DDB_SELECT_S3_SQL}";
+echo "-------"
+echo -e "insert:\n${DDB_INSERT_SQL}";
+echo "-------"
+echo -e "import summary:\n${DDB_IMPORT_SUMMARY_SQL}";
+
+
 
 
 
