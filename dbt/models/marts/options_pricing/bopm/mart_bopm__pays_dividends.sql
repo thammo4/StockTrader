@@ -39,8 +39,8 @@ select
 	moneyness_category as mnys_cat,
 
 	-- Liquidity/Market Activity
-	volume,
-	open_interest as oi,
+	volume::int as volume,
+	open_interest::int as oi,
 
 	-- Audit References
 	rate_date_ref,
