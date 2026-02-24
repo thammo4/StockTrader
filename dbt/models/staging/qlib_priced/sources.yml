@@ -1,0 +1,19 @@
+#
+# FILE: `StockTrader/dbt/models/staging/qlib_priced/sources.yml`
+#
+
+version: 2
+
+sources:
+  - name: qlib_priced
+    # schema: main
+    schema: raw
+    description: >
+      Options pricing results computed with Python/QuantLib.
+      Imported to duckdb from MinIO pricing-outputs bucket via minio_ddb_batch_import.sh
+      Logically downstream of mart_bopm__pays_dividends dbt model.
+      Treated as new source to emphasize role as origin point of a new DAG which joins ingested options data to pricing information.
+    tables:
+      # - name: raw_pricing__outputs
+      - name: qlib_priced__bopm_dividends
+        description: "QuantLib-computed npv, greeks, σ_iv for mart_bopm__pays_dividends data."
