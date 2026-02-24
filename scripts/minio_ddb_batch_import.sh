@@ -37,15 +37,17 @@ MINIO_ACCESS_KEY="${MINIO_ROOT_USER}"
 MINIO_SECRET_KEY="${MINIO_ROOT_PASSWORD}"
 
 S3_PREFIX_GLOB="s3://pricing-outputs/batch_${BATCH_ID}/**/results.parquet"
-DDB_TARGET_TABLE="raw_pricing__outputs"
+DDB_TARGET_SCHEMA="raw"
+DDB_TARGET_TABLE="qlib_priced__bopm_dividends"
 
 [[ -f "$DDB_PATH" ]] || { log "ERROR: ddb n/a, path=$DDB_PATH"; exit 1; }
 
 #
-# Install DuckDB HTTPFS
+# Install DuckDB HTTPFS / Ensure Schema Exists
 #
 
 duckdb "$DDB_PATH" -c "INSTALL httpfs;" >/dev/null
+duckdb "$DDB_PATH" -c "CREATE SCHEMA IF NOT EXISTS raw;" > /dev/null
 
 
 #
@@ -72,7 +74,7 @@ EOF
 )
 
 DDB_CREATE_TARGET_SQL=$(cat << EOF
-	CREATE TABLE IF NOT EXISTS ${DDB_TARGET_TABLE} (
+	CREATE TABLE IF NOT EXISTS ${DDB_TARGET_SCHEMA}.${DDB_TARGET_TABLE} (
 		market_date 	DATE,
 		occ 			VARCHAR,
 		npv 			DOUBLE,
@@ -102,7 +104,7 @@ DDB_DUPLICATE_CHECK_SQL=$(cat << EOF
 			THEN 'SKIP: batch_id=' || '${BATCH_ID}' || ' exists with ' || COUNT(*)::VARCHAR || ' records.'
 			ELSE 'OK: batch_id=' || '${BATCH_ID}' || ' up next.'
 		END AS batch_duplicate_check
-	FROM ${DDB_TARGET_TABLE}
+	FROM ${DDB_TARGET_SCHEMA}.${DDB_TARGET_TABLE}
 	WHERE batch_id = '${BATCH_ID}'
 	;
 EOF
@@ -110,7 +112,7 @@ EOF
 
 DDB_DUPLICATE_COUNT_SQL=$(cat << EOF
 	SELECT COUNT(*)
-	  FROM ${DDB_TARGET_TABLE}
+	  FROM ${DDB_TARGET_SCHEMA}.${DDB_TARGET_TABLE}
 	 WHERE batch_id = '${BATCH_ID}'
 	;
 EOF
@@ -142,7 +144,7 @@ EOF
 )
 
 DDB_INSERT_SQL=$(cat << EOF
-	INSERT INTO ${DDB_TARGET_TABLE}
+	INSERT INTO ${DDB_TARGET_SCHEMA}.${DDB_TARGET_TABLE}
 	${DDB_SELECT_S3_SQL}
 
 EOF
@@ -156,7 +158,7 @@ DDB_IMPORT_SUMMARY_SQL=$(cat << EOF
 		COUNT(DISTINCT occ) AS n_occ,
 		SUM(CASE WHEN npv_err IS NULL THEN 1 ELSE 0 END) AS n_priced,
 		SUM(CASE WHEN npv_err IS NULL AND σ_iv_err IS NULL THEN 1 ELSE 0 END) AS n_iv_solved
-	FROM ${DDB_TARGET_TABLE}
+	FROM ${DDB_TARGET_SCHEMA}.${DDB_TARGET_TABLE}
 	WHERE batch_id = '${BATCH_ID}'
 	GROUP BY batch_id
 	;
@@ -207,14 +209,13 @@ run_ddb "$DDB_CREATE_TARGET_SQL"
 log "Verify non-duplicate batch, batch_id=${BATCH_ID}"
 run_ddb "$DDB_DUPLICATE_CHECK_SQL"
 
-# EXISTING_COUNT=$(run_ddb "$DDB_DUPLICATE_COUNT_SQL" | tail -n 1 | tr -d ' ')
 EXISTING_COUNT=$(run_ddb_csv "$DDB_DUPLICATE_COUNT_SQL")
 if [[ "$EXISTING_COUNT" -gt 0 ]]; then
 	log "SKIP batch=${BATCH_ID}, existing=${EXISTING_COUNT}";
 	exit 0
 fi
 
-log "Inserting batch=${BATCH_ID} from Mino"
+log "Inserting batch=${BATCH_ID} from MinIO"
 run_ddb_s3 "$DDB_INSERT_SQL"
 
 log "Import summary"
