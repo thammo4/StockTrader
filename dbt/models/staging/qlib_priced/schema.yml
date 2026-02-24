@@ -1,0 +1,34 @@
+#
+# FILE: `StockTrader/dbt/models/staging/qlib_priced/schema.yml`
+#
+
+version: 2
+
+models:
+  - name: stg_qlib_priced__outputs
+    description: >
+      QuantLib pricing results imported from MinIO pricing-outputs bucket.
+      Contains npv, greeks, and implied volatility (brent root finding algo).
+    meta:
+      owner: "deng"
+      data_source: "MINIO_BUCKET"
+    columns:
+      - name: market_date
+        description: "Trading date for which option contracts were priced (PK 1/2)."
+        tests:
+          - not_null
+      - name: occ
+        description: "OCC symbol (PK 2/2)."
+        tests:
+          - not_null
+      - name: model_name
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["crr_bopm_amr_divs"]
+              config: {severity: warn}
+    tests:
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1000000
+          max_value: 99000000
+          config: {severity: warn}
