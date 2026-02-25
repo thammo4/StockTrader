@@ -64,6 +64,10 @@ StockTrader/
 │           	  └── stg_tradier__ohlcv_bars.sql
 │           	  └── stg_tradier__options.sql
 │           	  └── stg_tradier__quotes.sql
+│       	  └── qlib_priced/
+│           	  └── schema.yml
+│           	  └── sources.yml
+│           	  └── stg_qlib_priced__outputs.sql
 │   └── tests/
 │       └── assert_options_market_prices_consistent.sql
 │       └── assert_options_market_prices_sufficient.sql
