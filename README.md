@@ -18,6 +18,7 @@ StockTrader/
 │       └── ci.yml
 │       └── dbt-ci.yml
 ├── airflow/
+│   └── Dockerfile
 │   └── dags/
 │       └── ingest_fred_rates_dag.py
 │       └── ingest_tradier_dividends_dag.py
