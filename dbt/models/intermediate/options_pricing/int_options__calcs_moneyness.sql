@@ -2,6 +2,12 @@
 -- FILE: `StockTrader/dbt/models/intermediate/options_pricing/int_options__calcs_moneyness.sql`
 --
 
+{{ config(
+	materialized='incremental',
+	incremental_strategy='append',
+	description='Feature engineering table for moneyness, intrinsic value, time value, and quality flags for intrinsic/time value'
+) }}
+
 with options_base as (
 	select
 		market_date,
