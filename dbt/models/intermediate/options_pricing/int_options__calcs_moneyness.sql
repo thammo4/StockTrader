@@ -34,6 +34,9 @@ with options_base as (
 		dividend_date_ref,
 		dividend_status
 	from {{ ref('int_options__joins_dividends') }}
+	{% if is_incremental() %}
+	where market_date > (select max(market_date) from {{ this }})
+	{% endif %}
 ),
 
 with_time as (
