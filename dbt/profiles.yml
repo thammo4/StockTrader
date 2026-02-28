@@ -8,7 +8,7 @@ stocktrader_analytics:
       type: duckdb
       path: '/opt/stocktrader/data/warehouse/stocktrader_analytics_dev.duckdb'
       schema: 'main'
-      threads: 6
+      threads: 5
       extensions:
         - parquet
         # - httpfs
