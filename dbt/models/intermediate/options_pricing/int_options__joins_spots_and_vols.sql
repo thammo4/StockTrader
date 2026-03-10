@@ -38,6 +38,7 @@ underlying_price_and_rolling_vol as (
 		vol_rolling_day_annualized as sigma,
 		vol_is_valid_window as sigma_is_valid
 	from {{ ref('int_ohlcv__rolling_vol') }}
+	where vol_rolling_day_annualized is not null
 )
 
 select
@@ -61,6 +62,4 @@ select
 	u.sigma,
 	u.sigma_is_valid
 from options_base o
-left join underlying_price_and_rolling_vol u
-on o.symbol = u.symbol
-and o.market_date = u.market_date
+join underlying_price_and_rolling_vol u using (symbol, market_date)
