@@ -176,13 +176,13 @@ while IFS= read -r dt; do
 	if (( n_inserted == 0 )); then
 		run_ddb "
 			CREATE TABLE ${DDB_TARGET_SCHEMA_DOT_TABLE}
-					  AS ${DDB_SELECT_JOINED_SQL} ${DDB_AND_MARKET_DATE_SQL}
+					  AS ${DDB_SELECT_JOINED_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
 			;
 		"
 	else
 		run_ddb "
 			INSERT INTO ${DDB_TARGET_SCHEMA_DOT_TABLE}
-				${DDB_SELECT_JOINED_SQL} ${DDB_AND_MARKET_DATE_SQL}
+				${DDB_SELECT_JOINED_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
 			;
 
 		"
