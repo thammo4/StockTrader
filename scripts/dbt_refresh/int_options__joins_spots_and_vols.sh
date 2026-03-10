@@ -170,7 +170,8 @@ while IFS= read -r dt; do
 	(( i++ )) || true
 	log "Processing date $i / $N_TOTAL: $dt"
 
-	DDB_AND_MARKET_DATE_SQL="AND o.market_date = '${dt}'::DATE"
+	# DDB_AND_MARKET_DATE_SQL="AND o.market_date = '${dt}'::DATE"
+	DDB_WHERE_MARKET_DATE_SQL="WHERE o.market_date = '${dt}'::DATE"
 
 	if (( n_inserted == 0 )); then
 		run_ddb "
