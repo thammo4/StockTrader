@@ -45,7 +45,6 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 # VALIDATE DDB DWH EXISTS AT PATH
 #
 
-
 [[ -f "$DDB_PATH" ]] || { log "ERROR: ddb dwh n/a, path=$DDB_PATH"; exit 1; }
 
 #
