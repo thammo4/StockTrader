@@ -54,7 +54,6 @@ qlib_priced_data as (
 		gamma,
 		theta,
 		iv
-	-- from {{ ref('stg_qlib_priced__outputs') }}
 	from {{ ref('int_priced__materialized') }}
 	where pricing_status = 'ok'
 	{% if is_incremental() %}
