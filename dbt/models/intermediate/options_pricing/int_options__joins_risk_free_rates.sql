@@ -27,9 +27,8 @@ with options_base as (
 		spot_price,
 		sigma
 	from {{ ref('int_options__joins_spots_and_vols') }}
-	where sigma is not null
 	{% if is_incremental() %}
-	and market_date > (select max(market_date) from {{ this }})
+	where market_date > (select max(market_date) from {{ this }})
 	{% endif %}
 ),
 
@@ -62,4 +61,4 @@ select
 	m.risk_free_rate,
 	m.rate_date_ref
 from options_base o
-left join market_date_rates m using (market_date)
+join market_date_rates m using (market_date)
