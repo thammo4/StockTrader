@@ -53,13 +53,16 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 #
 
 DDB_MARKET_DATES_SQL=$(cat << EOF
-	SELECT DISTINCT market_date::VARCHAR
-	  FROM main_intermediate.int_options__joins_spots_and_vols
-	 ORDER BY 1
-	 ;
+	WITH
+		options_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_options__joins_spots_and_vols),
+		rate_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_risk_free_rates__maps_to_daily)
+	SELECT o.market_date::VARCHAR
+	FROM options_dates o
+	JOIN rate_dates r USING (market_date)
+	ORDER BY 1
+	;
 EOF
 )
-
 
 #
 # PRIMARY QUERY
@@ -93,7 +96,7 @@ DDB_SELECT_JOINED_SQL=$(cat << EOF
 				market_date,
 				risk_free_rate,
 				rate_date_ref
-			FROM main_intermediate.int_dim__daily_risk_free
+			FROM main_intermediate.int_risk_free_rates__maps_to_daily
 		)
 	SELECT
 		o.market_date,
