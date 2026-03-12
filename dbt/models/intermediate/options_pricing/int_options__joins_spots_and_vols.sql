@@ -24,7 +24,7 @@ with options_base as (
 		open_interest,
 		bid_size,
 		ask_size
-	from {{ ref('int_options__filters_bad_prices') }}
+	from {{ ref('int_options__creates_base_dset') }}
 	{% if is_incremental() %}
 	where market_date > (select max(market_date) from {{ this }})
 	{% endif %}

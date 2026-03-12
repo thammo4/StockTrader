@@ -53,7 +53,7 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 
 DDB_MARKET_DATES_SQL=$(cat << EOF
 	WITH
-		options_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_options__filters_bad_prices),
+		options_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_options__creates_base_dset),
 		vol_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_ohlcv__rolling_vol WHERE vol_rolling_day_annualized IS NOT NULL)
 	SELECT
 		o.market_date::VARCHAR
@@ -88,7 +88,7 @@ DDB_SELECT_JOINED_SQL=$(cat << EOF
 				open_interest,
 				bid_size,
 				ask_size
-			FROM main_intermediate.int_options__filters_bad_prices
+			FROM main_intermediate.int_options__creates_base_dset
 		),
 		underlying_price_and_rolling_vol AS (
 			SELECT 
@@ -136,7 +136,7 @@ fi
 # 1. FETCH MARKET DATES COMMON TO BOTH SOURCE TABLES
 #
 
-log "1. Fetching market dates common to upstream (int_options__filters_bad_prices, int_ohlcv__rolling_vol)"
+log "1. Fetching market dates common to upstream (int_options__creates_base_dset, int_ohlcv__rolling_vol)"
 
 MARKET_DATES="$(run_ddb_csv "$DDB_MARKET_DATES_SQL")"
 N_TOTAL=$(echo "$MARKET_DATES" | grep -c '.' || true)
