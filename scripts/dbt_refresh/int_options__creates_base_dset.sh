@@ -54,7 +54,7 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 DDB_MARKET_DATES_SQL=$(cat << EOF
 	SELECT DISTINCT created_date AS market_date
 	  FROM main_staging.stg_tradier__options
-	 ORDER BY created_date DESC
+	 ORDER BY created_date
 	;
 EOF
 )
@@ -63,61 +63,6 @@ EOF
 #
 # PRIMARY QUERY
 #
-
-# DDB_SELECT_SQL=$(cat << EOF
-# 	WITH 
-# 		options_base AS (
-# 			SELECT
-# 				market_date,
-# 				symbol,
-# 				occ,
-# 				option_type,
-# 				expiry_date,
-# 				ttm_days,
-# 				strike_price,
-# 				bid_price,
-# 				ask_price,
-# 				mid_price,
-# 				bid_ask_spread,
-# 				volume,
-# 				open_interest,
-# 				bid_size,
-# 				ask_size
-# 			FROM main_intermediate.int_options__filters_bad_prices
-# 		),
-# 		underlying_price_and_rolling_vol AS (
-# 			SELECT 
-# 				market_date,
-# 				symbol,
-# 				close_price AS spot_price,
-# 				vol_rolling_day_annualized AS sigma,
-# 				vol_is_valid_window AS sigma_is_valid
-# 			FROM main_intermediate.int_ohlcv__rolling_vol
-# 		    WHERE vol_rolling_day_annualized IS NOT NULL
-# 		)
-# 	SELECT
-# 		   o.market_date,
-# 		   o.symbol,
-# 		   o.occ,
-# 		   o.option_type,
-# 		   o.expiry_date,
-# 		   o.ttm_days,
-# 		   o.strike_price,
-# 		   o.bid_price,
-# 		   o.ask_price,
-# 		   o.mid_price,
-# 		   o.bid_ask_spread,
-# 		   o.volume,
-# 		   o.open_interest,
-# 		   o.bid_size,
-# 		   o.ask_size,
-# 		   u.spot_price,
-# 		   u.sigma,
-# 		   u.sigma_is_valid
-# 	FROM options_base o
-# 	JOIN underlying_price_and_rolling_vol u USING (symbol, market_date)
-# EOF
-# )
 
 DDB_SELECT_SQL=$(cat << EOF
 	WITH options_base AS (
