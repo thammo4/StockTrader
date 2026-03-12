@@ -37,7 +37,7 @@ market_date_rates as (
 		market_date,
 		risk_free_rate,
 		rate_date_ref
-	from {{ ref('int_dim__daily_risk_free') }}
+	from {{ ref('int_risk_free_rates__maps_to_daily') }}
 )
 
 select
