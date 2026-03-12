@@ -55,10 +55,9 @@ DDB_MARKET_DATES_SQL=$(cat << EOF
 	WITH
 		options_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_options__creates_base_dset),
 		vol_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_ohlcv__rolling_vol WHERE vol_rolling_day_annualized IS NOT NULL)
-	SELECT
-		o.market_date::VARCHAR
-		FROM options_dates o
-		JOIN vol_dates v USING (market_date)
+	SELECT o.market_date::VARCHAR
+	FROM options_dates o
+	JOIN vol_dates v USING (market_date)
 	ORDER BY 1
 	;
 EOF
