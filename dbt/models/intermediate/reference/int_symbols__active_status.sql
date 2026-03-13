@@ -1,5 +1,5 @@
 --
--- FILE: `StockTrader/dbt/models/intermediate/int_symbols__active_status.sql`
+-- FILE: `StockTrader/dbt/models/intermediate/reference/int_symbols__active_status.sql`
 --
 
 {{ config(

@@ -1,5 +1,5 @@
 --
--- FILE: `StockTrader/dbt/models/intermediate/dimensions/int_risk_free_rates__maps_to_daily.sql`
+-- FILE: `StockTrader/dbt/models/intermediate/mappings/int_risk_free_rates__maps_to_daily.sql`
 --
 
 {{ config(materialized='table') }}
