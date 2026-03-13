@@ -34,22 +34,24 @@ StockTrader/
 │       └── occ_utils.sql
 │   └── models/
 │       └── intermediate/
-│       	  └── int_symbols__active_status.sql
 │       	  └── data_quality/
 │           	  └── int_options__data_quality_metrics.sql
-│       	  └── dimensions/
-│           	  └── int_dim__daily_dividends.sql
-│           	  └── int_dim__daily_risk_free.sql
-│           	  └── int_dim__market_dates.sql
-│           	  └── int_dim__symbols_market_dates.sql
+│       	  └── mappings/
+│           	  └── int_dividends__maps_to_daily.sql
+│           	  └── int_risk_free_rates__maps_to_daily.sql
 │       	  └── options_pricing/
 │           	  └── int_ohlcv__rolling_vol.sql
 │           	  └── int_options__calcs_moneyness.sql
-│           	  └── int_options__filters_bad_prices.sql
+│           	  └── int_options__creates_base_dset.sql
 │           	  └── int_options__joins_dividends.sql
+│           	  └── int_options__joins_risk_free_rates.sql
 │           	  └── int_options__joins_spots_and_vols.sql
+│       	  └── priced_options/
+│           	  └── int_options__joins_qlib_priced.sql
+│           	  └── int_priced__materialized.sql
 │       	  └── reference/
 │           	  └── int_quotes__root_symbols_map.sql
+│           	  └── int_symbols__active_status.sql
 │       └── marts/
 │       	  └── options_pricing/
 │                  └── bopm/
@@ -78,20 +80,25 @@ StockTrader/
 ├── data/
 │   └── warehouse/
 │       └── stocktrader_analytics_dev.duckdb
-│       └── fred/
+│       └── fred_af/
 │           └── <landing directory for FRED interest rate data>
 │           └── <SERIESID.parquet>
-│       └── dividends/
+│       └── dividends_af/
 │           └── <landing directory for dividend data>
 │           └── <SYMBOL.parquet>
-│       └── options/
+│       └── options_af/
 │           └── <landing directory for options chain data>
 │           └── <SYMBOL.parquet>
-│       └── quotes/
+│       └── quotes_af/
 │           └── <landing directory for quote data>
 │           └── <SYMBOL.parquet>
+│       └── ohlcv_bars/
+│           └── <landing directory for OHLCV bar data>
+│           └── <SYMBOL.parquet>
 ├── infrastructure/
+│   └── __init__.py
 │   └── redis/
+│       └── __init__.py
 │       └── job_producer.py
 │       └── job_schema.py
 │       └── job_worker.py
@@ -104,35 +111,53 @@ StockTrader/
 │           └── gcp_vm_debian.sh
 ├── logs/
 ├── scripts/
+│   └── __init__.py
+│   └── bopm_live.py
 │   └── create_dividend_parquet.py
 │   └── create_fred_parquet.py
 │   └── create_ohlcv_parquet.py
 │   └── ddb_minio_batch_export.sh
+│   └── dolt_historical_ticker.sh
 │   └── fetch_active_options.py
-│   └── fetch_active_params.py
 │   └── generate_dbt_universe_seed.sh
 │   └── ingest_fred_rates.py
 │   └── ingest_tradier_dividends.py
 │   └── ingest_tradier_options.py
 │   └── ingest_tradier_quotes.py
+│   └── launch_pricing_worker.sh
+│   └── minio_ddb_batch_import.sh
 │   └── prep_bopm_data.py
+│   └── price_active_options.py
 │   └── price_bopm_data.py
+│   └── skip_us_holidays.py
+│   └── dbt_bstrap/
+│       └── int_options__joins_qlib_priced.sh
+│   └── dbt_refresh/
+│       └── int_options__calcs_moneyness.sh
+│       └── int_options__creates_base_dset.sh
+│       └── int_options__joins_dividends.sh
+│       └── int_options__joins_risk_free_rates.sh
+│       └── int_options__joins_spots_and_vols.sh
 ├── src/
 │   └── StockTrader/
+│       └── __init__.py
 │       └── settings.py
 │       └── tradier.py
 │       └── freddy.py
 │       └── pricing/
+│           └── __init__.py
 │           └── base.py
 │           └── batch.py
 │           └── errors.py
 │           └── registry.py
 │           └── types.py
 │           └── qlib/
+│               └── __init__.py
 │               └── builders.py
 │               └── context.py
 │               └── implied_vol.py
 │               └── models/
+│               	└── __init__.py
 │               	└── crr_bopm_amr_divs.py
 └── tests/
 │   └── config.py
