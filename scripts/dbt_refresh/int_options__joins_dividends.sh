@@ -55,7 +55,7 @@ DDB_MARKET_DATES_SQL=$(cat << EOF
 	WITH
 		options_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_options__joins_risk_free_rates),
 		dividends_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_dividends__maps_to_daily)
-	SELECT o.market_date
+	SELECT o.market_date::VARCHAR
 	FROM options_dates o
 	JOIN dividends_dates d USING (market_date)
 	ORDER BY 1
@@ -140,32 +140,32 @@ DDB_SELECT_JOINED_SQL=$(cat << EOF
 			FROM options_base o
 			JOIN dividends d USING (market_date, symbol)
 		)
-		SELECT
-			market_date,
-			symbol,
-			occ,
-			option_type,
-			expiry_date,
-			ttm_days,
-			strike_price,
-			bid_price,
-			ask_price,
-			mid_price,
-			bid_ask_spread,
-			volume,
-			open_interest,
-			bid_size,
-			ask_size,
-			spot_price,
-			sigma,
-			risk_free_rate,
-			rate_date_ref,
-			dividend_yield_ttm,
-			dividend_yield_annualized,
-			dividend_status,
-			is_complete_dividend_history,
-			dividend_date_ref
-		FROM joined_options_dividends
+	SELECT
+		market_date,
+		symbol,
+		occ,
+		option_type,
+		expiry_date,
+		ttm_days,
+		strike_price,
+		bid_price,
+		ask_price,
+		mid_price,
+		bid_ask_spread,
+		volume,
+		open_interest,
+		bid_size,
+		ask_size,
+		spot_price,
+		sigma,
+		risk_free_rate,
+		rate_date_ref,
+		dividend_yield_ttm,
+		dividend_yield_annualized,
+		dividend_status,
+		is_complete_dividend_history,
+		dividend_date_ref
+	FROM joined_options_dividends
 EOF
 )
 

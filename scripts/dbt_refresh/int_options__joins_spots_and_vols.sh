@@ -100,24 +100,24 @@ DDB_SELECT_JOINED_SQL=$(cat << EOF
 		    WHERE vol_rolling_day_annualized IS NOT NULL
 		)
 	SELECT
-		   o.market_date,
-		   o.symbol,
-		   o.occ,
-		   o.option_type,
-		   o.expiry_date,
-		   o.ttm_days,
-		   o.strike_price,
-		   o.bid_price,
-		   o.ask_price,
-		   o.mid_price,
-		   o.bid_ask_spread,
-		   o.volume,
-		   o.open_interest,
-		   o.bid_size,
-		   o.ask_size,
-		   u.spot_price,
-		   u.sigma,
-		   u.sigma_is_valid
+		o.market_date,
+		o.symbol,
+		o.occ,
+		o.option_type,
+		o.expiry_date,
+		o.ttm_days,
+		o.strike_price,
+		o.bid_price,
+		o.ask_price,
+		o.mid_price,
+		o.bid_ask_spread,
+		o.volume,
+		o.open_interest,
+		o.bid_size,
+		o.ask_size,
+		u.spot_price,
+		u.sigma,
+		u.sigma_is_valid
 	FROM options_base o
 	JOIN underlying_price_and_rolling_vol u USING (symbol, market_date)
 EOF
