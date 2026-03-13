@@ -182,7 +182,7 @@ fi
 # 1. FETCH MARKET DATES COMMON TO BOTH SOURCE TABLES
 #
 
-log "1. Fetching market dates from upstream int_options__joins_dividends"
+log "1. Fetching market dates common to upstream (int_options__joins_risk_free_rates, int_dividends__maps_to_daily)"
 
 MARKET_DATES="$(run_ddb_csv "$DDB_MARKET_DATES_SQL")"
 N_TOTAL=$(echo "$MARKET_DATES" | grep -c '.' || true)
