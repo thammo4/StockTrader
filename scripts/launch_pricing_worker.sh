@@ -4,6 +4,14 @@
 # FILE: `StockTrader/scripts/launch_pricing_worker.sh`
 #
 
+#
+# Launches background pricing-worker processes.
+# 	- Validates runtime environment + activates Python venv
+# 	- Spawns N_WORKERS instances of `infrastructure.redis.job_worker`
+# 	- Awaits completion of worker processes
+# 	- Prints/outputs report of results/failures
+#
+
 set -euo pipefail
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$(hostname)] $*"; }
