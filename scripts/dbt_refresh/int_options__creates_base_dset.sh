@@ -52,9 +52,9 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 #
 
 DDB_MARKET_DATES_SQL=$(cat << EOF
-	SELECT DISTINCT created_date AS market_date
+	SELECT DISTINCT created_date::VARCHAR AS market_date
 	  FROM main_staging.stg_tradier__options
-	 ORDER BY created_date
+	 ORDER BY 1
 	;
 EOF
 )

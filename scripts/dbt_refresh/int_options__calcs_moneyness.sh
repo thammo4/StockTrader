@@ -48,7 +48,7 @@ ekko () { echo -e "$1"; echo "        ------------------------------------------
 
 
 #
-# RETRIEVE MARKET DATES FROM UPSTREAM TABLE
+# RETRIEVE MARKET DATES FROM UPSTREAM-OF-TARGET TABLE
 #
 
 DDB_MARKET_DATES_SQL=$(cat << EOF
