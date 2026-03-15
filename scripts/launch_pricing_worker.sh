@@ -20,17 +20,51 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [$(hostname)] $*"; }
 # ARGS
 #
 
-N_WORKERS=${1:-4}
-N_STEPS=${2:-225}
+N_WORKERS=4
+N_STEPS=225
 MODEL="crr_bopm_amr_divs"
-MAX_JOBS=${3:-0}
+MAX_JOBS=0
+TIMEOUT=10
+
+#
+# PARSE COMMAND LINE ARGS
+#
+
+usage() {
+	cat <<EOF
+		Usage:
+			$0 [--n-workers N] [--n-steps M] [--model NAME] [--max-jobs K]
+
+		Options:
+			--n-workers 	Number of worker processes to launch, default=$N_WORKERS
+			--n-steps 		Number of BOPM tree steps in pricing, default=$N_STEPS
+			--model 		Pricing model name, default=$MODEL
+			--max-jobs 		Max jobs per worker. 0 indicates inf. default=$MAX_JOBS
+			--timeout		Redis job queue polling timeout seconds, default=$TIMEOUT
+EOF
+}
+
+
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--n-workers) N_WORKERS="$2"; shift 2 ;;
+		--n-steps) N_STEPS="$2"; shift 2 ;;
+		--model) MODEL="$2"; shift 2 ;;
+		--max-jobs) MAX_JOBS="$2"; shift 2 ;;
+		--timeout) TIMEOUT="$2"; shift 2 ;;
+		*) log "Unknown option: $1"; usage; exit 1 ;;
+	esac
+done
 
 #
 # DIRECTORY STRUCTURE
 #
 
-APP_ROOT="$HOME/Desktop/StockTrader"
+APP_ROOT="$STOCK_TRADER_HOME"
 VENV_ACTIVATE="$APP_ROOT/venv12/bin/activate"
+
+[[ -d "$APP_ROOT" ]] || { log "ERROR: APP_ROOT dir $APP_ROOT for StockTrader no esta aqui"; exit 1; }
 
 
 #
@@ -44,12 +78,9 @@ VENV_ACTIVATE="$APP_ROOT/venv12/bin/activate"
 [[ -n "${MINIO_ROOT_PASSWORD:-}" ]] || { log "ERROR: MINIO_ROOT_PASSWORD n/a"; exit 1; }
 
 
-
 #
 # ENV CONFIG
 #
-
-cd $STOCK_TRADER_HOME
 
 source "$VENV_ACTIVATE"
 export PYTHONPATH="$APP_ROOT/src:$APP_ROOT"
@@ -58,19 +89,18 @@ export PYTHONPATH="$APP_ROOT/src:$APP_ROOT"
 # LAUNCH WORKERS
 #
 
-log "Launching $N_WORKERS workers, model=$MODEL"
+log "Launching: n-workers=$N_WORKERS, max-jobs=$MAX_JOBS, timeout=$TIMEOUT; model=$MODEL, n-steps=$N_STEPS"
 log "redis=$REDIS_URL, minio=$MINIO_ENDPOINT"
 
 
-# PIDS=()
-# for i in $(seq 1 "$N_WORKERS"); do
-# 	python3.12 -m infrastructure.redis.job_worker --model "$MODEL" --max-jobs "$MAX_JOBS" --timeout 10 & PIDS+=($!)
-# 	log "Worker $i started (pid=${PIDS[-1]})"
-# done
-
 PIDS=()
 for i in $(seq 1 "$N_WORKERS"); do
-	python3.12 -m infrastructure.redis.job_worker --model "$MODEL" --max-jobs "$MAX_JOBS" --timeout 10 & pid=$!
+	python3.12 -m infrastructure.redis.job_worker \
+		--model "$MODEL" \
+		--n-steps "$N_STEPS" \
+		--max-jobs "$MAX_JOBS" \
+		--timeout "$TIMEOUT" \
+		& pid=$!
 	PIDS+=("$pid")
 	log "Worker $i started, pid=$pid"
 done
