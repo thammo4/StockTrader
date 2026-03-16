@@ -6,11 +6,13 @@
 
 set -euo pipefail
 
+
 #
 # Configure Logging
 #
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
+
 
 #
 # Batch/Run/Shard Settings
@@ -18,6 +20,7 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 
 BATCH_ID="$(date +%Y%m%d_%H%M%S)"
 N_SHARDS=4
+
 
 #
 # Parse Arguments
@@ -65,6 +68,7 @@ done
 DDB_PATH="${STOCK_TRADER_DWH}/stocktrader_analytics_dev.duckdb"
 MART_NAME="mart_bopm__pays_dividends"
 
+
 #
 # MinIO Config
 #
@@ -86,15 +90,11 @@ log "Start export, batchid=${BATCH_ID}"
 command -v duckdb >/dev/null 2>&1 || { log "ERROR: duckdb cli missing"; exit 1; }
 
 
-
-
 #
 # Install DuckDB HTTPFS
 #
 
 duckdb "$DDB_PATH" -c "INSTALL httpfs;" >/dev/null
-
-
 
 
 ###################################
@@ -110,6 +110,7 @@ if [[ -n "$LAST_RUN_DATE" ]]; then
 	DATE_FILTER="WHERE market_date >= '$LAST_RUN_DATE'"
 	log "Applying date filter: ${DATE_FILTER}"
 fi
+
 
 #
 # Retrieve Market Dates from Mart Model + Log Count Found
@@ -128,7 +129,6 @@ DDB_MARKET_DATES="$(duckdb "$DDB_PATH" -csv -noheader "$QUERY_MARKET_DATES" 2>/d
 
 N_DATES="$(printf '%s\n' "$DDB_MARKET_DATES" | sed '/^$/d' | wc -l | tr -d ' ')"
 log "Found $N_DATES market dates to export"
-
 
 
 ##############################################
@@ -151,6 +151,7 @@ S3_CONFIG_SQL=$(cat << EOF
 	SET partitioned_write_max_open_files=128;
 EOF
 )
+
 
 ##############################################
 # 3. Incrementally Export Data ~ Market Date #
