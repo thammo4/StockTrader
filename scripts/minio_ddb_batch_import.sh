@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# FILE: `StockTrader/scripts/minio_ddb_pricing_import.sh`
+# FILE: `StockTrader/scripts/minio_ddb_batch_import.sh`
 #
 
 set -euo pipefail
@@ -78,15 +78,15 @@ DDB_CREATE_TARGET_SQL=$(cat << EOF
 		market_date 	DATE,
 		occ 			VARCHAR,
 		npv 			DOUBLE,
-		Δ 			DOUBLE,
-		Γ 			DOUBLE,
-		Θ 			DOUBLE,
-		ν 			DOUBLE,
-		ρ 			DOUBLE,
-		σ_iv 			DOUBLE,
+		delta 			DOUBLE,
+		gamma 			DOUBLE,
+		theta 			DOUBLE,
+		vega 			DOUBLE,
+		rho 			DOUBLE,
+		iv 				DOUBLE,
 		npv_err 		VARCHAR,
 		greek_err 		VARCHAR,
-		σ_iv_err 		VARCHAR,
+		iv_err 			VARCHAR,
 		model_name 		VARCHAR,
 		n_steps 		INT,
 		compute_ms 		DOUBLE,
@@ -123,15 +123,15 @@ DDB_SELECT_S3_SQL=$(cat << EOF
 		market_date::DATE,
 		occ::VARCHAR,
 		npv::DOUBLE,
-		Δ::DOUBLE,
-		Γ::DOUBLE,
-		Θ::DOUBLE,
-		ν::DOUBLE,
-		ρ::DOUBLE,
-		σ_iv::DOUBLE,
+		Δ::DOUBLE AS delta,
+		Γ::DOUBLE AS gamma,
+		Θ::DOUBLE AS theta,
+		ν::DOUBLE AS vega,
+		ρ::DOUBLE AS rho,
+		σ_iv::DOUBLE AS iv,
 		npv_err::VARCHAR,
 		greek_err::VARCHAR,
-		σ_iv_err::VARCHAR,
+		σ_iv_err::VARCHAR AS iv_err,
 		model_name::VARCHAR,
 		n_steps::INT,
 		compute_ms::DOUBLE,
@@ -157,7 +157,7 @@ DDB_IMPORT_SUMMARY_SQL=$(cat << EOF
 		COUNT(DISTINCT market_date) AS n_market_dates,
 		COUNT(DISTINCT occ) AS n_occ,
 		SUM(CASE WHEN npv_err IS NULL THEN 1 ELSE 0 END) AS n_priced,
-		SUM(CASE WHEN npv_err IS NULL AND σ_iv_err IS NULL THEN 1 ELSE 0 END) AS n_iv_solved
+		SUM(CASE WHEN npv_err IS NULL AND iv_err IS NULL THEN 1 ELSE 0 END) AS n_iv_solved
 	FROM ${DDB_TARGET_SCHEMA}.${DDB_TARGET_TABLE}
 	WHERE batch_id = '${BATCH_ID}'
 	GROUP BY batch_id
