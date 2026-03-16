@@ -1,5 +1,5 @@
 --
--- FILE: `StockTrader/dbt/models/intermediate/options_pricing/int_options__creates_base_dset.sql
+-- FILE: `StockTrader/dbt/models/intermediate/options_pricing/int_options__creates_base_dset.sql`
 --
 
 {{ config(
