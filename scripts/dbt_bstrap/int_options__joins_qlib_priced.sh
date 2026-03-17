@@ -52,23 +52,23 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 #
 
 DDB_MARKET_DATES_SQL=$(cat << EOF
-	WITH 
-		options_market_dates AS (
+	WITH
+		options_dates AS (
 			SELECT DISTINCT market_date
 			  FROM main_intermediate.int_options__calcs_moneyness
 			 WHERE dividend_status = 'yes_dividend'
 			   AND is_negative_ask_time_value = false
 			   AND ttm_days >= 1
 		),
-		priced_market_dates AS (
+		qlib_priced_dates AS (
 			SELECT DISTINCT market_date
-			  FROM main_intermediate.int_priced__materialized
+			  FROM main_staging.stg_qlib_priced__outputs
 			 WHERE pricing_status = 'ok'
 		)
-	SELECT p.market_date::VARCHAR
-	  FROM options_market_dates o
-	  JOIN priced_market_dates p USING (market_date)
-	 ORDER BY 1
+		SELECT o.market_date::VARCHAR
+		  FROM options_dates o
+		  JOIN qlib_priced_dates q USING (market_date)
+		 ORDER BY 1
 	;
 EOF
 )
@@ -109,45 +109,121 @@ EOF
 #
 
 DDB_SELECT_JOINED_SQL=$(cat << EOF
+	WITH
+		options_base AS (
+			SELECT
+				market_date,
+				symbol,
+				occ,
+				option_type,
+				expiry_date,
+				ttm_days,
+				strike_price,
+				spot_price,
+				mid_price,
+				bid_price,
+				ask_price,
+				intrinsic_price,
+				time_value_mid_price,
+				time_value_bid_price,
+				time_value_ask_price,
+				volume::INT AS volume,
+				open_interest::INT AS open_interest,
+				bid_size,
+				ask_size,
+				sigma,
+				risk_free_rate,
+				dividend_yield_annualized,
+				moneyness_ratio,
+				moneyness_ratio_log,
+				moneyness_standardized,
+				moneyness_category
+			FROM main_intermediate.int_options__calcs_moneyness
+			WHERE dividend_status = 'yes_dividend'
+			  AND is_negative_ask_time_value = false
+			  AND ttm_days >= 1
+		),
+		qlib_priced AS (
+			SELECT
+				market_date,
+				occ,
+				npv,
+				delta,
+				gamma,
+				theta,
+				iv
+			FROM main_staging.stg_qlib_priced__outputs
+			WHERE pricing_status = 'ok'
+		),
+		joined_options_qlib_priced AS (
+			SELECT
+				o.market_date,
+				o.symbol,
+				o.occ,
+				o.option_type,
+				o.expiry_date,
+				o.ttm_days,
+				o.strike_price,
+				o.spot_price,
+				o.mid_price,
+				o.bid_price,
+				o.ask_price,
+				o.intrinsic_price,
+				o.time_value_mid_price,
+				o.time_value_bid_price,
+				o.time_value_ask_price,
+				o.volume,
+				o.open_interest,
+				o.bid_size,
+				o.ask_size,
+				o.sigma,
+				o.risk_free_rate,
+				o.dividend_yield_annualized,
+				o.moneyness_ratio,
+				o.moneyness_ratio_log,
+				o.moneyness_standardized,
+				o.moneyness_category,
+				q.npv,
+				q.delta,
+				q.gamma,
+				q.theta,
+				q.iv
+			FROM options_base o
+			JOIN qlib_priced q USING (market_date, occ)
+		)
 	SELECT
-		   o.market_date,
-		   o.symbol,
-		   o.occ,
-		   o.option_type,
-		   o.expiry_date,
-		   o.ttm_days,
-		   o.strike_price,
-		   o.spot_price,
-		   o.mid_price,
-		   o.bid_price,
-		   o.ask_price,
-		   o.intrinsic_price,
-		   o.time_value_mid_price,
-		   o.time_value_bid_price,
-		   o.time_value_ask_price,
-		   o.volume::INT AS volume,
-		   o.open_interest::INT AS open_interest,
-		   o.bid_size,
-		   o.ask_size,
-		   o.sigma,
-		   o.risk_free_rate,
-		   o.dividend_yield_annualized,
-		   o.moneyness_ratio,
-		   o.moneyness_ratio_log,
-		   o.moneyness_standardized,
-		   o.moneyness_category,
-		   p.npv,
-		   p.delta,
-		   p.gamma,
-		   p.theta,
-		   p.iv
-	FROM main_intermediate.int_options__calcs_moneyness o
-	JOIN main_intermediate.int_priced__materialized p USING (market_date, occ)
-   WHERE o.dividend_status = 'yes_dividend'
-     AND o.is_negative_ask_time_value = false
-     AND o.ttm_days >= 1
-     AND p.pricing_status = 'ok'
-
+		market_date,
+		symbol,
+		occ,
+		option_type,
+		expiry_date,
+		ttm_days,
+		strike_price,
+		spot_price,
+		mid_price,
+		bid_price,
+		ask_price,
+		intrinsic_price,
+		time_value_mid_price,
+		time_value_bid_price,
+		time_value_ask_price,
+		volume,
+		open_interest,
+		bid_size,
+		ask_size,
+		sigma,
+		risk_free_rate,
+		dividend_yield_annualized,
+		moneyness_ratio,
+		moneyness_ratio_log,
+		moneyness_standardized,
+		moneyness_category,
+		npv,
+		delta,
+		gamma,
+		theta,
+		iv
+	FROM joined_options_qlib_priced
 EOF
 )
 
@@ -165,10 +241,10 @@ fi
 #################################################
 # 1. Fetch market dates common to source tables #
 # 	- int_options__cals_moneyness				#
-# 	- int_priced__materialized					#
+# 	- stg_qlib_priced__outputs					#
 #################################################
 
-log "1. Fetching market dates common to int_options__calcs_moneyness and int_priced__materialized"
+log "1. Fetching market dates common to int_options__calcs_moneyness and stg_qlib_priced__outputs"
 
 MARKET_DATES="$(run_ddb_csv "$DDB_MARKET_DATES_SQL")"
 
@@ -225,12 +301,13 @@ while IFS= read -r dt; do
 
 	# HAS_BECOME_EXISTING_TARGET_TABLE="$(run_ddb_csv "$DDB_TABLE_EXISTS_SQL")"
 
-	DDB_AND_MARKET_DATE_SQL="AND o.market_date='${dt}'::DATE"
+	# DDB_AND_MARKET_DATE_SQL="AND o.market_date='${dt}'::DATE"
+	DDB_WHERE_MARKET_DATE_SQL="WHERE market_date='${dt}'::DATE"
 
 	if (( n_inserted == 0 )) && [[ "$IS_EXISTING_TARGET_TABLE" -eq 0 ]]; then
 		run_ddb "
 			CREATE TABLE ${DDB_TARGET_SCHEMA_DOT_TABLE}
-					  AS ${DDB_SELECT_JOINED_SQL} ${DDB_AND_MARKET_DATE_SQL}
+					  AS ${DDB_SELECT_JOINED_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
 		"
 		(( n_inserted++ )) || true
 		continue
@@ -238,7 +315,7 @@ while IFS= read -r dt; do
 
 	run_ddb "
 		INSERT INTO ${DDB_TARGET_SCHEMA_DOT_TABLE}
-			${DDB_SELECT_JOINED_SQL} ${DDB_AND_MARKET_DATE_SQL}
+			${DDB_SELECT_JOINED_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
 	"
 
 	(( n_inserted++ )) || true
