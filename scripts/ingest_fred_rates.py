@@ -7,24 +7,11 @@ import pandas as pd
 from datetime import datetime
 from StockTrader.freddy import fred
 from StockTrader.settings import STOCK_TRADER_DWH, logger, today, today_last_year
+from utils.write_atomic import write_parquet_atomic
 from airflow.exceptions import AirflowSkipException
 
 
 def ingest_fred_rates(series_id="TB3MS", subdir="fred_af"):
-
-    #
-    # Aux Function - Atomic Writes Using Local Temp File
-    #
-
-    def write_parquet_atomic(df, fpath_target):
-        fpath_tmp = fpath_target + ".tmp"
-        try:
-            df.to_parquet(fpath_tmp, index=False, engine="pyarrow")
-            os.replace(fpath_tmp, fpath_target)
-        except Exception:
-            if os.path.exists(fpath_tmp):
-                os.remove(fpath_tmp)
-            raise
 
     #
     # Aux Function - Retrieve FRED API Data + Prepare DataFrame
