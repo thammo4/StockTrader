@@ -33,7 +33,6 @@ symbol_map as (
 select
 	root_symbol,
 	current_trading_symbol,
-	is_primary_symbol,
-	current_date as created_at
+	is_primary_symbol
 from symbol_map
 order by root_symbol, is_primary_symbol desc

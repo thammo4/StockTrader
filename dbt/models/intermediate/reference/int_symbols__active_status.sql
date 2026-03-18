@@ -86,7 +86,6 @@ select
 	has_current_quotes,
 	has_current_options,
 	max_quotes_date,
-	max_options_date,
-	current_timestamp as created_date_mdata
+	max_options_date
 from universe_active_mdata
 order by is_active_traded desc, symbol asc
