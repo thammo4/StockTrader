@@ -1,5 +1,5 @@
 #
-# FILE: `StockTrader/scripts/ingest_fred_rate.py`
+# FILE: `StockTrader/scripts/ingest_fred_rates.py`
 #
 
 import os
@@ -11,21 +11,41 @@ from airflow.exceptions import AirflowSkipException
 
 
 def ingest_fred_rates(series_id="TB3MS", subdir="fred_af"):
+
     #
-    # Auxillary function to create initial FRED dataset
+    # Aux Function - Atomic Writes Using Local Temp File
     #
 
-    def ingest_fred_rates_initial():
-        df_fred = fred.get_series(series_id=series_id, observation_start=observation_start_date)
-        df_fred = df_fred.reset_index()
-        df_fred.columns = ["fred_date", "fred_rate"]
-        df_fred["created_date"] = today
-        df_fred.to_parquet(fpath_parquet, index=False, engine="pyarrow")
-        return df_fred
+    def write_parquet_atomic(df, fpath_target):
+        fpath_tmp = fpath_target + ".tmp"
+        try:
+            df.to_parquet(fpath_tmp, index=False, engine="pyarrow")
+            os.replace(fpath_tmp, fpath_target)
+        except Exception:
+            if os.path.exists(fpath_tmp):
+                os.remove(fpath_tmp)
+            raise
 
+    #
+    # Aux Function - Retrieve FRED API Data + Prepare DataFrame
+    #
+
+    def fetch_fred_df(observation_start):
+        df_api = fred.get_series(series_id=series_id, observation_start=observation_start)
+
+        if df_api is None or df_api.empty:
+            return None
+
+        df = df_api.reset_index()
+        df.columns = ["fred_date", "fred_rate"]
+        df["created_date"] = today
+
+        return df
+
+    logger.info("Starting FRED ingest for rate data, series={series_id} [ingest_fred_rates]")
     try:
         #
-        # Define landing directory
+        # Define local landing directory/filepath
         #
 
         dir_landing = os.path.join(STOCK_TRADER_DWH, subdir)
@@ -40,38 +60,42 @@ def ingest_fred_rates(series_id="TB3MS", subdir="fred_af"):
         today_last_year_dt = datetime.strptime(today_last_year, "%Y-%m-%d")
         observation_start_date = today_last_year_dt.replace(day=1).strftime("%Y-%m-%d")
 
-        #
-        # If no FRED data exists yet, create the initial upload
-        #
-
-        if not os.path.exists(fpath_parquet):
-            df_initial = ingest_fred_rates_initial()
-            logger.info(f"Initial fred load series={series_id}, n={len(df_initial)}")
-
-        #
-        # Retrieve new FRED rate for the current month
-        #
-
-        df_rate = fred.get_series(series_id=series_id, observation_start=observation_start_date)
-
-        if df_rate.empty:
-            logger.info(f"No new FRED data, series={series_id}")
+        df_fred = fetch_fred_df(observation_start_date)
+        if df_fred is None:
+            logger.info(f"No FRED data: series={series_id} [ingest_fred_rates]")
             return
 
         #
-        # If data exists, identify observation_start date
+        # Create initial load if no local data exists
         #
 
-        if os.path.exists(fpath_parquet):
-            df_rate = df_rate.reset_index()
-            df_rate.columns = ["fred_date", "fred_rate"]
-            df_rate["created_date"] = today
-            df_existing = pd.read_parquet(fpath_parquet)
-            df_concat = pd.concat([df_existing, df_rate]).drop_duplicates(subset=["fred_date"], keep="last")
-            df_concat.to_parquet(fpath_parquet, index=False, engine="pyarrow")
-            logger.info(f"Added {len(df_concat)-len(df_existing)} new records, series={series_id}")
+        if not os.path.exists(fpath_parquet):
+            write_parquet_atomic(df_fred, fpath_parquet)
+            logger.info(f"Initial load: series={series_id}, n={len(df_fred)} [ingest_fred_rates]")
+            return
+
+        #
+        # Incremental append new records
+        # - concat new records to existing dataset
+        # - deduplicate per fred_date
+        #
+
+        df_existing = pd.read_parquet(fpath_parquet)
+        n0 = len(df_existing)
+        logger.info(f"Found existing FRED data: series={series_id}, n={n0} [ingest_fred_rates]")
+
+        df_concat = pd.concat([df_existing, df_fred]).drop_duplicates(subset=["fred_date"], keep="last")
+        n1 = len(df_concat)
+        logger.info(f"Concatenated FRED data n={n1} [ingest_fred_rates]")
+
+        write_parquet_atomic(df_concat, fpath_parquet)
+        logger.info(f"Appended Δn={n1-n0} records, series={series_id} [ingest_fred_rates]")
+
+        logger.info("Done. [ingest_fred_rates]")
+
     except AirflowSkipException:
         raise
+
     except Exception as e:
-        logger.error(f"FRED ingest failed, series={series_id}: {str(e)}")
+        logger.error(f"FRED ingest failed, series={series_id}: {str(e)} [ingest_fred_rates]")
         raise
