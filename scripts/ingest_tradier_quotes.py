@@ -14,13 +14,13 @@ from airflow.exceptions import AirflowSkipException
 # Retrieve + Store today's quote data from Tradier for all largecap_all symbols
 #
 
-def ingest_tradier_quotes(subdir="quotes_af", fpath=None):
+def ingest_tradier_quotes(subdir="quotes_af", fpath_symbols=None):
 
     #
     # Retrieve tickers in symbol space
     #
 
-    symbol_list = get_symbols() if fpath is None else get_symbols(fpath)
+    symbol_list = get_symbols() if fpath_symbols is None else get_symbols(fpath_symbols)
     if not symbol_list:
         logger.warning("Missing symbol list [ingest_tradier_quotes]")
         return
