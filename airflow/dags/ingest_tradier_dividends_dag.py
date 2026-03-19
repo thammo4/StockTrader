@@ -8,7 +8,8 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.log.logging_mixin import LoggingMixin
 
-from scripts.ingest_tradier_dividends import get_symbols, ingest_tradier_dividends
+from scripts.ingest_tradier_dividends import ingest_tradier_dividends
+from utils.get_symbols import get_symbols
 
 log = LoggingMixin().log
 
@@ -31,8 +32,9 @@ def dag_me():
     with DAG(
         dag_id="ingest_tradier_dividends",
         default_args=default_args,
-        description="Retrieve quarterly dividends from Tradier",
-        schedule_interval="0 17 28 1,4,7,10 *",
+        description="Retrieve dividends from Tradier. Runs weekly to check for newly declared dividends.",
+        # run at 3:06 AM Thursday morning
+        schedule_interval="6 3 * * 4",
         start_date=datetime(2025, 1, 1),
         catchup=False,
         max_active_tasks=20,
