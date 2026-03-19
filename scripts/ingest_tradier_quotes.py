@@ -74,6 +74,12 @@ def ingest_tradier_quotes(subdir="quotes_af", fpath_symbols=None):
             else:
                 logger.info(f"Creating new parquet file: symbol={symbol}, n={len(df_symbol)}, fpath={fpath_parquet} [ingest_tradier_quotes]")
 
+            #
+            # Deduplicate
+            #
+
+            df_symbol.drop_duplicates(subset=["symbol", "created_date"], keep="last", inplace=True)
+
 
             #
             # Load the quote data
