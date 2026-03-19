@@ -8,8 +8,9 @@ from airflow.operators.python import PythonOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.utils.log.logging_mixin import LoggingMixin
 
-from scripts.ingest_tradier_options import get_symbols, ingest_tradier_options
+from scripts.ingest_tradier_options import ingest_tradier_options
 from scripts.skip_us_holidays import skip_us_holidays
+from utils.get_symbols import get_symbols
 
 log = LoggingMixin().log
 
