@@ -6,42 +6,38 @@ import os
 import pandas as pd
 from StockTrader.tradier import quotesL
 from StockTrader.settings import STOCK_TRADER_DWH, logger, today
+from utils.get_symbols import get_symbols
+from utils.write_atomic import write_parquet_atomic
 from airflow.exceptions import AirflowSkipException
-
-
-def get_symbols():
-    path = "/opt/stocktrader/largecap_all.txt"
-    if os.path.exists(path):
-        return pd.read_table(path, header=None)[0].to_list()
-    else:
-        logger.warning(f"No symbol list: {path}")
-        return []
-
 
 #
 # Retrieve + Store today's quote data from Tradier for all largecap_all symbols
 #
 
+def ingest_tradier_quotes(subdir="quotes_af", fpath=None):
 
-def ingest_tradier_quotes(subdir="quotes_af"):
     #
     # Retrieve tickers in symbol space
     #
 
-    symbol_list = get_symbols()
+    symbol_list = get_symbols() if fpath is None else get_symbols(fpath)
     if not symbol_list:
         logger.warning("Missing symbol list [ingest_tradier_quotes]")
         return
+
+    logger.info(f"Starting Tradier quotes ingest, n={len(symbol_list)} symbols [ingest_tradier_quotes]")
     try:
+
         #
         # Retrieve the day's quote data from Tradier
         #
 
         df = quotesL.get_quote_data(symbol_list)
         if df.empty:
-            logger.warning(f"No quote data, |symbols|={len(symbol_list)}")
+            logger.warning(f"No quote data, n={len(symbol_list)} [ingest_tradier_quotes]")
             return
         df["created_date"] = today
+
 
         #
         # Define the landing directory
@@ -49,6 +45,7 @@ def ingest_tradier_quotes(subdir="quotes_af"):
 
         dir_landing = os.path.join(STOCK_TRADER_DWH, subdir)
         os.makedirs(dir_landing, exist_ok=True)
+
 
         #
         # Iterate over each symbol and create or append parquet data
@@ -63,6 +60,9 @@ def ingest_tradier_quotes(subdir="quotes_af"):
             df_symbol = df[df["symbol"] == symbol].copy()
             fpath_parquet = os.path.join(dir_landing, f"{symbol}.parquet")
 
+            logger.info(f"Inserting n={len(df_symbol)} new record, symbol={symbol} [ingest_tradier_quotes]")
+
+
             #
             # Check for existing data
             #
@@ -70,16 +70,22 @@ def ingest_tradier_quotes(subdir="quotes_af"):
             if os.path.exists(fpath_parquet):
                 df_existing = pd.read_parquet(fpath_parquet)
                 df_symbol = pd.concat([df_existing, df_symbol])
+                logger.info(f"Found existing data: symbol={symbol}, n0={len(df_existing)} [ingest_tradier_quotes]")
+            else:
+                logger.info(f"Creating new parquet file: symbol={symbol}, n={len(df_symbol)}, fpath={fpath_parquet} [ingest_tradier_quotes]")
+
 
             #
             # Load the quote data
             #
 
-            df_symbol.to_parquet(fpath_parquet, index=False, engine="pyarrow")
-            logger.info(f"Loaded quote, symbol={symbol}")
+            write_parquet_atomic(df_symbol, fpath_parquet)
+
+        logger.info(f"Done. [ingest_tradier_quotes]")
 
     except AirflowSkipException:
         raise
     except Exception as e:
-        logger.error(f"Ingest failed, symbol={symbol}: {str(e)} [ingest_tradier_quotes]")
+        logger.error(f"Yikes! {str(e)} [ingest_tradier_quotes]")
+        logger.error(f"Symbol list={symbol_list} [ingest_tradier_quotes]")
         raise
