@@ -14,6 +14,7 @@ from airflow.exceptions import AirflowSkipException
 # Retrieve + Store today's quote data from Tradier for all largecap_all symbols
 #
 
+
 def ingest_tradier_quotes(subdir="quotes_af", fpath_symbols=None):
 
     #
@@ -38,14 +39,12 @@ def ingest_tradier_quotes(subdir="quotes_af", fpath_symbols=None):
             return
         df["created_date"] = today
 
-
         #
         # Define the landing directory
         #
 
         dir_landing = os.path.join(STOCK_TRADER_DWH, subdir)
         os.makedirs(dir_landing, exist_ok=True)
-
 
         #
         # Iterate over each symbol and create or append parquet data
@@ -62,7 +61,6 @@ def ingest_tradier_quotes(subdir="quotes_af", fpath_symbols=None):
 
             logger.info(f"Inserting n={len(df_symbol)} new record, symbol={symbol} [ingest_tradier_quotes]")
 
-
             #
             # Check for existing data
             #
@@ -72,14 +70,15 @@ def ingest_tradier_quotes(subdir="quotes_af", fpath_symbols=None):
                 df_symbol = pd.concat([df_existing, df_symbol])
                 logger.info(f"Found existing data: symbol={symbol}, n0={len(df_existing)} [ingest_tradier_quotes]")
             else:
-                logger.info(f"Creating new parquet file: symbol={symbol}, n={len(df_symbol)}, fpath={fpath_parquet} [ingest_tradier_quotes]")
+                logger.info(
+                    f"Creating new parquet file: symbol={symbol}, n={len(df_symbol)}, fpath={fpath_parquet} [ingest_tradier_quotes]"
+                )
 
             #
             # Deduplicate
             #
 
             df_symbol.drop_duplicates(subset=["symbol", "created_date"], keep="last", inplace=True)
-
 
             #
             # Load the quote data

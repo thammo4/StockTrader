@@ -14,6 +14,7 @@ from airflow.exceptions import AirflowSkipException
 # Retrieve + Store today's options chain from Tradier for a given ticker symbol
 #
 
+
 def ingest_tradier_options(symbol, subdir="options_af"):
     try:
         #
