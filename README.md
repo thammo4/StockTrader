@@ -48,7 +48,6 @@ StockTrader/
 │           	  └── int_options__joins_spots_and_vols.sql
 │       	  └── priced_options/
 │           	  └── int_options__joins_qlib_priced.sql
-│           	  └── int_priced__materialized.sql
 │       	  └── reference/
 │           	  └── int_quotes__root_symbols_map.sql
 │           	  └── int_symbols__active_status.sql
@@ -171,6 +170,8 @@ StockTrader/
 │       └── test_dolt_historical_ticker.py
 └── utils/
 │   └── dividend_table.py
+│   └── get_symbols.py
 |   └── parse_occ.py
 |   └── vol_estimate.py
+│   └── write_atomic.py
 ```
