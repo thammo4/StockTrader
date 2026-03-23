@@ -111,13 +111,10 @@ StockTrader/
 ├── logs/
 ├── scripts/
 │   └── __init__.py
-│   └── bopm_live.py
 │   └── create_dividend_parquet.py
 │   └── create_fred_parquet.py
 │   └── create_ohlcv_parquet.py
 │   └── ddb_minio_batch_export.sh
-│   └── dolt_historical_ticker.sh
-│   └── fetch_active_options.py
 │   └── generate_dbt_universe_seed.sh
 │   └── ingest_fred_rates.py
 │   └── ingest_tradier_dividends.py
@@ -125,9 +122,6 @@ StockTrader/
 │   └── ingest_tradier_quotes.py
 │   └── launch_pricing_worker.sh
 │   └── minio_ddb_batch_import.sh
-│   └── prep_bopm_data.py
-│   └── price_active_options.py
-│   └── price_bopm_data.py
 │   └── skip_us_holidays.py
 │   └── dbt_bstrap/
 │       └── int_options__joins_qlib_priced.sh
