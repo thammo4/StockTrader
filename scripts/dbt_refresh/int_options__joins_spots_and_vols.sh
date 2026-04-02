@@ -54,12 +54,13 @@ ekko () { echo -e "$1"; echo "		------------------------------------------------
 DDB_MARKET_DATES_SQL=$(cat << EOF
 	WITH
 		options_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_options__creates_base_dset),
-		vol_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_ohlcv__rolling_vol WHERE vol_rolling_day_annualized IS NOT NULL)
-	SELECT o.market_date::VARCHAR
+		spots_dates AS (SELECT DISTINCT market_date FROM main_staging.stg_tradier__ohlcv_bars),
+		vols_dates AS (SELECT DISTINCT market_date FROM main_intermediate.int_ohlcv__calcs_rolling_vols)
+	SELECT o.market_date
 	FROM options_dates o
-	JOIN vol_dates v USING (market_date)
+	JOIN spots_dates s USING (market_date)
+	JOIN vols_dates v USING (market_date)
 	ORDER BY 1
-	;
 EOF
 )
 
@@ -79,47 +80,98 @@ DDB_SELECT_JOINED_SQL=$(cat << EOF
 				expiry_date,
 				ttm_days,
 				strike_price,
+				mid_price,
 				bid_price,
 				ask_price,
-				mid_price,
 				bid_ask_spread,
-				volume,
-				open_interest,
+				volume::INT AS volume,
+				open_interest::INT AS open_interest,
 				bid_size,
 				ask_size
 			FROM main_intermediate.int_options__creates_base_dset
 		),
-		underlying_price_and_rolling_vol AS (
-			SELECT 
+
+		underlying_vols AS (
+			SELECT
 				market_date,
 				symbol,
-				close_price AS spot_price,
-				vol_rolling_day_annualized AS sigma,
-				vol_is_valid_window AS sigma_is_valid
-			FROM main_intermediate.int_ohlcv__rolling_vol
-		    WHERE vol_rolling_day_annualized IS NOT NULL
+				sigma_5d,
+				sigma_21d,
+				sigma_42d,
+				sigma_63d,
+				sigma_252d
+			FROM main_intermediate.int_ohlcv__calcs_rolling_vols
+		),
+
+		underlying_spots AS (
+			SELECT
+				market_date,
+				symbol,
+				close_price AS spot_price
+			FROM main_staging.stg_tradier__ohlcv_bars
+		),
+
+
+		joined_options_underlyings AS (
+			SELECT
+				o.market_date,
+				o.symbol,
+				o.occ,
+				o.option_type,
+				o.expiry_date,
+				o.ttm_days,
+				o.strike_price,
+				o.mid_price,
+				o.bid_price,
+				o.ask_price,
+				o.bid_ask_spread,
+				o.volume,
+				o.open_interest,
+				o.bid_size,
+				o.ask_size,
+				us.spot_price,
+				CASE
+					WHEN o.ttm_days BETWEEN 1 AND 7 THEN uv.sigma_5d
+					WHEN o.ttm_days BETWEEN 8 AND 30 THEN uv.sigma_21d
+					WHEN o.ttm_days BETWEEN 31 AND 60 THEN uv.sigma_42d
+					WHEN o.ttm_days BETWEEN 61 AND 120 THEN uv.sigma_63d
+					ELSE uv.sigma_252d
+				END AS sigma,
+				uv.sigma_5d,
+				uv.sigma_21d,
+				uv.sigma_42d,
+				uv.sigma_63d,
+				uv.sigma_252d
+			FROM options_base o
+			JOIN underlying_spots us USING (market_date, symbol)
+			JOIN underlying_vols uv USING (market_date, symbol)
 		)
+
 	SELECT
-		o.market_date,
-		o.symbol,
-		o.occ,
-		o.option_type,
-		o.expiry_date,
-		o.ttm_days,
-		o.strike_price,
-		o.bid_price,
-		o.ask_price,
-		o.mid_price,
-		o.bid_ask_spread,
-		o.volume,
-		o.open_interest,
-		o.bid_size,
-		o.ask_size,
-		u.spot_price,
-		u.sigma,
-		u.sigma_is_valid
-	FROM options_base o
-	JOIN underlying_price_and_rolling_vol u USING (symbol, market_date)
+		market_date,
+		symbol,
+		occ,
+		option_type,
+		expiry_date,
+		ttm_days,
+		strike_price,
+		mid_price,
+		bid_price,
+		ask_price,
+		bid_ask_spread,
+		volume,
+		open_interest,
+		bid_size,
+		ask_size,
+		spot_price,
+		sigma,
+		sigma_5d,
+		sigma_21d,
+		sigma_42d,
+		sigma_63d,
+		sigma_252d
+	FROM joined_options_underlyings
+	WHERE sigma IS NOT NULL
 EOF
 )
 
@@ -135,7 +187,7 @@ fi
 # 1. FETCH MARKET DATES COMMON TO BOTH SOURCE TABLES
 #
 
-log "1. Fetching market dates common to upstream (int_options__creates_base_dset, int_ohlcv__rolling_vol)"
+log "1. Fetching market dates common to upstream (int_options__creates_base_dset, int_ohlcv__calcs_rolling_vols, stg_tradier__ohlcv_bars)"
 
 MARKET_DATES="$(run_ddb_csv "$DDB_MARKET_DATES_SQL")"
 N_TOTAL=$(echo "$MARKET_DATES" | grep -c '.' || true)
@@ -169,19 +221,18 @@ while IFS= read -r dt; do
 	(( i++ )) || true
 	log "Processing date $i / $N_TOTAL: $dt"
 
-	# DDB_AND_MARKET_DATE_SQL="AND o.market_date = '${dt}'::DATE"
-	DDB_WHERE_MARKET_DATE_SQL="WHERE o.market_date = '${dt}'::DATE"
+	DDB_AND_MARKET_DATE_SQL="AND market_date = '${dt}'::DATE"
 
 	if (( n_inserted == 0 )); then
 		run_ddb "
 			CREATE TABLE ${DDB_TARGET_SCHEMA_DOT_TABLE}
-					  AS ${DDB_SELECT_JOINED_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
+					  AS ${DDB_SELECT_JOINED_SQL} ${DDB_AND_MARKET_DATE_SQL}
 			;
 		"
 	else
 		run_ddb "
 			INSERT INTO ${DDB_TARGET_SCHEMA_DOT_TABLE}
-				${DDB_SELECT_JOINED_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
+				${DDB_SELECT_JOINED_SQL} ${DDB_AND_MARKET_DATE_SQL}
 			;
 
 		"
