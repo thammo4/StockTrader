@@ -13,7 +13,6 @@
 with options_data as (
 	select *
 	from {{ ref('stg_tradier__options') }}
-
 	{% if is_incremental() %}
 	where created_date > (select max(market_date) from {{ this }})
 	{% endif %}
