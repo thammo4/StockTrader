@@ -118,6 +118,14 @@ DDB_SELECT_SQL=$(cat << 'EOF'
             iv - sigma AS vrp_spread,
             iv / NULLIF(sigma, 0) AS vrp_ratio
         FROM dte_buckets
+    ),
+    xaction_prices AS (
+        SELECT
+            *,
+            100*(ask_price-bid_price) AS spread_price,
+            100*(ask_price-bid_price) + .70 AS xaction_price,
+            100*bid_price AS credit_price
+        FROM vrp_metrics
     )
     SELECT
         market_date,
@@ -153,8 +161,11 @@ DDB_SELECT_SQL=$(cat << 'EOF'
         iv,
         dte_bucket,
         vrp_spread,
-        vrp_ratio
-    FROM vrp_metrics
+        vrp_ratio,
+        spread_price,
+        xaction_price,
+        credit_price
+    FROM xaction_prices
 EOF
 )
 

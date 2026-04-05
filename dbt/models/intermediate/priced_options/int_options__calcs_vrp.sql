@@ -76,6 +76,15 @@ vrp_metrics as (
 		iv-sigma as vrp_spread,
 		iv/nullif(sigma,0) as vrp_ratio
 	from dte_buckets
+),
+
+xaction_prices as (
+	select
+		*,
+		100*(ask_price-bid_price) as spread_price,
+		100*(ask_price-bid_price) + .70 as xaction_price,
+		100*bid_price as credit_price
+	from vrp_metrics
 )
 
 select
@@ -112,5 +121,8 @@ select
 	iv,
 	dte_bucket,
 	vrp_spread,
-	vrp_ratio
-from vrp_metrics
+	vrp_ratio,
+	spread_price,
+	xaction_price,
+	credit_price
+from xaction_prices
