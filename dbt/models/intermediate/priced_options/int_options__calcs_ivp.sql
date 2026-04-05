@@ -12,17 +12,13 @@ with source as (
 ivp as (
 	select
 		*,
-		percent_rank() over (
+		cume_dist() over (
 			partition by symbol, option_type, moneyness_category, dte_bucket
 			order by iv
-		) as ivp,
-		rank() over (
-			partition by symbol, option_type, moneyness_category, dte_bucket
-			order by iv
-		) as ivr,
+		) as iv_cdf,
 		count(*) over (
 			partition by symbol, option_type, moneyness_category, dte_bucket
-		) as ivp_n
+		) as iv_partition_n
 	from source
 )
 

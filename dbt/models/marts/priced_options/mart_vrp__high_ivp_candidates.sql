@@ -13,19 +13,20 @@
 
 with source as (select * from {{ ref('int_options__calcs_ivp') }}),
 
-ok_partition as (select * from source where ivp_n >= {{ n_partition_min }}),
+ok_partition as (select * from source where iv_partition_n >= {{ n_partition_min }}),
 
 ok_tradable as (
 	select *
 	from ok_partition
 	where volume >= {{ min_volume }}
 	and open_interest >= {{ min_open_interest }}
+	and (ask_price - bid_price) / mid_price <= {{ max_bid_ask_spread_pct }}
 ),
 
 high_ivp as (
 	select *
 	from ok_tradable
-	where ivp >= {{ ivp_threshold }}
+	where iv_cdf >= {{ ivp_threshold }}
 )
 
 select * from high_ivp
