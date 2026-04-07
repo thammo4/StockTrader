@@ -12,14 +12,16 @@ from StockTrader.tradier import options_order, acct, quotes
 from StockTrader.execution.orders import TradierOrderExecutor
 from StockTrader.execution.portfolio import TradierPositionMonitor, BasicM2M, ThresholdExitEvaluator
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+from StockTrader.settings import logger, STOCK_TRADER_HOME, STOCK_TRADER_LOG
 
 REDIS_HOST = "rudi.local"
 REDIS_PORT = 6379
 COMMAND_QUEUE = "execution:commands"
 RESULT_PREFIX = "execution:results:"
 
-ORDER_LOG_PATH = Path("./logs/order_log.parquet")
+# ORDER_LOG_PATH = Path("./logs/order_log.parquet")
+ORDER_LOG_PATH=Path(STOCK_TRADER_LOG + "/order_logs.parquet")
 
 
 def build_components():
