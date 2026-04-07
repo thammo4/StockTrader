@@ -8,7 +8,9 @@ from pathlib import Path
 from StockTrader.settings import logger
 
 
+
 class TradierPositionMonitor:
+	""" Reconcile broker records with local records """
     def __init__(self, acct, order_log_path: Path):
         self._acct = acct
         self._log_path = order_log_path
@@ -50,6 +52,7 @@ class TradierPositionMonitor:
 
 
 class BasicM2M:
+	"""Valuation of outstanding positions - pull quotes, compute upl"""
     def __init__(self, quotes):
         self._quotes = quotes
 
@@ -89,7 +92,7 @@ class ThresholdExitEvaluator:
             reason = None
             priority = 0
 
-            pnl_pct = pos.get("upl_ask", 0)
+            pnl_pct = pos.get("upl_pct", 0)
             dte = pos.get("entry_dte")
 
             if pnl_pct <= self._stop_loss:
