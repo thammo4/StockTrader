@@ -232,8 +232,10 @@ services:
         mc alias set stocktrader http://minio:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}
         mc mb --ignore-existing stocktrader/pricing-inputs;
         mc mb --ignore-existing stocktrader/pricing-outputs;
-        mc mb --ignore-existing stocktrader/pricing-archive
+        mc mb --ignore-existing stocktrader/pricing-archive;
+        mc mb --ignore-existing stocktrader/trading-candidates;
         mc anonymous set download stocktrader/pricing-outputs;
+        mc anonymous set download stocktrader/trading-candidates;
         echo 'MinIO buckets initalized'."
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
