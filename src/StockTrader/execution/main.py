@@ -2,7 +2,6 @@
 # FILE: `StockTrader/src/StockTrader/execution/main.py`
 #
 
-
 import argparse
 from datetime import date
 from StockTrader.tradier import options_order, options_orderL

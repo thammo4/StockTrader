@@ -5,10 +5,10 @@
 import io
 import os
 
-
 import pandas as pd
 from minio import Minio
 from minio.error import S3Error
+
 
 MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT")
 MINIO_ACCESS_KEY = os.environ.get("MINIO_ROOT_USER")
