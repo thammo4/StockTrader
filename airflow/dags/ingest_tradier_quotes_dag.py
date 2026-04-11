@@ -29,7 +29,7 @@ def dag_me():
         dag_id="ingest_tradier_quotes",
         default_args=default_args,
         description="Retrieve EOD quote data for symbols in largecap_all text file",
-        schedule_interval="35 16 * * 1-5",
+        schedule_interval="35 19 * * 1-5",
         start_date=datetime(2025, 5, 1),
         catchup=False,
         tags=["quotes", "ingest", "tradier"],
