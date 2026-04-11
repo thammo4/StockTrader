@@ -8,7 +8,7 @@
 ) }}
 
 --
--- Assign DTE Bucket Classification + Compute Raw VRP Signals
+-- Assign DTE Bucket Classification + Compute Raw VRP Signals + Xaction Costs
 --
 
 -- DTE Buckets match sigma horizons defined in int_ohlcv__calcs_rolling_vols
