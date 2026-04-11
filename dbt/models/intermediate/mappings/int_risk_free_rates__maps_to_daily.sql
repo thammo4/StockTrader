@@ -2,7 +2,7 @@
 -- FILE: `StockTrader/dbt/models/intermediate/mappings/int_risk_free_rates__maps_to_daily.sql`
 --
 
-{{ config(materialized='table') }}
+{{ config(materialized='view') }}
 
 with market_calendar as (
 	select distinct
