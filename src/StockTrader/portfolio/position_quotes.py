@@ -1,0 +1,49 @@
+#
+# FILE: `StockTrader/src/StockTrader/portfolio/position_quotes.py`
+#
+
+import pandas as pd
+from StockTrader.settings import logger
+
+class PositionQuotes:
+	def __init__ (self, quotes_client):
+		self._quotes_client = quotes_client
+	def add_market_data (self, df_positions:pd.DataFrame) -> pd.DataFrame:
+		if df_positions.empty:
+			return df_positions
+
+		symbols = df_positions["symbol"].tolist()
+		df_quotes = self._quotes_client.get_quote_data(symbols)
+
+		if df_quotes.empty:
+			logger.warning("No quote data [positions_quotes]")
+			df_positions["bid_price"] = None
+			df_positions["ask_price"] = None
+			df_positions["last_price"] = None
+			df_positions["mid_price"] = None
+
+			return df_positions
+
+		df_quotes = df_quotes.rename(
+			columns={
+				"symbol":"occ",
+				"id":"tradier_id",
+				"bid": "bid_price",
+				"ask": "ask_price",
+			},
+			axis=1
+		)
+
+		df_quotes = df_quotes[["occ", "mid_price", "bid_price", "ask_price"]]
+
+		df_enriched = df_positions.merge(df_quotes, on="symbol", how="inner")
+
+		df_enriched["mid_price"] = df_enriched.apply(
+			lambda x: x["last"] if pd.isna(x["bid_price"]) or pd.isna(x["ask_price"]) else (x["bid_price"]+x["ask_price"])/2,
+			axis=1
+		)
+
+		logger.info(f"Enriched n={len(df_enriched)} positions with current quote data")
+
+		return df_enriched
+
