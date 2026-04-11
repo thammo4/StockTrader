@@ -14,14 +14,14 @@ class PositionLoader:
 		try:
 			df = self._account.get_positions(options=True)
 			if df is None or df.empty:
-				return pd.DataFrame(columns=["symbol", "quantity", "cost_basis", "date_acquired", "id"])
+				return pd.DataFrame(columns=["occ", "quantity", "cost_basis", "date_acquired", "id"])
 
 			df["quantity"] = pd.to_numeric(df["quantity"])
 			df["cost_basis"] = pd.to_numeric(df["cost_basis"])
 
 			logger.info(f"Loaded n={len(df)} open positions")
 
-			return df
+			return df.rename({"symbol":"occ"}, axis=1)
 		except Exception as e:
 			logger.error(f"Failed to load positions: {str(e)}")
 			return pd.DataFrame()
