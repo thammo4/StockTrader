@@ -12,7 +12,7 @@ class PositionQuotes:
 		if df_positions.empty:
 			return df_positions
 
-		symbols = df_positions["symbol"].tolist()
+		symbols = df_positions["occ"].tolist()
 		df_quotes = self._quotes_client.get_quote_data(symbols)
 
 		if df_quotes.empty:
@@ -24,22 +24,15 @@ class PositionQuotes:
 
 			return df_positions
 
-		df_quotes = df_quotes.rename(
-			columns={
-				"symbol":"occ",
-				"id":"tradier_id",
-				"bid": "bid_price",
-				"ask": "ask_price",
-			},
-			axis=1
-		)
+		df_quotes = df_quotes.rename({"symbol":"occ", "id":"tradier_id", "bid": "bid_price", "ask": "ask_price", "last":"last_price"}, axis=1)
+		print(df_quotes)
 
-		df_quotes = df_quotes[["occ", "mid_price", "bid_price", "ask_price"]]
+		df_quotes = df_quotes[["occ", "last_price", "bid_price", "ask_price"]]
 
-		df_enriched = df_positions.merge(df_quotes, on="symbol", how="inner")
+		df_enriched = df_positions.merge(df_quotes, on="occ", how="inner");
 
 		df_enriched["mid_price"] = df_enriched.apply(
-			lambda x: x["last"] if pd.isna(x["bid_price"]) or pd.isna(x["ask_price"]) else (x["bid_price"]+x["ask_price"])/2,
+			lambda x: x["last_price"] if pd.isna(x["bid_price"]) or pd.isna(x["ask_price"]) else (x["bid_price"]+x["ask_price"])/2,
 			axis=1
 		)
 
