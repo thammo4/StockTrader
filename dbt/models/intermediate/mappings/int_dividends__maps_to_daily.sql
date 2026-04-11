@@ -2,7 +2,7 @@
 -- FILE: `StockTrader/dbt/models/intermediate/mappings/int_dividends__maps_to_daily.sql`
 --
 
-{{ config (materialized='table') }}
+{{ config (materialized='view') }}
 
 with symbol_calendar as (
 	select distinct
