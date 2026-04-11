@@ -2,6 +2,8 @@
 -- FILE: `StockTrader/dbt/models/staging/qlib_priced/stg_qlib_priced__outputs.sql`
 --
 
+{{ config(materialized='view') }}
+
 with source as (
 	select
 		market_date::DATE 		as market_date,
