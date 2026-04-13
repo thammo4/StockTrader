@@ -25,7 +25,7 @@ class PositionQuotes:
 
 			return df_positions
 
-		df_quotes = df_quotes.rename({"symbol":"occ", "id":"tradier_id", "bid": "bid_price", "ask": "ask_price", "last":"last_price"}, axis=1)
+		df_quotes = df_quotes.rename({"symbol":"occ", "bid": "bid_price", "ask": "ask_price", "last":"last_price"}, axis=1)
 		df_quotes = df_quotes[["occ", "last_price", "bid_price", "ask_price", "contract_size"]]
 		df_enriched = df_positions.merge(df_quotes, on="occ", how="left")
 
