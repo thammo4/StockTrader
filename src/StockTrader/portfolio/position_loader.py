@@ -20,9 +20,9 @@ class PositionLoader:
             df["quantity"] = pd.to_numeric(df["quantity"])
             df["cost_basis"] = pd.to_numeric(df["cost_basis"])
 
-            logger.info(f"Loaded n={len(df)} open positions")
+            logger.info(f"Loaded n={len(df)} open positions [position_loader]")
 
             return df.rename({"symbol": "occ", "id": "tradier_id"}, axis=1)
         except Exception as e:
-            logger.error(f"Failed to load positions: {str(e)}")
+            logger.error(f"Failed to load positions: {str(e)} [position_loader]")
             return pd.DataFrame()

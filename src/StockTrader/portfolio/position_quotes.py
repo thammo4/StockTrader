@@ -44,6 +44,6 @@ class PositionQuotes:
 
         df_enriched["contract_size"] = df_enriched["contract_size"].fillna(100)
 
-        logger.info(f"Enriched n={len(df_enriched)} positions with current quote data")
+        logger.info(f"Enriched n={len(df_enriched)} positions with current quote data [position_quotes]")
 
         return df_enriched
