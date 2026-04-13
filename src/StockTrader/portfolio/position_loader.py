@@ -21,7 +21,7 @@ class PositionLoader:
 
 			logger.info(f"Loaded n={len(df)} open positions")
 
-			return df.rename({"symbol":"occ"}, axis=1)
+			return df.rename({"symbol":"occ", "id":"tradier_id"}, axis=1)
 		except Exception as e:
 			logger.error(f"Failed to load positions: {str(e)}")
 			return pd.DataFrame()
