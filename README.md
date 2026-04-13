@@ -137,6 +137,19 @@ StockTrader/
 │       └── settings.py
 │       └── tradier.py
 │       └── freddy.py
+│       └── execution/
+│           └── __init__.py
+│           └── candidate_store.py
+│           └── main.py
+│           └── order_builder.py
+│           └── order_executor.py
+│           └── order_processor.py
+│       └── portfolio/
+│           └── __init__.py
+│           └── m2m.py
+│           └── monitor.py
+│           └── position_loader.py
+│           └── position_quotes.py
 │       └── pricing/
 │           └── __init__.py
 │           └── base.py
@@ -165,6 +178,7 @@ StockTrader/
 └── utils/
 │   └── dividend_table.py
 │   └── get_symbols.py
+│   └── minio_store.py
 |   └── parse_occ.py
 |   └── vol_estimate.py
 │   └── write_atomic.py
