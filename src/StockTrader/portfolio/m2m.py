@@ -15,28 +15,47 @@ class M2MCalc:
 
         df = df_enriched.copy()
 
-        df["quantity"] = pd.to_numeric(df["quantity"])
-        df["cost_basis"] = pd.to_numeric(df["cost_basis"])
-        df["mid_price"] = pd.to_numeric(df["mid_price"])
-        # df["contract_size"] = pd.to_numeric(df.get("contract_size", 100)).fillna(100)
-        df["contract_size"] = pd.to_numeric(df["contract_size"])
-
-        df["market_value"] = df["mid_price"] * df["quantity"] * df["contract_size"]
+        df["market_value"] = df["mid_price"] * df["quantity"] * df["n_contracts"]
         df["upl"] = df["market_value"] - df["cost_basis"]
 
         df["upl_pct"] = df["upl"] / df["cost_basis"].abs() * 100
 
-        if "date_acquired" in df.columns:
-            # df["date_acquired"] = pd.to_datetime(df["date_acquired"])
-            df["date_acquired"] = pd.to_datetime(df["date_acquired"]).dt.tz_localize(None)
-            df["days_held"] = (pd.Timestamp.now() - df["date_acquired"]).dt.days
+        if "acq_date" in df.columns:
+            df["acq_date_tz"] = pd.to_datetime(df["acq_date"]).dt.tz_localize(None)
+            df["days_held"] = (pd.Timestamp.now() - df["acq_date_tz"]).dt.days
 
         df["upl"] = np.round(df["upl"], 2)
         df["upl_pct"] = np.round(df["upl_pct"], 2)
 
         logger.info(f"Computed P/L for n={len(df)} positions [m2m]")
 
-        return df
+        cols = [
+            'symbol',
+            'occ',
+            'option_type',
+            'expiry_date',
+            'expiry_type',
+            'n_contracts',
+            'strike_price',
+            'mid_price',
+            'bid_price',
+            'ask_price',
+            'volume',
+            'open_interest',
+            'bid_size',
+            'ask_size',
+            'quantity',
+            'cost_basis',
+            'market_value',
+            'upl',
+            'upl_pct',
+            'days_held',
+            'acq_date',
+            'acq_time',
+            'tradier_id',
+        ]
+
+        return df[cols]
 
     @staticmethod
     def portfolio_summary(df: pd.DataFrame) -> dict:

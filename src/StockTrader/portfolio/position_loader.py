@@ -19,6 +19,12 @@ class PositionLoader:
 
             df["quantity"] = pd.to_numeric(df["quantity"])
             df["cost_basis"] = pd.to_numeric(df["cost_basis"])
+            df["date_acquired"] = pd.to_datetime(df["date_acquired"])
+
+            df["acq_date"] = df["date_acquired"].dt.date
+            df["acq_time"] = df["date_acquired"].dt.time
+
+            df.drop(columns=["date_acquired"], inplace=True)
 
             logger.info(f"Loaded n={len(df)} open positions [position_loader]")
 
