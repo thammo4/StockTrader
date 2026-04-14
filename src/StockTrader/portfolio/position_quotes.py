@@ -59,7 +59,6 @@ class PositionQuotes:
         ]
 
     def add_market_data(self, df_positions: pd.DataFrame) -> pd.DataFrame:
-        print(f"df_positions\n{df_positions}")
         if df_positions.empty:
             return df_positions
 
@@ -70,11 +69,9 @@ class PositionQuotes:
             return pd.DataFrame(columns=self.columns_return)
 
         df_quotes = df_quotes[self.columns_keep].rename(self.columns_rename, axis=1)
-        print(f"df_quotes\n{df_quotes}\n{df_quotes.info()}")
         df_quotes["mid_price"] = df_quotes.apply(lambda x: 0.5 * (x["bid_price"] + x["ask_price"]), axis=1)
 
         df_enriched = df_positions.merge(df_quotes, on="occ", how="left")
-        print(f"df_enriched\n{df_enriched}\n{df_enriched.info()}")
 
         logger.info(f"Enriched n={len(df_enriched)} positions with current quote data [position_quotes]")
 
