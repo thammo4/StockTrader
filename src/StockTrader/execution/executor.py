@@ -8,6 +8,8 @@ from typing import List, Union
 from StockTrader.settings import logger
 from StockTrader.execution.dto import (
 	AssetType,
+	CancelRequest,
+	CancelResult,
 	ExecutionResult,
 	MLegOrderRequest,
 	MLegOrderType,
@@ -24,6 +26,16 @@ class TraderAdapter:
 	def __init__ (self, options_client, equities_client):
 		self._options = options_client
 		self._equities = equities_client
+
+	def cancel_order (self, cancel: CancelRequest) -> dict:
+		if cancel.asset_type == AssetType.OPTION:
+			return self._options.cancel_order(order_id=cancel.order_id)
+		else:
+			if self._equities is None:
+				raise RunTimeError(
+					"TraderAdapter got equity cancel without equities client"
+				)
+			return self._equities.cancel_order(order_id=cancel.order_id)
 
 	def place_order (self, order:  OrderRequestUnion) -> dict:
 		if isinstance (order, MLegOrderRequest):
@@ -48,6 +60,7 @@ class TraderAdapter:
 			stop_price = order.stop_price,
 			duration = order.duration
 		)
+
 	def _place_equity_order (self, order: OrderRequest) -> dict:
 		return self._equities.order(
 			symbol = order.symbol,
@@ -79,6 +92,19 @@ class SimpleOrderExecutor (OrderExecutor):
 	def __init__ (self, trader_adapter: TraderAdapter):
 		self._adapter = trader_adapter
 
+	def cancel (self, cancels: List[CancelRequest], dry_run: bool=False) -> List[CancelResult]:
+		mode = "DRY_RUN" if dry_run else "LIVE"
+		logger.info(f"{mode} SimpleOrderEecutor.cancel, n_cancels={len(cancels)}")
+
+		results: List[CancelResult] = []
+		for c in cancels:
+			results.append(self._dry_run_cancel(c)) if dry_run else results.append(self._cancel_one(c))
+
+		n_ok = sum(1 for r in results if r.success)
+		n_fail = len(results) - n_ok
+		logger.info(f"Cancel Summary: n_cancelled={n_ok}, n_fail={n_fail}")
+		return results
+
 	def execute (self, orders: List[OrderRequestUnion], dry_run: bool = False) -> List[ExecutionResult]:
 		run_mode = "DRY_RUN" if dry_run else "LIVE"
 		logger.info(f"{run_mode} SimpleOrderExecutor.execute: n_orders={len(orders)}")
@@ -89,6 +115,27 @@ class SimpleOrderExecutor (OrderExecutor):
 			results.append(self._dry_run_result(order)) if dry_run else results.append(self._execute_one(order))
 		self._log_summary(results)
 		return results
+
+	def _cancel_one (self, cancel: CancelRequest) -> CancelResult:
+		try:
+			r = self._adapter.cancel_order(cancel)
+
+			status = None
+			if isinstance(r, dict):
+				status = r.get("order", {}).get("status")
+			return CancelResult(
+				request = cancel,
+				success = status == "ok",
+				cancel_ts = datetime.now(timezone.utc).isoformat()
+			)
+		except Exception as e:
+			logger.error(f"Cacnel failed: order_id={cancel.order_id}: {str(e)}")
+			return CancelResult(
+				request = cancel,
+				success = False,
+				error = str(e),
+				cancel_ts = datetime.now(timezone.utc).isoformat()
+			)
 
 	def _execute_one (self, order: OrderRequestUnion) -> ExecutionResult:
 		try:
@@ -116,6 +163,14 @@ class SimpleOrderExecutor (OrderExecutor):
 			success=True,
 			order_id = -1,
 			submit_ts = datetime.now(timezone.utc).isoformat()
+		)
+
+	def _dry_run_cancel (self, cancel:CancelRequest) -> CancelResult:
+		logger.info(f"DRY_RUN cancel: order_id={cancel.order_id}")
+		return CancelResult(
+			request = cancel,
+			success = True,
+			cancel_ts = datetime.now(timezone.utc).isoformat()
 		)
 
 	def _log_summary (self, results: List[ExecutionResult]):
