@@ -1,0 +1,12 @@
+#
+# FILE: `StockTrader/src/StockTrader/execution/templates/vrp_short.yml`
+#
+
+asset_type: option
+symbol: "{symbol}"
+occ: "{occ}"
+side: sell_to_open
+order_type: limit
+quantity: 1
+limit_price: "{mid_price}"
+duration: day

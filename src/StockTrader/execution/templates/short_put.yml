@@ -1,0 +1,12 @@
+#
+# FILE: `StockTrader/src/StockTrader/execution/templates/short_put.yml`
+#
+
+asset_type: option
+symbol: "{symbol}"
+occ: "{occ}"
+side: sell_to_open
+quantity: 1
+order_type: limit
+limit_price: "{mid_price}"
+duration: day
