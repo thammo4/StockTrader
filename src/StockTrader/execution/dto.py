@@ -35,6 +35,19 @@ class OrderType (Enum):
 	STOP_LIMIT = "stop_limit"
 
 @dataclass(frozen=True)
+class CancelRequest:
+	order_id: int
+	asset_type: AssetType
+	df_idx: Optional[int] = None
+
+@dataclass
+class CancelResult:
+	request: CancelRequest
+	success: bool
+	error: Optional[str] = None
+	cancel_ts: Optional[str] = None
+
+@dataclass(frozen=True)
 class OrderLeg:
 	asset_type: AssetType
 	symbol: str
