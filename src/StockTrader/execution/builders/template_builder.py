@@ -108,7 +108,6 @@ class TemplateOrderBuilder (OrderBuilder):
 			return None
 		return str(resolved)
 
-
 	@staticmethod
 	def _resolve_optional_float (value, row:pd.Series) -> Optional[float]:
 		if value is None:
