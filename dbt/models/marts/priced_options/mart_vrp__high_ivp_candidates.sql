@@ -143,7 +143,10 @@ select
 	round(credit_price,2) as credit_price,
 	round(iv_cdf,4) as iv_cdf,
 	iv_partition_n,
-	symbol_rank
+	symbol_rank,
+	'sell_to_open' as order_side,
+	bid_price as entry_price,
+	'bid_price' as entry_price_ref
 from symbol_count_cutoffs
 order by
 	symbol,
