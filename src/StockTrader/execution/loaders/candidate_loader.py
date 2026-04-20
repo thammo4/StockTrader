@@ -6,8 +6,10 @@ import pandas as pd
 from utils.minio_store import MinioStore
 from StockTrader.execution.order_iface import DataLoader
 
+
 class CandidateLoader(DataLoader):
     """Loads candidate Parquet files from MinIO using the existing MinioStore utility."""
+
     def __init__(self, store: MinioStore, bucket: str):
         self.store = store
         self.bucket = bucket
