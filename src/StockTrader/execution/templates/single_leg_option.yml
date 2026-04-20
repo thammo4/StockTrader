@@ -1,0 +1,11 @@
+#
+# FILE: `StockTrader/src/StockTrader/execution/templates/single_leg_option.yml`
+#
+
+asset_type: option
+symbol: "{symbol}"
+occ: "{occ}"
+side: "{order_side}"
+order_type: limit
+quantity: "{quantity}"
+limit_price: "{entry_price}"
