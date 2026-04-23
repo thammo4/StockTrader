@@ -147,3 +147,10 @@ class MinioStore:
         )
 
         return f"s3://{bucket}/{obj_name}"
+
+    def list_buckets(self) -> list[str]:
+        return [b.name for b in self._client.list_buckets()]
+
+    def list_bucket_objects(self, bucket: str, prefix: str = "", recursive: bool = False) -> list[str]:
+        objs = self._client.list_objects(bucket, prefix=prefix, recursive=recursive)
+        return [o.object_name for o in objs]
