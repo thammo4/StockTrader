@@ -31,33 +31,21 @@ def main():
 
     parser.add_argument(
         "--max-position-frac",
-        type = float,
-        default = 0.05,
-        help = "max per-position margin proportion of option buying power"
+        type=float,
+        default=0.05,
+        help="max per-position margin proportion of option buying power",
     )
     parser.add_argument(
         "--max-portfolio-margin-frac",
-        type = float,
-        default = 0.80,
-        help = "max agg-portfolio margin proportion of total equity"
+        type=float,
+        default=0.80,
+        help="max agg-portfolio margin proportion of total equity",
     )
     parser.add_argument(
-        "--min-credit-frac",
-        type = float,
-        default = 0.005,
-        help = "min agg candidate credit proportion of total equity"
+        "--min-credit-frac", type=float, default=0.005, help="min agg candidate credit proportion of total equity"
     )
-    parser.add_argument(
-        "--ok-duplicate-symbols",
-        action = "store_true",
-        help = "ok to have > 1 same underlying"
-    )
-    parser.add_argument(
-        "--no-filter",
-        action = "store_true",
-        help = "get rich quick / yolo"
-    )
-
+    parser.add_argument("--ok-duplicate-symbols", action="store_true", help="ok to have > 1 same underlying")
+    parser.add_argument("--no-filter", action="store_true", help="get rich quick / yolo")
 
     args = parser.parse_args()
 
@@ -72,12 +60,12 @@ def main():
         loader = loader_raw
     else:
         loader = FilteredCandidateLoader(
-            inner_loader = loader_raw,
-            account_client = account_client,
-            max_position_frac = args.max_position_frac,
-            max_portfolio_margin_frac = args.max_portfolio_margin_frac,
-            min_credit_frac = args.min_credit_frac,
-            ok_duplicate_symbols = args.ok_duplicate_symbols
+            inner_loader=loader_raw,
+            account_client=account_client,
+            max_position_frac=args.max_position_frac,
+            max_portfolio_margin_frac=args.max_portfolio_margin_frac,
+            min_credit_frac=args.min_credit_frac,
+            ok_duplicate_symbols=args.ok_duplicate_symbols,
         )
 
     builder = TemplateOrderBuilder(template_path=args.template)
