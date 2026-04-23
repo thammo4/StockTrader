@@ -145,8 +145,9 @@ select
 	iv_partition_n,
 	symbol_rank,
 	'sell_to_open' as order_side,
-	bid_price as entry_price,
-	'bid_price' as entry_price_ref
+	mid_price as entry_price,
+	'mid_price' as entry_price_ref,
+	1 as quantity
 from symbol_count_cutoffs
 order by
 	symbol,
