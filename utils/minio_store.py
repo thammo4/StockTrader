@@ -68,7 +68,6 @@ class MinioStore:
     def _read_single(self, bucket: str, obj_name: str) -> pd.DataFrame:
         return pd.read_parquet(io.BytesIO(self._read_bytes(bucket, obj_name)))
 
-
     #
     # READERS
     #
@@ -157,7 +156,6 @@ class MinioStore:
 
         return f"s3://{bucket}/{obj_name}"
 
-
     #
     # LISTERS
     #
@@ -169,18 +167,11 @@ class MinioStore:
         objs = self._client.list_objects(bucket, prefix=prefix, recursive=recursive)
         return [o.object_name for o in objs]
 
-
     #
     # DOWNLOADERS
     #
 
-    def download_prefix(
-        self,
-        bucket: str,
-        prefix: str="",
-        local_dir: str=".",
-        recursive: bool=True
-    ) -> list[str]:
+    def download_prefix(self, bucket: str, prefix: str = "", local_dir: str = ".", recursive: bool = True) -> list[str]:
         path_base = Path(local_dir)
         path_base.mkdir(parents=True, exist_ok=True)
 
@@ -192,18 +183,14 @@ class MinioStore:
         if not objs:
             raise FileNotFoundError(f"No objs, path=s3://{bucket}/{prefix}")
 
-        download_paths=[];
+        download_paths = []
 
         for o in objs:
-            path_relative = o.object_name[len(prefix):] if prefix else o.object_name
+            path_relative = o.object_name[len(prefix) :] if prefix else o.object_name
             path_local = path_base / path_relative
             path_local.parent.mkdir(parents=True, exist_ok=True)
 
-            self._client.fget_object(
-                bucket_name = bucket,
-                object_name = o.object_name,
-                file_path = str(path_local)
-            )
+            self._client.fget_object(bucket_name=bucket, object_name=o.object_name, file_path=str(path_local))
 
             download_paths.append(str(path_local))
 
