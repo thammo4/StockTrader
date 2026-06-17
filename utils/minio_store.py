@@ -5,7 +5,7 @@
 import io
 import os
 import json
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 
 import pandas as pd
 from minio import Minio
@@ -68,6 +68,11 @@ class MinioStore:
     def _read_single(self, bucket: str, obj_name: str) -> pd.DataFrame:
         return pd.read_parquet(io.BytesIO(self._read_bytes(bucket, obj_name)))
 
+
+    #
+    # READERS
+    #
+
     def read_prefix(self, bucket: str, prefix: str = "", fmt: str = "parquet", fname_col: str | list[str] = None):
         ext = f".{fmt}"
         objs = [
@@ -116,6 +121,10 @@ class MinioStore:
 
         return self.read_prefix(bucket, prefix, fmt="parquet", fname_col=fname_col)
 
+    #
+    # WRITERS
+    #
+
     def write_parquet(
         self, bucket: str, obj_name: str, df: pd.DataFrame, compress: str = "zstd", ensure_bucket: bool = False
     ) -> str:
@@ -148,9 +157,54 @@ class MinioStore:
 
         return f"s3://{bucket}/{obj_name}"
 
+
+    #
+    # LISTERS
+    #
+
     def list_buckets(self) -> list[str]:
         return [b.name for b in self._client.list_buckets()]
 
     def list_bucket_objects(self, bucket: str, prefix: str = "", recursive: bool = False) -> list[str]:
         objs = self._client.list_objects(bucket, prefix=prefix, recursive=recursive)
         return [o.object_name for o in objs]
+
+
+    #
+    # DOWNLOADERS
+    #
+
+    def download_prefix(
+        self,
+        bucket: str,
+        prefix: str="",
+        local_dir: str=".",
+        recursive: bool=True
+    ) -> list[str]:
+        path_base = Path(local_dir)
+        path_base.mkdir(parents=True, exist_ok=True)
+
+        if prefix and not prefix.endswith("/"):
+            prefix += "/"
+
+        objs = [o for o in self._client.list_objects(bucket, prefix=prefix, recursive=recursive) if not o.is_dir]
+
+        if not objs:
+            raise FileNotFoundError(f"No objs, path=s3://{bucket}/{prefix}")
+
+        download_paths=[];
+
+        for o in objs:
+            path_relative = o.object_name[len(prefix):] if prefix else o.object_name
+            path_local = path_base / path_relative
+            path_local.parent.mkdir(parents=True, exist_ok=True)
+
+            self._client.fget_object(
+                bucket_name = bucket,
+                object_name = o.object_name,
+                file_path = str(path_local)
+            )
+
+            download_paths.append(str(path_local))
+
+        return download_paths
