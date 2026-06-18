@@ -61,7 +61,34 @@ EOF
 
 
 #
-# PRIMARY QUERY (identical to the model's SQL but without the config block)
+# DETERMINE WHETHER TARGET SCHEMA.TABLE EXISTS IN DDB
+#
+
+DDB_TABLE_EXISTS_SQL=$(cat << EOF
+    SELECT COUNT(*)
+      FROM information_schema.tables
+     WHERE table_schema = '${DDB_TARGET_SCHEMA}'
+       AND table_name = '${DDB_TARGET_TABLE}'
+    ;
+EOF
+)
+
+
+#
+# RETRIEVE EXISTING MARKET DATES IN TARGET SCHEMA.TABLE [if exists]
+#
+
+DDB_MARKET_DATES_EXISTING_SQL=$(cat << EOF
+    SELECT DISTINCT market_date::VARCHAR
+      FROM ${DDB_TARGET_SCHEMA_DOT_TABLE}
+     ORDER BY market_date ASC
+    ;
+EOF
+)
+
+
+#
+# PRIMARY QUERY
 #
 
 DDB_SELECT_SQL=$(cat << 'EOF'
@@ -173,6 +200,8 @@ EOF
 if [[ "$VERBOSE" == "true" ]]; then
     echo "        !!!!!!!!!!!!!!!!!! SQL STATEMENTS !!!!!!!!!!!!!!!!!!";
     ekko "DDB_MARKET_DATES_SQL\n${DDB_MARKET_DATES_SQL}"
+    ekko "DDB_TABLE_EXISTS_SQL:\n${DDB_TABLE_EXISTS_SQL}"
+    ekko "DDB_MARKET_DATES_EXISTING_SQL:\n${DDB_MARKET_DATES_EXISTING_SQL}"
     ekko "DDB_SELECT_SQL\n${DDB_SELECT_SQL}"
 fi
 
@@ -181,43 +210,77 @@ fi
 # 1. FETCH MARKET DATES
 #
 
-log "1. Fetching market dates from main_intermediate.int_options__joins_qlib_priced"
+log "1. Fetching market dates from main_intermediate.int_options__joins_qlib_priced."
 
 MARKET_DATES="$(run_ddb_csv "$DDB_MARKET_DATES_SQL")"
 N_TOTAL=$(echo "$MARKET_DATES" | grep -c '.' || true)
 
-log "Found $N_TOTAL market dates"
+log "Found $N_TOTAL market dates."
 
 
 #
-# 2. DROP EXISTING TARGET TABLE
+# 2. CHECK EXISTING TARGET TABLE + DATES
 #
 
-log "2. Dropping existing table if exists: ${DDB_TARGET_SCHEMA_DOT_TABLE}"
+log "2. Checking for existing target table: ${DDB_TARGET_SCHEMA_DOT_TABLE}."
 
-run_ddb "DROP TABLE IF EXISTS ${DDB_TARGET_SCHEMA_DOT_TABLE};"
+IS_EXISTING_TARGET_TABLE="$(run_ddb_csv "$DDB_TABLE_EXISTS_SQL")"
+MARKET_DATES_EXISTING=""
+N_EXISTING=0
 
-log "Dropped."
+if (( IS_EXISTING_TARGET_TABLE > 0 )); then
+    log "Table exists, will skip existing market dates."
+    MARKET_DATES_EXISTING="$(run_ddb_csv "$DDB_MARKET_DATES_EXISTING_SQL")"
+    N_EXISTING=$(echo "$MARKET_DATES_EXISTING" | grep -c '.' || true)
+    log "Found $N_EXISTING target dates."
+else
+    log "Table n/a will CTAS on first insert."
+fi
+
+if [[ "$VERBOSE" == "true" ]]; then
+    echo "        !!!!!!!!!!!!!!!!!! SQL STATEMENTS !!!!!!!!!!!!!!!!!!";
+    ekko "MARKET_DATES:\n${MARKET_DATES}"
+    ekko "IS_EXISTING_TARGET_TABLE:\n${IS_EXISTING_TARGET_TABLE}"
+    ekko "MARKET_DATES_EXISTING:\n${MARKET_DATES_EXISTING}"
+fi
 
 
 #
-# 3. RECONSTRUCT TARGET TABLE BY ITERATING MARKET DATES
+# IF NO UPSTREAM DATES OR TARGET TABLE THEN NO MAS
 #
 
-log "3. Reconstructing table via CTAS + Inserts"
+if (( N_TOTAL == 0 )) && (( IS_EXISTING_TARGET_TABLE == 0 )); then
+    log "No upstream market dates, no target table, no mas."
+    log "Done."
+    exit 0
+fi
+
+
+#
+# 3. POPULATE TARGET TABLE BY ITERATING MARKET DATES
+#
+
+log "3. Populating table via CTAS + Inserts, skip existing."
 
 i=0
 n_inserted=0
+n_skipped=0
 
 while IFS= read -r dt; do
     [[ -z "$dt" ]] && continue
+
+    if echo "$MARKET_DATES_EXISTING" | grep -qx "$dt"; then
+        (( n_skipped++ )) || true
+        continue
+    fi
+
     (( i++ )) || true
 
-    log "Processing date $i / $N_TOTAL: $dt"
+    log "Inserting date $i / $(( N_TOTAL - n_skipped )): $dt."
 
     DDB_WHERE_MARKET_DATE_SQL="WHERE market_date = '${dt}'::DATE"
 
-    if (( n_inserted == 0 )); then
+    if (( n_inserted == 0 )) && (( IS_EXISTING_TARGET_TABLE == 0 )); then
         run_ddb "
             CREATE TABLE ${DDB_TARGET_SCHEMA_DOT_TABLE}
                       AS ${DDB_SELECT_SQL} ${DDB_WHERE_MARKET_DATE_SQL}
@@ -235,7 +298,7 @@ while IFS= read -r dt; do
 
     if (( n_inserted % 10 == 0 )); then
         N_LOADED="$(run_ddb_csv "SELECT COUNT(*) FROM ${DDB_TARGET_SCHEMA_DOT_TABLE};")"
-        log "Insert progress: dates=$n_inserted, records=$N_LOADED"
+        log "Insert progress: dates=$n_inserted, skips=$n_skipped, records=$N_LOADED."
     fi
 done <<< "$MARKET_DATES"
 
@@ -247,7 +310,7 @@ done <<< "$MARKET_DATES"
 N_RECORDS_LOADED="$(run_ddb_csv "SELECT COUNT(*) FROM ${DDB_TARGET_SCHEMA_DOT_TABLE};")"
 N_DATES_LOADED="$(run_ddb_csv "SELECT COUNT(DISTINCT market_date) FROM ${DDB_TARGET_SCHEMA_DOT_TABLE};")"
 
-log "Insert results: inserted=$n_inserted"
-log "Table ${DDB_TARGET_SCHEMA_DOT_TABLE}: n=${N_RECORDS_LOADED}, dates=${N_DATES_LOADED}"
+log "Insert results: inserted=$n_inserted, skipped=$n_skipped."
+log "Table ${DDB_TARGET_SCHEMA_DOT_TABLE}: n=${N_RECORDS_LOADED}, dates=${N_DATES_LOADED}."
 
 log "Done."
