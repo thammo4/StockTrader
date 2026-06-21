@@ -1,3 +1,7 @@
+#
+# FILE: `StockTrader/scripts/dbt_refresh/groups/priced_options.txt`
+#
+
 int_options__joins_qlib_priced
 int_options__calcs_vrp
 int_options__calcs_pricing_metrics
