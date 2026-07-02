@@ -50,10 +50,14 @@ def ingest_tradier_ohlcv_bars(symbol, subdir="ohlcv_bars", start_date=None, end_
                 if "date" in df_existing.columns and not df_existing.empty:
                     latest_date = pd.to_datetime(df_existing["date"]).max()
                     start_date = (latest_date + pd.Timedelta(days=1)).strftime("%Y-%m-%d")
-                    logger.info(f"Found existing data up to {latest_date.strftime('%Y-%m-%d')}, fetching from {start_date} [ingest_tradier_ohlcv_bars]")
+                    logger.info(
+                        f"Found existing data up to {latest_date.strftime('%Y-%m-%d')}, fetching from {start_date} [ingest_tradier_ohlcv_bars]"
+                    )
                 else:
                     start_date = today_last_year
-                    logger.info(f"Existing file has no date column, fetching from {start_date} [ingest_tradier_ohlcv_bars]")
+                    logger.info(
+                        f"Existing file has no date column, fetching from {start_date} [ingest_tradier_ohlcv_bars]"
+                    )
             else:
                 start_date = today_last_year
                 logger.info(f"No existing file, fetching from {start_date} [ingest_tradier_ohlcv_bars]")
@@ -73,13 +77,10 @@ def ingest_tradier_ohlcv_bars(symbol, subdir="ohlcv_bars", start_date=None, end_
         # Retrieve daily bar data from Tradier
         #
 
-        logger.info(f"Fetching OHLCV data: symbol={symbol}, start={start_date}, end={end_date} [ingest_tradier_ohlcv_bars]")
-        df = quotesL.get_historical_quotes(
-            symbol=symbol,
-            interval="daily",
-            start_date=start_date,
-            end_date=end_date
+        logger.info(
+            f"Fetching OHLCV data: symbol={symbol}, start={start_date}, end={end_date} [ingest_tradier_ohlcv_bars]"
         )
+        df = quotesL.get_historical_quotes(symbol=symbol, interval="daily", start_date=start_date, end_date=end_date)
 
         if df is None or df.empty:
             logger.info(f"No OHLCV data, symbol={symbol} [ingest_tradier_ohlcv_bars]")
@@ -103,7 +104,9 @@ def ingest_tradier_ohlcv_bars(symbol, subdir="ohlcv_bars", start_date=None, end_
         if os.path.exists(fpath_parquet):
             df_existing = pd.read_parquet(fpath_parquet)
             df = pd.concat([df_existing, df])
-            logger.info(f"Appending to existing data: symbol={symbol}, n_existing={len(df_existing)}, n_new={len(df)-len(df_existing)} [ingest_tradier_ohlcv_bars]")
+            logger.info(
+                f"Appending to existing data: symbol={symbol}, n_existing={len(df_existing)}, n_new={len(df)-len(df_existing)} [ingest_tradier_ohlcv_bars]"
+            )
 
         #
         # Deduplicate based on symbol, date, and created_date
