@@ -46,7 +46,9 @@ def main():
     )
     parser.add_argument("--ok-duplicate-symbols", action="store_true", help="ok to have > 1 same underlying")
     parser.add_argument("--no-filter", action="store_true", help="get rich quick / yolo")
-    parser.add_argument("--minio-endpoint", default=None, help="MinIO endpoint host:port (overrides MINIO_ENDPOINT env)")
+    parser.add_argument(
+        "--minio-endpoint", default=None, help="MinIO endpoint host:port (overrides MINIO_ENDPOINT env)"
+    )
 
     args = parser.parse_args()
 
