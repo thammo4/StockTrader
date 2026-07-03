@@ -16,7 +16,12 @@ log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*"; }
 # Runtime Config
 #
 
-RT_DATE="${1:-$(date +%Y-%m-%d)}"
+if [[ $# -gt 0 && "$1" != --* ]]; then
+	RT_DATE="$1"
+	shift
+else
+	RT_DATE="$(date +%Y-%m-%d)"
+fi
 TMP_DIR="$(mktemp -d)"
 
 trap "rm -rf ${TMP_DIR}" EXIT
@@ -42,29 +47,13 @@ ekko () { echo -e "$1"; echo "        ------------------------------------------
 
 
 #
-# MinIO Config
+# MinIO Config (defaults; overrideable via --minio-* args below)
 #
 
 MINIO_ENDPOINT="${MINIO_ENDPOINT:-127.0.0.1:9000}"
 MINIO_ACCESS_KEY="${MINIO_ACCESS_KEY:-${MINIO_ROOT_USER:-stocktrader}}"
 MINIO_SECRET_KEY="${MINIO_SECRET_KEY:-${MINIO_ROOT_PASSWORD:-stocktrader}}"
 S3_BUCKET="trading-candidates"
-
-S3_CONFIG_SQL=$(cat << EOF
-	LOAD httpfs;
-	CREATE OR REPLACE SECRET minio_secret (
-		TYPE S3,
-		KEY_ID '${MINIO_ACCESS_KEY}',
-		SECRET '${MINIO_SECRET_KEY}',
-		REGION 'us-east-1',
-		ENDPOINT '${MINIO_ENDPOINT}',
-		URL_STYLE 'path',
-		USE_SSL false
-	);
-EOF
-)
-
-
 
 
 
@@ -90,18 +79,44 @@ while [[ $# -gt 0 ]]; do
 			TARGET="$2"
 			shift 2
 			;;
+		--minio-endpoint)
+			MINIO_ENDPOINT="$2"
+			shift 2
+			;;
+		--minio-access-key)
+			MINIO_ACCESS_KEY="$2"
+			shift 2
+			;;
+		--minio-secret-key)
+			MINIO_SECRET_KEY="$2"
+			shift 2
+			;;
 		*)
 			echo "Unknown arg $1"
 			echo "Usage:"
 			echo "  $0 						# export all marts"
 			echo "  $0 --mart-name <mart> 	# export <mart>"
 			echo "  $0 --exclude 			# export all but <mart>"
+			echo "  $0 --minio-endpoint HOST:PORT --minio-access-key KEY --minio-secret-key SECRET"
 			exit 1
 			;;
 	esac
 done
 
 
+S3_CONFIG_SQL=$(cat << EOF
+	LOAD httpfs;
+	CREATE OR REPLACE SECRET minio_secret (
+		TYPE S3,
+		KEY_ID '${MINIO_ACCESS_KEY}',
+		SECRET '${MINIO_SECRET_KEY}',
+		REGION 'us-east-1',
+		ENDPOINT '${MINIO_ENDPOINT}',
+		URL_STYLE 'path',
+		USE_SSL false
+	);
+EOF
+)
 
 
 #
