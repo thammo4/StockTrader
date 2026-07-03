@@ -46,6 +46,7 @@ def main():
     )
     parser.add_argument("--ok-duplicate-symbols", action="store_true", help="ok to have > 1 same underlying")
     parser.add_argument("--no-filter", action="store_true", help="get rich quick / yolo")
+    parser.add_argument("--minio-endpoint", default=None, help="MinIO endpoint host:port (overrides MINIO_ENDPOINT env)")
 
     args = parser.parse_args()
 
@@ -53,7 +54,7 @@ def main():
     trader = options_orderL if args.live else options_order
     account_client = acctL if args.live else acct
 
-    store = MinioStore()
+    store = MinioStore(endpoint=args.minio_endpoint)
     loader_raw = CandidateLoader(store=store, bucket=CANDIDATES_BUCKET)
 
     if args.no_filter:
