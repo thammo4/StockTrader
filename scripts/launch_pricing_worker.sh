@@ -34,13 +34,19 @@ usage() {
 	cat <<EOF
 		Usage:
 			$0 [--n-workers N] [--n-steps M] [--model NAME] [--max-jobs K]
+			   [--redis-url URL] [--minio-endpoint HOST:PORT]
+			   [--minio-access-key KEY] [--minio-secret-key SECRET]
 
 		Options:
-			--n-workers 	Number of worker processes to launch, default=$N_WORKERS
+			--n-workers 		Number of worker processes to launch, default=$N_WORKERS
 			--n-steps 		Number of BOPM tree steps in pricing, default=$N_STEPS
 			--model 		Pricing model name, default=$MODEL
 			--max-jobs 		Max jobs per worker. 0 indicates inf. default=$MAX_JOBS
 			--timeout		Redis job queue polling timeout seconds, default=$TIMEOUT
+			--redis-url		Redis URL (overrides REDIS_URL env)
+			--minio-endpoint	MinIO endpoint host:port (overrides MINIO_ENDPOINT env)
+			--minio-access-key	MinIO access key (overrides MINIO_ROOT_USER env)
+			--minio-secret-key	MinIO secret key (overrides MINIO_ROOT_PASSWORD env)
 EOF
 }
 
@@ -53,6 +59,10 @@ while [[ $# -gt 0 ]]; do
 		--model) MODEL="$2"; shift 2 ;;
 		--max-jobs) MAX_JOBS="$2"; shift 2 ;;
 		--timeout) TIMEOUT="$2"; shift 2 ;;
+		--redis-url) REDIS_URL="$2"; shift 2 ;;
+		--minio-endpoint) MINIO_ENDPOINT="$2"; shift 2 ;;
+		--minio-access-key) MINIO_ROOT_USER="$2"; shift 2 ;;
+		--minio-secret-key) MINIO_ROOT_PASSWORD="$2"; shift 2 ;;
 		*) log "Unknown option: $1"; usage; exit 1 ;;
 	esac
 done
@@ -100,6 +110,10 @@ for i in $(seq 1 "$N_WORKERS"); do
 		--n-steps "$N_STEPS" \
 		--max-jobs "$MAX_JOBS" \
 		--timeout "$TIMEOUT" \
+		--redis-url "$REDIS_URL" \
+		--minio-endpoint "$MINIO_ENDPOINT" \
+		--minio-access-key "$MINIO_ROOT_USER" \
+		--minio-secret-key "$MINIO_ROOT_PASSWORD" \
 		& pid=$!
 	PIDS+=("$pid")
 	log "Worker $i started, pid=$pid"

@@ -52,9 +52,22 @@ while [[ $# -gt 0 ]]; do
 			N_SHARDS="$2"
 			shift 2
 			;;
+		--minio-endpoint)
+			MINIO_ENDPOINT="$2"
+			shift 2
+			;;
+		--minio-access-key)
+			MINIO_ACCESS_KEY="$2"
+			shift 2
+			;;
+		--minio-secret-key)
+			MINIO_SECRET_KEY="$2"
+			shift 2
+			;;
 		*)
 			echo "Unknown option: $1"
 			echo "Usage: $0 [--n-shards N] [--batch-id ID] [--last-run-date YYYY-MM-DD] [--dry-run] [--verbose]"
+			echo "          [--minio-endpoint HOST:PORT] [--minio-access-key KEY] [--minio-secret-key SECRET]"
 			exit 1
 			;;
 	esac

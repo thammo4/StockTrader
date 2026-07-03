@@ -115,9 +115,18 @@ def main():
     parser.add_argument("--batch-id", help="Specify particular batch to process")
     parser.add_argument("--force", action="store_true", help="Re-enqueue previously run job")
     parser.add_argument("--stats", action="store_true", help="Show queue stats only")
+    parser.add_argument("--redis-url", help="Redis URL (overrides REDIS_URL env)")
+    parser.add_argument("--minio-endpoint", help="MinIO endpoint (overrides MINIO_ENDPOINT env)")
+    parser.add_argument("--minio-access-key", help="MinIO access key (overrides MINIO_ROOT_USER env)")
+    parser.add_argument("--minio-secret-key", help="MinIO secret key (overrides MINIO_ROOT_PASSWORD env)")
 
     args = parser.parse_args()
-    producer = JobProducer()
+    producer = JobProducer(
+        redis_url=args.redis_url,
+        minio_endpoint=args.minio_endpoint,
+        minio_access_key=args.minio_access_key,
+        minio_secret_key=args.minio_secret_key,
+    )
 
     if args.stats:
         stats = producer.get_queue_stats()

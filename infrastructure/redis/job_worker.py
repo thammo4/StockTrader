@@ -203,12 +203,23 @@ def main():
     parser.add_argument("--n-steps", type=int, default=225, help="BOPM tree steps")
     parser.add_argument("--max-jobs", type=int, default=0, help="Exit after max_jobs")
     parser.add_argument("--timeout", type=int, default=5, help="Q poll timeout sec")
+    parser.add_argument("--redis-url", help="Redis URL (overrides REDIS_URL env)")
+    parser.add_argument("--minio-endpoint", help="MinIO endpoint (overrides MINIO_ENDPOINT env)")
+    parser.add_argument("--minio-access-key", help="MinIO access key (overrides MINIO_ROOT_USER env)")
+    parser.add_argument("--minio-secret-key", help="MinIO secret key (overrides MINIO_ROOT_PASSWORD env)")
 
     args = parser.parse_args()
 
     import StockTrader.pricing.qlib.models
 
-    worker = JobWorker(model_name=args.model, n_steps=args.n_steps)
+    worker = JobWorker(
+        redis_url=args.redis_url,
+        minio_endpoint=args.minio_endpoint,
+        minio_access_key=args.minio_access_key,
+        minio_secret_key=args.minio_secret_key,
+        model_name=args.model,
+        n_steps=args.n_steps,
+    )
     worker.run(poll_timeout=args.timeout, max_jobs=args.max_jobs)
 
 

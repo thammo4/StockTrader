@@ -21,7 +21,10 @@ while [[ $# -gt 0 ]]; do
 		--batch-id) 	BATCH_ID="$2"; shift 2 ;;
 		--dry-run) 	DRY_RUN=true; shift ;;
 		--verbose) 	VERBOSE=true; shift ;;
-		*) echo "Unknown option: $1"; exit 1 ;;
+		--minio-endpoint) 	MINIO_ENDPOINT="$2"; shift 2 ;;
+		--minio-access-key) 	MINIO_ROOT_USER="$2"; shift 2 ;;
+		--minio-secret-key) 	MINIO_ROOT_PASSWORD="$2"; shift 2 ;;
+		*) echo "Unknown option: $1"; echo "Usage: $0 --batch-id ID [--dry-run] [--verbose] [--minio-endpoint HOST:PORT] [--minio-access-key KEY] [--minio-secret-key SECRET]"; exit 1 ;;
 	esac
 done
 
@@ -32,9 +35,9 @@ done
 #
 
 DDB_PATH="${STOCK_TRADER_DWH}/stocktrader_analytics_dev.duckdb"
-MINIO_ENDPOINT="${MINIO_ENDPOINT}"
-MINIO_ACCESS_KEY="${MINIO_ROOT_USER}"
-MINIO_SECRET_KEY="${MINIO_ROOT_PASSWORD}"
+MINIO_ENDPOINT="${MINIO_ENDPOINT:-127.0.0.1:9000}"
+MINIO_ACCESS_KEY="${MINIO_ROOT_USER:-stocktrader}"
+MINIO_SECRET_KEY="${MINIO_ROOT_PASSWORD:-stocktrader}"
 
 S3_PREFIX_GLOB="s3://pricing-outputs/batch_${BATCH_ID}/**/results.parquet"
 DDB_TARGET_SCHEMA="raw"
