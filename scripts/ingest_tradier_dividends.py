@@ -23,15 +23,23 @@ def ingest_tradier_dividends(symbol, subdir="dividends_af"):
         df["created_date"] = today
 
         #
-        # Write output to local parquet, overwrite existing
+        # Append output to local parquet.
         #
 
         dir_landing = os.path.join(STOCK_TRADER_DWH, subdir)
         os.makedirs(dir_landing, exist_ok=True)
         fpath_parquet = os.path.join(dir_landing, f"{symbol}.parquet")
 
-        write_parquet_atomic(df, fpath_parquet)
-        logger.info(f"Wrote dividend data, symbol={symbol}, n={len(df)} records [ingest_tradier_dividends]")
+        if os.path.exists(fpath_parquet):
+            df_existing = pd.read_parquet(fpath_parquet)
+            df_output = pd.concat([df_existing, df], ignore_index=True)
+
+            logger.info(f"Appending dividend data, symbol={symbol}, n={len(df_output)} [ingest_tradier_dividends]")
+        else:
+            df_output = df
+            logger.info(f"Creating dividend data, symbol={symbol}, n={len(df_output)} [ingest_tradier_dividends]")
+
+        write_parquet_atomic(df_output, fpath_parquet)
     except AirflowSkipException:
         raise
     except Exception as e:
