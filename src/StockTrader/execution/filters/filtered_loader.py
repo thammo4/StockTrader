@@ -96,8 +96,6 @@ class FilteredCandidateLoader(DataLoader):
 
         df = df[selected]
 
-        # df = df.drop(columns=["margin_est"])
-
         logger.info(f"FilteredCandidateLoader: n0={n0}, n1={len(df)} [filtered_loader]")
 
         return df
