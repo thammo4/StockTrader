@@ -65,7 +65,9 @@ def main():
     parser = argparse.ArgumentParser(description="Portfolio Monitor")
     parser.add_argument("--live", action="store_true", help="Use live account (default: paper)")
     parser.add_argument("--interval", type=int, default=300, help="Inter-snapshot sleep seconds")
-    parser.add_argument("--minio-endpoint", default=None, help="MinIO endpoint host:port (overrides MINIO_ENDPOINT env)")
+    parser.add_argument(
+        "--minio-endpoint", default=None, help="MinIO endpoint host:port (overrides MINIO_ENDPOINT env)"
+    )
 
     args = parser.parse_args()
 
