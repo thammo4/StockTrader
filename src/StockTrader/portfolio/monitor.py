@@ -47,7 +47,6 @@ def run_monitoring(account_client, quotes_client, minio_store: MinioStore):
     s3_addr_snapshot = minio_store.write_parquet(
         bucket=SNAPSHOT_BUCKET, obj_name=snapshot_id, df=df_upl, ensure_bucket=True
     )
-    # logger.info(f"Snapshot: s3://{SNAPSHOT_BUCKET}/{snapshot_id}")
     logger.info(f"Snapshot: {s3_addr_snapshot} [monitor]")
 
     s3_addr_summary = minio_store.write_json(
@@ -66,12 +65,13 @@ def main():
     parser = argparse.ArgumentParser(description="Portfolio Monitor")
     parser.add_argument("--live", action="store_true", help="Use live account (default: paper)")
     parser.add_argument("--interval", type=int, default=300, help="Inter-snapshot sleep seconds")
+    parser.add_argument("--minio-endpoint", default=None, help="MinIO endpoint host:port (overrides MINIO_ENDPOINT env)")
 
     args = parser.parse_args()
 
     account_client = acct if not args.live else acctL
     quotes_client = quotes if not args.live else quotesL
-    minio_store = MinioStore()
+    minio_store = MinioStore(endpoint=args.minio_endpoint)
 
     logger.info(f"Starting portfolio monitor [monitor]")
     while True:
