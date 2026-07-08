@@ -4,33 +4,42 @@
 
 import pandas as pd
 from datetime import datetime
-
 from StockTrader.settings import logger, today
 
+
 class EquitySnapshot:
-	def __init__ (self, account_client) -> None:
-		self._account = account_client
+    def __init__(self, account_client) -> None:
+        self._account = account_client
+        self.columns_keep = ["total_equity", "total_cash", "market_value", "open_pl", "close_pl", "option_requirement"]
+        self.columns_rename = {
+            "total_equity": "equity",
+            "total_cash": "cash",
+            "market_value": "value",
+            "open_pl": "upnl",
+            "close_pl": "pnl",
+            "option_requirement": "option_req",
+        }
+        self.columns_return = ["market_date", "snapshot_ts", "equity", "cash", "value", "upnl", "pnl", "option_req"]
 
-	def snapshot (self) -> dict:
-		try:
-			bal = self._account.get_account_balance(return_as_series=True)
-		except Exception as e:
-			logger.error(f"Failed to fetch account balance: {str(e)} [equity_snapshot]")
-			raise
+    def load_equity_snapshot(self) -> pd.DataFrame:
+        try:
+            bal = self._account.get_account_balance()
+            df = bal[self.columns_keep].rename(self.columns_rename, axis=1)
+            df = df.astype(float)
 
-		row = {
-			"market_date": pd.to_datetime(today).date().isoformat(),
-			"snapshot_ts": datetime.now().isoformat(timespec="seconds"),
-			"total_equity": float(bal["equity"]),
-			"total_cash": float(bal["cash"]),
-			"market_value": float(bal["value"]),
-			"upnl": float(bal["open_pl"]),
-			"pnl": float(bal["close_pl"]),
-			"option_requirement": float(bal["option_requirement"])
-		}
+            df["market_date"] = pd.to_datetime(today).date().isoformat()
+            df["snapshot_ts"] = datetime.now().isoformat(timespec="seconds")
 
-		logger.info(
-			f"Equity snapshot: equity={row['equity']:.2f}, cash={row['cash']:.2f}, value={row['value']:.2f}, upnl={row['upnl']:.2f}, pnl={row['pnl']:.2f}"
-		)
+            equity = df["equity"].iloc[0]
+            cash = df["cash"].iloc[0]
+            value = df["value"].iloc[0]
 
-		return row
+            logger.info(
+                f"Account Snapshot: equity={equity:.2f}, cash={equity:.2f}, value={value:.2f} [equity_snapshot]"
+            )
+
+            return df[self.columns_return]
+
+        except Exception as e:
+            logger.error(f"Failed to fetch acct bal: {str(e)} [equity_snapshot]")
+            return pd.DataFrame(columns=self.columns_return)
