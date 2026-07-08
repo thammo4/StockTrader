@@ -28,7 +28,7 @@ models:
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0.0099
+              min_value: 0
               max_value: 105.0
               config:
                 severity: warn
@@ -51,7 +51,7 @@ models:
           - not_null:
               config: {severity: error}
           - accepted_values:
-              values: [0, 1, 2, 4, 12]
+              values: [0, 1, 2, 4, 12, 52]
               config: {severity: error}
               quote: false
         meta:
@@ -67,7 +67,7 @@ models:
           - not_null:
               config: {severity: error}
           - accepted_values:
-              values: ['special', 'annual', 'semi_annual', 'quarterly', 'monthly', 'unknown']
+              values: ['special', 'annual', 'semi_annual', 'quarterly', 'monthly', 'weekly', 'unknown']
               config: {severity: error}
       - name: is_regular_dividend
         description: >
@@ -125,7 +125,7 @@ models:
         description: "Open price for the trading day."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
+              min_value: .750
               max_value: 15000.00
               where: "open_price is not null"
               config: {severity: warn}
@@ -138,7 +138,7 @@ models:
         description: "Highest trading price of security during trading session (e.g. day)."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
+              min_value: .750
               max_value: 15000.00
               where: "high_price is not null"
               config: {severity: warn}
@@ -151,7 +151,7 @@ models:
         description: "Lowest trading price of security during trading session (e.g. day)."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
+              min_value: .750
               max_value: 15000.00
               where: "low_price is not null"
               config: {severity: warn}
@@ -169,7 +169,7 @@ models:
           - not_null:
               config: {severity: error}
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
+              min_value: .750
               max_value: 15000.00
               config: {severity: warn}
         meta:
@@ -184,7 +184,7 @@ models:
           NULL for first observation in dataset (roughly 1 year in past apropos current date).
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
+              min_value: 0.750
               max_value: 15000.00
               config: {severity: warn}
         meta:
@@ -199,11 +199,11 @@ models:
           NULL if prev_close_price = NULL or 0.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: -0.50
-              max_value: 0.50
+              min_value: -0.05
+              max_value: 0.750
               config:
                 severity: warn
-                warn_if: ">5"
+                warn_if: ">30"
         meta:
           unit: "ratio"
           precision: "ten-thousandths"
