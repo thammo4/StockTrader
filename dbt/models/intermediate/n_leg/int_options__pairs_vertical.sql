@@ -43,7 +43,7 @@ with legs as (
 		gamma,
 		theta,
 		iv,
-		-- vrp_spread,
+		vrp_spread,
 		vrp_ratio
 	from {{ ref('int_options__calcs_vrp') }}
 	where ttm_days <= {{ max_ttm_days }}
@@ -87,7 +87,7 @@ select
 	l1.gamma as gamma1,
 	l1.theta as theta1,
 	l1.iv as iv1,
-	-- l1.vrp_spread as vrp_spread1,
+	l1.vrp_spread as vrp_spread1,
 	l1.vrp_ratio as vrp_ratio1,
 
 	-- leg2 = high strike
@@ -108,7 +108,7 @@ select
 	l2.gamma as gamma2,
 	l2.theta as theta2,
 	l2.iv as iv2,
-	-- l2.vrp_spread as vrp_spread2,
+	l2.vrp_spread as vrp_spread2,
 	l2.vrp_ratio as vrp_ratio2,
 
 	l2.strike_price - l1.strike_price as strike_width,
@@ -120,6 +120,7 @@ from legs l1
 join legs l2
 	on l1.market_date = l2.market_date
 	and l1.symbol = l2.symbol
+	and l1.option_type = l2.option_type
 	and l1.expiry_date = l2.expiry_date
 	and l1.strike_price < l2.strike_price
 	and (l2.strike_price - l1.strike_price) / l1.spot_price <= {{ max_width_pct_spot }}
