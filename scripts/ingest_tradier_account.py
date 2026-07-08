@@ -38,4 +38,4 @@ def ingest_tradier_account(live: bool = False, subdir: str = "account_af"):
     df = df.sort_values("snapshot_ts").drop_duplicates(subset=["account_env", "market_date"], keep="last")
 
     write_parquet_atomic(df, fpath_parquet)
-    logger.info(f"Loaded equity snapshot: env={env}, n_snapshots={len(df)} [ingest_tradier_account]")
+    logger.info(f"Loaded equity snapshot: env={env},  n_records={len(df)} [ingest_tradier_account]")
