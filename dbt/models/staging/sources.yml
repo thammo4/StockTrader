@@ -9,14 +9,10 @@ sources:
     description: "Raw market data ingested from Tradier API (uvatradier) via Airflow"
 
     tables:
-      - name: options_af
-        description: "Daily options chain data for large-cap dividend stocks."
+      - name: account_af
+        description: "Daily EOD account equity/cash/value snapshots."
         meta:
-          external_location: "../data/warehouse/options_af/*.parquet"
-      - name: quotes_af
-        description: "Daily EOD stock quotes for large-cap dividend stocks."
-        meta:
-          external_location: "../data/warehouse/quotes_af/*.parquet"
+          external_location: "../data/warehouse/account_af/*.parquet"
       - name: dividends_af
         description: "Historical dividend data ingested quarterly."
         meta:
@@ -25,6 +21,18 @@ sources:
         description: "Historical OHLCV daily bar data"
         meta:
           external_location: "../data/warehouse/ohlcv_bars/*.parquet"
+      - name: options_af
+        description: "Daily options chain data for large-cap dividend stocks."
+        meta:
+          external_location: "../data/warehouse/options_af/*.parquet"
+      - name: positions_af
+        description: "Daily EOD open options positions snapshots."
+        meta:
+          external_location: "../data/warehouse/positions_af/*.parquet"
+      - name: quotes_af
+        description: "Daily EOD stock quotes for large-cap dividend stocks."
+        meta:
+          external_location: "../data/warehouse/quotes_af/*.parquet"
 
 
   - name: fred_raw
