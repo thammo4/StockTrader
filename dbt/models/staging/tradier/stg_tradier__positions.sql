@@ -6,6 +6,7 @@ with source as (select * from {{ source('tradier_raw', 'positions_af') }})
 
 select
 	market_date::date as market_date,
+	occ,
 
 	{{ occ_parse_underlying('occ') }} as symbol,
 	{{ occ_parse_option_type('occ') }} as option_type,
