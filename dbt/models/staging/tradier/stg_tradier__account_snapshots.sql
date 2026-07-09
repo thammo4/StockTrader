@@ -5,7 +5,6 @@
 with source as ( select * from {{ source('tradier_raw', 'account_af') }})
 
 select
-	account_env,
 	market_date::date as market_date,
 	snapshot_ts::timestamp as snapshot_ts,
 	equity,
@@ -14,6 +13,7 @@ select
 	upnl,
 	pnl,
 	option_req,
-	created_date::date as created_date
+	created_date::date as created_date,
+	account_env
 from source
 -- qualify row_number() over (partition by account_env, market_date order by snapshot_ts desc) = 1
