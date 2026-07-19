@@ -35,6 +35,7 @@ while [[ $# -gt 0 ]]; do
 			shift 2
 			;;
 		--force-dates)
+			[[ $# -ge 2 ]] || { log "ERROR: --force-dates needs > 1 comma-sep YYYY-MM-DD"; exit 1; }
 			FORCE_DATES="$2"
 			shift 2
 			;;
@@ -131,14 +132,6 @@ refresh_model () {
 	;
 EOF
 )
-
-	if [[ -n "$FORCE_DATES" ]] && (( IS_EXISTING_TARGET_TABLE > 0 )); then
-		local fd
-		for fd in ${FORCE_DATES//,/ }; do
-			log "Force dates: delete ${fd} from ${DDB_TARGET_SCHEMA_DOT_TABLE}"
-			run_ddb "DELETE FROM ${DDB_TARGET_SCHEMA_DOT_TABLE} WHERE market_date = '${fd}'::DATE;"
-		done
-	fi
 
 	local DDB_MARKET_DATES_EXISTING_SQL
 	DDB_MARKET_DATES_EXISTING_SQL=$(cat << EOF
