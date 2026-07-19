@@ -130,12 +130,11 @@ fi
 #
 
 QUERY_MARKET_DATES="
-	SELECT DISTINCT market_date::VARCHAR
-	  FROM main.$MART_NAME
+	SELECT DISTINCT m.market_date::VARCHAR
+	  FROM $MART_NAME  m
+	  ANTI JOIN raw.qlib_priced__bopm_dividends q USING (market_date, occ)
 	 $DATE_FILTER
-	 ORDER BY market_date DESC
-	 ;
-"
+	 ORDER BY 1 DESC"
 
 DDB_MARKET_DATES="$(duckdb "$DDB_PATH" -csv -noheader "$QUERY_MARKET_DATES" 2>/dev/null | tr -d '\r')"
 [[ -z "$DDB_MARKET_DATES" ]] && { log "No market dates to export"; exit 0; }
@@ -180,11 +179,18 @@ while IFS= read -r market_date; do
 	[[ -z "$market_date" ]] && continue
 	log "Processing market date: $market_date"
 
+#	QUERY_N_MARKET_DATE_RECORDS="
+#		SELECT COUNT(*)
+#		  FROM main.$MART_NAME
+#		 WHERE market_date = '$market_date'
+#		 ;
+#	"
 	QUERY_N_MARKET_DATE_RECORDS="
 		SELECT COUNT(*)
-		  FROM main.$MART_NAME
-		 WHERE market_date = '$market_date'
-		 ;
+		  FROM $MART_NAME m
+		ANTI JOIN raw.qlib_priced__bopm_dividends q USING (market_date, occ)
+		WHERE m.market_date = '$market_date'
+		;
 	"
 
 	DDB_N_MARKET_DATE_RECORDS="$(duckdb "$DDB_PATH" --csv --noheader "$QUERY_N_MARKET_DATE_RECORDS" 2>/dev/null | tr -d '\r' | xargs)"
@@ -195,16 +201,18 @@ while IFS= read -r market_date; do
 
 		COPY (
 			SELECT
-				*,
-				(hash(occ) % $N_SHARDS)::UTINYINT AS shard
-			  FROM main.$MART_NAME
-			 WHERE market_date='$market_date'
+				m.*,
+				(hash(m.occ) % $N_SHARDS)::UTINYINT AS shard
+			  FROM $MART_NAME m
+			  ANTI JOIN raw.qlib_priced__bopm_dividends q USING (market_date, occ)
+			 WHERE m.market_date = '${market_date}'::DATE
 		)
 		TO '${S3_BUCKET_ADDR}/market_date=${market_date}'
 		(FORMAT PARQUET, PARTITION_BY (shard), COMPRESSION ZSTD)
 		;
 	EOF
 	)
+
 
 	log "Exporting $market_date"
 
