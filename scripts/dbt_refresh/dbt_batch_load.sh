@@ -12,6 +12,7 @@ ekko () { echo -e "$1"; echo "        ------------------------------------------
 VERBOSE=false
 MODEL=""
 GROUP=""
+FORCE_DATES=""
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="${SCRIPT_DIR}/models"
@@ -31,6 +32,10 @@ while [[ $# -gt 0 ]]; do
 		--group)
 			[[ $# -ge 2 ]] || { log "ERROR: --group requires a group name"; exit 1; }
 			GROUP="$2"
+			shift 2
+			;;
+		--force-dates)
+			FORCE_DATES="$2"
 			shift 2
 			;;
 		*)
@@ -127,6 +132,14 @@ refresh_model () {
 EOF
 )
 
+	if [[ -n "$FORCE_DATES" ]] && (( IS_EXISTING_TARGET_TABLE > 0 )); then
+		local fd
+		for fd in ${FORCE_DATES//,/ }; do
+			log "Force dates: delete ${fd} from ${DDB_TARGET_SCHEMA_DOT_TABLE}"
+			run_ddb "DELETE FROM ${DDB_TARGET_SCHEMA_DOT_TABLE} WHERE market_date = '${fd}'::DATE;"
+		done
+	fi
+
 	local DDB_MARKET_DATES_EXISTING_SQL
 	DDB_MARKET_DATES_EXISTING_SQL=$(cat << EOF
 	SELECT DISTINCT market_date::VARCHAR
@@ -181,6 +194,15 @@ EOF
 
 	if (( IS_EXISTING_TARGET_TABLE > 0 )); then
 		log "Table exists, will skip existing market dates."
+
+		if [[ -n "$FORCE_DATES" ]] && (( IS_EXISTING_TARGET_TABLE > 0 )); then
+			local fd
+			for fd in ${FORCE_DATES//,/ }; do
+				log "Force-date DELETE: ${DDB_TARGET_SCHEMA_DOT_TABLE} @ ${fd}"
+				run_ddb "DELETE FROM ${DDB_TARGET_SCHEMA_DOT_TABLE} WHERE market_date = '${fd}'::DATE;"
+			done
+		fi
+
 		MARKET_DATES_EXISTING="$(run_ddb_csv "$DDB_MARKET_DATES_EXISTING_SQL")"
 		N_EXISTING=$(echo "$MARKET_DATES_EXISTING" | grep -c '.' || true)
 		log "Found $N_EXISTING target dates."
