@@ -216,7 +216,8 @@ while IFS= read -r market_date; do
 
 	log "Exporting $market_date"
 
-	if printf '%s\n' "$COPY_EXPORT_MARKET_DATE" | duckdb "$DDB_PATH" >/dev/null 2>&1; then
+	# if printf '%s\n' "$COPY_EXPORT_MARKET_DATE" | duckdb "$DDB_PATH" >/dev/null 2>&1; then
+	if printf '%s\n' "$COPY_EXPORT_MARKET_DATE" | duckdb "$DDB_PATH" >/dev/null 2>>"${TMPDIR:-/tmp}/export_errors.log"; then
 		log "Exported $market_date: $DDB_N_MARKET_DATE_RECORDS"
 		N_EXPORT_MARKET_DATES=$((N_EXPORT_MARKET_DATES+1))
 		N_CONTRACTS_TOTAL=$((N_CONTRACTS_TOTAL+DDB_N_MARKET_DATE_RECORDS))
