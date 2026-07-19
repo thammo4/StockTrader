@@ -35,7 +35,8 @@ while [[ $# -gt 0 ]]; do
 			shift 2
 			;;
 		--force-dates)
-			[[ $# -ge 2 ]] || { log "ERROR: --force-dates needs > 1 comma-sep YYYY-MM-DD"; exit 1; }
+			[[ $# -ge 2 ]] || { log "ERROR: --force-dates needs comma-sep YYYY-MM-DD"; exit 1; }
+			[[ "$2" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}(,[0-9]{4}-[0-9]{2}-[0-9]{2})*$ ]] || { log "ERROR: bad --force-dates format: $2"; exit 1; }
 			FORCE_DATES="$2"
 			shift 2
 			;;
@@ -188,9 +189,19 @@ EOF
 	if (( IS_EXISTING_TARGET_TABLE > 0 )); then
 		log "Table exists, will skip existing market dates."
 
-		if [[ -n "$FORCE_DATES" ]] && (( IS_EXISTING_TARGET_TABLE > 0 )); then
+		#
+		# Force-date DELETE: only dates present in upstream MARKET_DATES are
+		# deleted, guaranteeing every deleted date is re-inserted this run.
+		# Runs before the MARKET_DATES_EXISTING fetch so forced dates fall
+		# out of the skip set and re-enter the insert loop.
+		#
+		if [[ -n "$FORCE_DATES" ]]; then
 			local fd
 			for fd in ${FORCE_DATES//,/ }; do
+				if ! echo "$MARKET_DATES" | grep -qx "$fd"; then
+					log "WARN: fd=${fd} not in upstream dates for ${model_name}, skip delete"
+					continue
+				fi
 				log "Force-date DELETE: ${DDB_TARGET_SCHEMA_DOT_TABLE} @ ${fd}"
 				run_ddb "DELETE FROM ${DDB_TARGET_SCHEMA_DOT_TABLE} WHERE market_date = '${fd}'::DATE;"
 			done
