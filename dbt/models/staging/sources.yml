@@ -9,6 +9,10 @@ sources:
     description: "Raw market data ingested from Tradier API (uvatradier) via Airflow"
 
     tables:
+      - name: account_af
+        description: "Intraday account balance snapshots per Tradier account."
+        meta:
+          external_location: "../data/warehouse/account_af/*.parquet"
       - name: options_af
         description: "Daily options chain data for large-cap dividend stocks."
         meta:
