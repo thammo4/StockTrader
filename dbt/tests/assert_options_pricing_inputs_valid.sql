@@ -8,6 +8,8 @@
 -- 	• expiry_date must be present
 -- 	• strike_price must be present and non-negative
 
+{{ config(severity='warn') }}
+
 select
 	market_date,
 	n_occ,
