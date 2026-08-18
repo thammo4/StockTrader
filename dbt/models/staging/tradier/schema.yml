@@ -5,6 +5,329 @@
 version: 2
 
 models:
+  - name: stg_tradier__acct_bal
+    description: >
+      Standardized account balance, buying power, and margin requirement snapshots from Tradier Account Balances API.
+      Contains: portfolio equity, cash, buying power, margin reqs, market value decomposition per account.
+      Intraday snapshots (hourly) per account per trading day.
+    meta:
+      owner: "deng"
+      refresh_frequency: "daily"
+      data_source: "TRADIER_API"
+    columns:
+      - name: acct_id
+        description: "Tradier-provided alphanum account identifier."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[A-Z0-9]+$"
+              config: {severity: warn}
+      - name: acct_type
+        description: >
+          Type of the account (margin, cash, pdt).
+          Determines which margin/cash Tradier sub-obj returned.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - accepted_values:
+              values: ['margin', 'cash', 'pdt']
+              config: {severity: error}
+      - name: value
+        description: >
+          Total account value (total_equity).
+          Net liquidation value: cash + net market value of all positions.
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: equity
+        description: >
+          Equity value reported by Tradier.
+          Margin accounts observed as zero.
+          value (total_equity) is authoritative account-value field.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: cash
+        description: "Total cash in account (settled, unsettled)."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: cash_pending
+        description: "Amount of cash held for unfilled open orders."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: cash_uncleared
+        description: >
+          Cash unavailable for trading.
+          Think: recent deposits not yet cleared.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: stock_buy_pwr
+        description: >
+          Funds to buy fully marginable securities.
+          Reg T (Initial Margin): Roughly 2 * cash.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 2000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: option_buy_pwr
+        description: >
+          Funds to purchase non-marginable securities.
+          Typical .5 * stock_buy_pwr.
+          Capacity constraint for short-premium margin requirements.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: req_margin
+        description: >
+          Account maintenance margin (current_requirement).
+          Minimum equity to support current positions.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: req_option
+        description: >
+          Account option requirement (option_requirement).
+          Margin held against option positions, typically for short premium.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: margin_fed
+        description: >
+          Federal Reg T Margin Call.
+          Amount by which account is in deficit for trades executed but not yet paid.
+          Expected to be zero for normal operation.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: margin_maintain
+        description: >
+          Maintenance Call.
+          Amount by which account is lesser than minimum requisite equity to support current positions.
+          Ideally zero on a typical day.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: margin_sweep
+        description: "Margin sweep amount."
+        tests:
+          - not_null
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: market_value
+        description: >
+          Net market value of all positions (long + short).
+          Negative when short exposure > long exposure.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: market_value_long
+        description: "Total market value of long positions (equities + options)."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: market_value_short
+        description: >
+          Market value of short positions (equities + options).
+          Expressed as negative value.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000.00
+              max_value: 0.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: stock_value_long
+        description: "Value of long equity positions."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: stock_value_short
+        description: "Value of short equity positions. Expressed as negative."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000.00
+              max_value: 0.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: option_value_long
+        description: "Value of long option positions."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: option_value_short
+        description: >
+          Value of short option positions.
+          Primary exposure field for short-premium positions.
+          Expressed as negative.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000.00
+              max_value: 0.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: pnl_open
+        description: "Total unrealized gain/loss of current open positions."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: pnl_close
+        description: "Realized gain/loss of current session closed positions."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -1000000.00
+              max_value: 1000000.00
+              config: {severity: warn}
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: n_orders_pending
+        description: "Number of outstanding pending/open orders."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 25
+              config: {severity: warn}
+        meta:
+          unit: "orders"
+      - name: created_date
+        description: "Date of ingest into system."
+        tests:
+          - not_null:
+              config: {severity: error}
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_date"
+              config: {severity: warn}
+      - name: created_ts
+        description: >
+          Timestamp of ingest snapshot.
+          Composite of created_date and tradier time.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2025-01-01'"
+              max_value: "current_timestamp"
+              config: {severity: warn}
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - acct_id
+            - created_ts
+          config: {severity: error}
+
+
   - name: stg_tradier__dividends
     description: >
       Standardized historical dividend payments from Tradier API.
