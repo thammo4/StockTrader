@@ -75,23 +75,3 @@ select
 	created_date::date as created_date,
 	(created_date || ' ' || created_ts)::timestamp as created_ts
 from source
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
