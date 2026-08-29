@@ -33,7 +33,7 @@ def dag_me():
         dag_id="ingest_tradier_acct_bal",
         default_args=default_args,
         description="Retrieve intraday account balance snapshots from Tradier",
-        schedule_interval="30 9-15 * * 1-5",
+        schedule_interval="30 9-16 * * 1-5",
         start_date=datetime(2026, 7, 1),
         catchup=False,
         tags=["acct_bal", "ingest", "tradier", "portfolio"],
