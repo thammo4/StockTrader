@@ -58,6 +58,10 @@ ivp as (
 	from ivp_population
 ),
 
+--
+-- Today's Contracts
+--
+
 todays_contracts as (
 	select
 		*
@@ -65,6 +69,10 @@ todays_contracts as (
 	where market_date = (select max(market_date) from ivp)
 	and expiry_date > current_date
 ),
+
+--
+-- Sufficient Price and Liquidity
+--
 
 tradable_cutoffs as (
 	select
@@ -78,6 +86,10 @@ tradable_cutoffs as (
 	and time_value_bid_price > 0
 ),
 
+--
+-- High Implied Volatility Percentile Threshold
+--
+
 iv_cutoffs as (
 	select
 		*
@@ -88,12 +100,20 @@ iv_cutoffs as (
 	and iv_partition_n > {{ min_iv_partition_n }}
 ),
 
+--
+-- Near ATM
+--
+
 delta_cutoffs as (
 	select
 		*
 	from iv_cutoffs
 	where abs(delta) between {{ min_abs_delta }} and {{ max_abs_delta }}
 ),
+
+--
+-- Distinct Symbol Mix
+--
 
 symbol_count_cutoffs as (
 	select
