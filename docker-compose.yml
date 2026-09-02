@@ -108,6 +108,10 @@ services:
 
       - REDIS_URL=redis://redis:6379/0
 
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+
       - STOCK_TRADER_HOME=/opt/stocktrader
       - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
       - STOCK_TRADER_DWH=/opt/stocktrader/data/warehouse
@@ -158,6 +162,10 @@ services:
       - PYTHONPATH=/opt/stocktrader:/opt/stocktrader/src:/opt/uvatradier
 
       - REDIS_URL=redis://redis:6379/0
+
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
 
       - STOCK_TRADER_HOME=/opt/stocktrader
       - STOCK_TRADER_MARKET_DATA=/opt/stocktrader/data
