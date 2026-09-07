@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# FILE: `StockTrader/scripts/minio_ddb_import/importers/portfolio_snapshots.sh`
+# FILE: `StockTrader/scripts/minio_ddb_import/importers/portfolio_positions_snapshots.sh`
 #
 #
 # Sourced by minio_ddb_import/run.sh. Not executable on its own.
@@ -10,7 +10,7 @@
 #
 
 TARGET_SCHEMA="raw"
-TARGET_TABLE="monitor__position_snapshots"
+TARGET_TABLE="portfolio__positions_snapshots"
 PARTITION_COL="market_date"
 KEY_REGEX='^[0-9]{8}$'
 IMPORT_MODE="replace"
