@@ -5,6 +5,54 @@
 version: 2
 
 sources:
+
+  #
+  # FRED
+  #
+
+  - name: fred_raw
+    description: "Time series interest rate/macroeconomic data from Federal Reserve Data API"
+
+    tables:
+      - name: fred_af
+        description: "Historical monthly interest rate data for use as risk-free proxies"
+        meta:
+          external_location: "../data/warehouse/fred_af/*.parquet"
+
+
+  #
+  # PORTFOLIO
+  #
+
+  - name: portfolio
+    schema: raw
+    description: >
+      Intraday per-position snapshots (positions, quotes, m2m) from monitor_tradier_portfolio_dag.
+      Imported from s3://portfolio-snapshots via scripts/minio_ddb_import/run.sh with portfolio_snapshots importer.
+      The snapshot_ts is writer container's naive wall clock.
+    tables:
+      - name: portfolio__positions_snapshots
+
+
+  #
+  # QLIB_PRICED
+  #
+
+  - name: qlib_priced
+    schema: raw
+    description: >
+      Options pricing results computed with Python/QuantLib.
+      Imported to DDB from MinIO s3://pricing-outputs bucket.
+      Logically downstream of mart_bopm__pays_dividends model.
+    tables:
+      - name: qlib_priced__bopm_dividends
+        description: "QuantLib-computed npv, greeks, iv for mart_bopm__pays_dividends data."
+
+
+  #
+  # TRADIER
+  #
+
   - name: tradier_raw
     description: "Raw market data ingested from Tradier API (uvatradier) via Airflow"
 
@@ -29,13 +77,3 @@ sources:
         description: "Historical OHLCV daily bar data"
         meta:
           external_location: "../data/warehouse/ohlcv_bars/*.parquet"
-
-
-  - name: fred_raw
-    description: "Time series interest rate/macroeconomic data from Federal Reserve Data API"
-
-    tables:
-      - name: fred_af
-        description: "Historical monthly interest rate data for use as risk-free proxies"
-        meta:
-          external_location: "../data/warehouse/fred_af/*.parquet"
