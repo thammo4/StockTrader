@@ -11,7 +11,8 @@
 TARGET_SCHEMA="raw"
 TARGET_TABLE="qlib_priced__bopm_dividends"
 PARTITION_COL="batch_id"
-KEY_REGEX='^[0-9]{8}_[0-9]{6}$'
+# KEY_REGEX='^[0-9]{8}_[0-9]{6}$'
+KEY_REGEX='^[A-Za-z0-9_]+$'
 IMPORT_MODE="skip"
 ALLOW_EMPTY=false
 
