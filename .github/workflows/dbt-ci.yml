@@ -82,6 +82,14 @@ jobs:
           unzip -o /tmp/duckdb.zip -d /usr/local/bin
           duckdb --version
 
+      - name: Generate Test Data (quotes, options, dividends, ohlcv, fred, position snapshots)
+        run: |
+          source venv/bin/activate
+          python .github/scripts/dbt-generate-test-data.py
+
+      - name: Load Raw Schema Tables
+        run: bash .github/scripts/dbt-load-raw-tables.sh
+
       - name: Build dbt Container
         run: docker compose build dbt
 
@@ -96,14 +104,6 @@ jobs:
           docker compose run --rm dbt \
             dbt debug --profiles-dir /opt/stocktrader/dbt --target dev \
             2>&1 | tee artifacts/dbt-reports/dbt-debug.log
-
-      - name: Generate Test Data (quotes, options, dividends, ohlcv, fred, position snapshots)
-        run: |
-          source venv/bin/activate
-          python .github/scripts/dbt-generate-test-data.py
-
-      - name: Load Raw Schema Tables
-        run: bash .github/scripts/dbt-load-raw-tables.sh
 
       - name: Generate Symbol Universe CSV (largecap_all.csv)
         run: |
