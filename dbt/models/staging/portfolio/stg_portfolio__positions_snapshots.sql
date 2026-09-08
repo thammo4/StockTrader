@@ -47,7 +47,6 @@ rep_flags as (
 	from prev_marks
 ),
 
-
 --
 -- Flag Stale Records (e.g. repeated)
 --
