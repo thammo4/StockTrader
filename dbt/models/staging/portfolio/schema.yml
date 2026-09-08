@@ -1,0 +1,90 @@
+#
+# FILE: `StockTrader/dbt/models/staging/portfolio/schema.yml`
+#
+
+version: 2
+
+models:
+  - name: stg_portfolio__positions_snapshots
+    description: >
+      Market hours position snapshots.
+      Grain = one row per snapshot_ts.
+    meta:
+      owner: "deng"
+      refresh_frequency: "daily"
+      data_source: "MONITOR_DAG"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns: [snapshot_ts, tradier_id]
+          config: {severity: error}
+    columns:
+      - name: market_date
+        description: "trading date from s3 key prefix."
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: "'2026-01-01'"
+              max_value: "current_date"
+              config: {severity: error}
+      - name: snapshot_ts
+        description: "Write clock from s3 (e.g. container). Intra-market_date ordinal"
+        tests:
+          - not_null
+      - name: tradier_id
+        description: "Tradier position identifier"
+        tests:
+          - not_null
+      - name: occ
+        tests:
+          - not_null
+      - name: option_type
+        tests:
+          - accepted_values:
+              values: ['call', 'put']
+              config: {severity: error}
+      - name: expiry_type
+        tests:
+          - accepted_values:
+              values: {'standard', 'weeklys', 'eom'}
+              config: {severity: warn}
+      - name: expiry_date
+        description: "Contracts expiration dates."
+        tests:
+          - not_null
+      - name: n_contracts
+        description: "Deliverable size. Standard = 100"
+        tests:
+          - accepted_values:
+              values: [100]
+              config: {severity: warn}
+      - name: quantity
+        description: "Signed contract count. Short={quantity<0}, Long={quantity>0}"
+        tests:
+          - not_null
+      - name: cost_basis
+        description: "Net premium. Negative={credit premium inflow}."
+        tests:
+          - not_null
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: market_value
+        description: "mid_price * quantity * n_contracts. Negative=short"
+      - name: upl
+        description: "market_value - cost_basis. Profit=upl>0"
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: upl_pct
+        description: "upl / |cost_basis| * 100"
+        meta:
+          unit: "USD"
+          precision: "hundredths"
+      - name: acq_ts
+        description: "Position acquisition ts from Tradier (UTC)"
+        tests:
+          - not_null
+      - name: is_valid_price
+        description: "bid > 0, ask > 0 and ask >= bid."
+
+
