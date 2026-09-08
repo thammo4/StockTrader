@@ -15,7 +15,6 @@ def get_rt_env():
     else:
         return os.path.join(os.environ["STOCK_TRADER_HOME"], "test_data", "warehouse")
 
-
 def create_acct_bal_test_data():
     print("!!! ACCT BAL DATA !!!")
 
@@ -120,6 +119,64 @@ def create_acct_bal_test_data():
     return n_records
 
 
+def create_dividends_test_data():
+    print("!!! DIVIDEND DATA !!!")
+
+    #
+    # Helper Function to map: symbol -> dividend test data dataframe
+    #
+
+    def create_symbol_data(s):
+        data = []
+        base_amt = base_dividend.get(s)
+
+        for yr in [2024, 2025]:
+            quarter_dates = [datetime(yr, 2, 5), datetime(yr, 5, 6), datetime(yr, 8, 5), datetime(yr, 11, 4)]
+            for ex_date in quarter_dates:
+                epsilon = np.random.uniform(0.950, 1.05)
+                div_amt = round(base_amt * epsilon, 2)
+                data.append(
+                    {
+                        "cash_amount": div_amt,
+                        "ex_date": ex_date,
+                        "frequency": 4,
+                        "symbol": s,
+                        "created_date": datetime.now().strftime("%Y-%m-%d"),
+                    }
+                )
+
+        return pd.DataFrame(data)
+
+    n_records = 0
+
+    symbols = ["AAPL", "KO", "PG", "C", "XOM"]
+    dividends = [0.25 * x for x in range(1, 6)]
+    base_dividend = dict(zip(symbols, dividends))
+
+    data_dir = get_rt_env()
+    output_dir = os.path.join(data_dir, "dividends_af")
+    os.makedirs(output_dir, exist_ok=True)
+
+    print(f"Data Dir: {data_dir}")
+    print(f"Output Dir: {output_dir}")
+
+    for s in symbols:
+        df_symbol_dividends = create_symbol_data(s)
+
+        fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
+        df_symbol_dividends.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+
+        n_records += len(df_symbol_dividends)
+
+    if len(df_symbol_dividends):
+        print("Schema:")
+        df_symbol_dividends.info()
+
+    print(f"\nGenerated {n_records} records")
+
+    return n_records
+
+
 def create_fred_test_data():
     """Generate FED interest rate data for TB3MS series"""
     print("!!! FRED DATA !!!")
@@ -160,6 +217,85 @@ def create_fred_test_data():
     print(f"\nGenerated {len(df_fred)} records")
 
     return len(df_fred)
+
+
+def create_ohlcv_bars_test_data():
+    print("!!! OHLCV BARS !!!")
+
+    def create_symbol_data(s):
+        data = []
+        base_price = base_prices.get(s)
+
+        n_trading_days = 45
+        price_current = base_price
+
+        for d in range(n_trading_days):
+            daily_return = np.random.normal(0.0005, 0.015)
+            price_current = price_current * (1 + daily_return)
+            price_current = max(1.0, price_current)
+
+            daily_vol = price_current * np.random.uniform(0.01, 0.03)
+
+            price_open = price_current + np.random.uniform(-daily_vol, daily_vol)
+            price_close = price_current + np.random.uniform(-daily_vol, daily_vol)
+
+            price_high = max(price_open, price_close) + np.random.uniform(0, daily_vol / 2)
+            price_low = min(price_open, price_close) - np.random.uniform(0, daily_vol / 2)
+
+            price_low = min(price_low, price_open, price_close)
+            price_high = max(price_high, price_open, price_close)
+
+            jitter = abs(price_close - price_open) / price_open
+            base_volume = np.random.randint(500000, 3000000)
+            volume = int(base_volume * (1 + jitter * 10))
+
+            market_date = datetime.now() - timedelta(days=n_trading_days - d - 1)
+
+            data.append(
+                {
+                    "date": market_date,
+                    "open": round(price_open, 2),
+                    "high": round(price_high, 2),
+                    "low": round(price_low, 2),
+                    "close": round(price_close, 2),
+                    "volume": volume,
+                    "created_date": datetime.now().strftime("%Y-%m-%d"),
+                    "symbol": s,
+                }
+            )
+
+            price_current = price_close
+
+        return pd.DataFrame(data)
+
+    n_records = 0
+    symbols = ["AAPL", "KO", "PG", "C", "XOM"]
+    prices = [12.5 * x for x in range(50, 75, 5)]
+
+    base_prices = dict(zip(symbols, prices))
+
+    data_dir = get_rt_env()
+    output_dir = os.path.join(data_dir, "ohlcv_bars")
+    os.makedirs(output_dir, exist_ok=True)
+
+    print(f"Data Dir: {data_dir}")
+    print(f"Output Dir: {output_dir}")
+
+    for s in symbols:
+        df_symbol_bars = create_symbol_data(s)
+
+        fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
+        df_symbol_bars.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+
+        n_records += len(df_symbol_bars)
+
+    if len(df_symbol_bars):
+        print("Schema:")
+        df_symbol_bars.info()
+
+    print(f"\nGenerated {n_records} records")
+
+    return n_records
 
 
 def create_options_test_data():
@@ -288,6 +424,112 @@ def create_options_test_data():
     return n_records
 
 
+def create_portfolio_snapshots_test_data():
+    """
+    Fixture for raw.portfolio__positions_snapshots.
+
+    Exercises the staging filter deliberately:
+      - one weekend date (dropped by isodow)
+      - a pre-open and a post-close run of frozen marks (dropped by repeat-mark rule)
+      - live snapshots where bid/ask/sizes move (kept)
+      - one position closing mid-day (non-rectangular grain)
+    """
+    print("!!! PORTFOLIO SNAPSHOT DATA !!!")
+
+    positions = [
+        # occ,                  symbol, type,  strike, expiry,       cost_basis, tradier_id
+        ("AAPL260918C00650000", "AAPL", "call", 650.0, "2026-09-18", -1250.0, 9000001),
+        ("KO260918P00062500",   "KO",   "put",   62.5, "2026-09-18",  -430.0, 9000002),
+        ("XOM261016C00135000",  "XOM",  "call", 135.0, "2026-10-16",  -880.0, 9000003),
+    ]
+
+    rows = []
+    base_monday = datetime(2026, 8, 17)
+    dates = [base_monday + timedelta(days=d) for d in range(0, 7)]  # Mon..Sun
+
+    for market_date in dates:
+        is_weekend = market_date.isoweekday() > 5
+
+        # 3 frozen pre-open, 8 live, 3 frozen post-close; weekend gets frozen only
+        if is_weekend:
+            phases = [("frozen", 4)]
+        else:
+            phases = [("frozen", 3), ("live", 8), ("frozen", 3)]
+
+        frozen_mark = {}
+        t = datetime.combine(market_date.date(), datetime.min.time()) + timedelta(hours=6)
+
+        for phase, n_ticks in phases:
+            for _ in range(n_ticks):
+                for occ, symbol, opt_type, strike, expiry, cost_basis, tradier_id in positions:
+                    # XOM closes mid-session on the second trading day
+                    if (occ.startswith("XOM")
+                            and market_date.date() == (base_monday + timedelta(days=1)).date()
+                            and t.hour >= 11):
+                        continue
+
+                    if phase == "live" or occ not in frozen_mark:
+                        bid = round(np.random.uniform(1.0, 20.0), 2)
+                        ask = round(bid + np.random.uniform(0.02, 0.40), 2)
+                        bid_size = int(np.random.randint(1, 1500))
+                        ask_size = int(np.random.randint(1, 1500))
+                        vol = int(np.random.randint(0, 3000))
+                        frozen_mark[occ] = (bid, ask, bid_size, ask_size, vol)
+                    bid, ask, bid_size, ask_size, vol = frozen_mark[occ]
+
+                    mid = 0.5 * (bid + ask)
+                    quantity = -1.0
+                    n_contracts = 100
+                    market_value = mid * quantity * n_contracts
+                    upl = market_value - cost_basis
+
+                    rows.append(
+                        {
+                            "market_date": market_date.date(),
+                            "snapshot_ts": t,
+                            "symbol": symbol,
+                            "occ": occ,
+                            "option_type": opt_type,
+                            "expiry_date": expiry,
+                            "expiry_type": "standard",
+                            "n_contracts": n_contracts,
+                            "strike_price": strike,
+                            "mid_price": mid,
+                            "bid_price": bid,
+                            "ask_price": ask,
+                            "volume": vol,
+                            "open_interest": 4321,
+                            "bid_size": bid_size,
+                            "ask_size": ask_size,
+                            "quantity": quantity,
+                            "cost_basis": cost_basis,
+                            "market_value": round(market_value, 2),
+                            "upl": round(upl, 2),
+                            "upl_pct": round(upl / abs(cost_basis) * 100, 2),
+                            "days_held": 10,
+                            "acq_date": (base_monday - timedelta(days=10)).date(),
+                            "acq_time": "14:31:07.412+00",
+                            "tradier_id": tradier_id,
+                        }
+                    )
+                t += timedelta(minutes=5)
+
+    df = pd.DataFrame(rows)
+
+    data_dir = get_rt_env()
+    output_dir = os.path.join(data_dir, "portfolio_snapshots")
+    os.makedirs(output_dir, exist_ok=True)
+    fpath_parquet = os.path.join(output_dir, "snapshots.parquet")
+    df.to_parquet(fpath_parquet, index=False, engine="pyarrow")
+
+    print(f"Output Dir: {output_dir}")
+    print("Schema:")
+    df.info()
+    print(f"\nGenerated {len(df)} records")
+
+    return len(df)
+
+
 def create_quotes_test_data():
     print("!!! QUOTE DATA !!!")
 
@@ -408,143 +650,6 @@ def create_quotes_test_data():
     return n_records
 
 
-def create_dividends_test_data():
-    print("!!! DIVIDEND DATA !!!")
-
-    #
-    # Helper Function to map: symbol -> dividend test data dataframe
-    #
-
-    def create_symbol_data(s):
-        data = []
-        base_amt = base_dividend.get(s)
-
-        for yr in [2024, 2025]:
-            quarter_dates = [datetime(yr, 2, 5), datetime(yr, 5, 6), datetime(yr, 8, 5), datetime(yr, 11, 4)]
-            for ex_date in quarter_dates:
-                epsilon = np.random.uniform(0.950, 1.05)
-                div_amt = round(base_amt * epsilon, 2)
-                data.append(
-                    {
-                        "cash_amount": div_amt,
-                        "ex_date": ex_date,
-                        "frequency": 4,
-                        "symbol": s,
-                        "created_date": datetime.now().strftime("%Y-%m-%d"),
-                    }
-                )
-
-        return pd.DataFrame(data)
-
-    n_records = 0
-
-    symbols = ["AAPL", "KO", "PG", "C", "XOM"]
-    dividends = [0.25 * x for x in range(1, 6)]
-    base_dividend = dict(zip(symbols, dividends))
-
-    data_dir = get_rt_env()
-    output_dir = os.path.join(data_dir, "dividends_af")
-    os.makedirs(output_dir, exist_ok=True)
-
-    print(f"Data Dir: {data_dir}")
-    print(f"Output Dir: {output_dir}")
-
-    for s in symbols:
-        df_symbol_dividends = create_symbol_data(s)
-
-        fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
-        df_symbol_dividends.to_parquet(fpath_parquet, index=False, engine="pyarrow")
-
-        n_records += len(df_symbol_dividends)
-
-    if len(df_symbol_dividends):
-        print("Schema:")
-        df_symbol_dividends.info()
-
-    print(f"\nGenerated {n_records} records")
-
-    return n_records
-
-
-def create_ohlcv_bars_test_data():
-    print("!!! OHLCV BARS !!!")
-
-    def create_symbol_data(s):
-        data = []
-        base_price = base_prices.get(s)
-
-        n_trading_days = 45
-        price_current = base_price
-
-        for d in range(n_trading_days):
-            daily_return = np.random.normal(0.0005, 0.015)
-            price_current = price_current * (1 + daily_return)
-            price_current = max(1.0, price_current)
-
-            daily_vol = price_current * np.random.uniform(0.01, 0.03)
-
-            price_open = price_current + np.random.uniform(-daily_vol, daily_vol)
-            price_close = price_current + np.random.uniform(-daily_vol, daily_vol)
-
-            price_high = max(price_open, price_close) + np.random.uniform(0, daily_vol / 2)
-            price_low = min(price_open, price_close) - np.random.uniform(0, daily_vol / 2)
-
-            price_low = min(price_low, price_open, price_close)
-            price_high = max(price_high, price_open, price_close)
-
-            jitter = abs(price_close - price_open) / price_open
-            base_volume = np.random.randint(500000, 3000000)
-            volume = int(base_volume * (1 + jitter * 10))
-
-            market_date = datetime.now() - timedelta(days=n_trading_days - d - 1)
-
-            data.append(
-                {
-                    "date": market_date,
-                    "open": round(price_open, 2),
-                    "high": round(price_high, 2),
-                    "low": round(price_low, 2),
-                    "close": round(price_close, 2),
-                    "volume": volume,
-                    "created_date": datetime.now().strftime("%Y-%m-%d"),
-                    "symbol": s,
-                }
-            )
-
-            price_current = price_close
-
-        return pd.DataFrame(data)
-
-    n_records = 0
-    symbols = ["AAPL", "KO", "PG", "C", "XOM"]
-    prices = [12.5 * x for x in range(50, 75, 5)]
-
-    base_prices = dict(zip(symbols, prices))
-
-    data_dir = get_rt_env()
-    output_dir = os.path.join(data_dir, "ohlcv_bars")
-    os.makedirs(output_dir, exist_ok=True)
-
-    print(f"Data Dir: {data_dir}")
-    print(f"Output Dir: {output_dir}")
-
-    for s in symbols:
-        df_symbol_bars = create_symbol_data(s)
-
-        fpath_parquet = os.path.join(output_dir, f"{s}.parquet")
-        df_symbol_bars.to_parquet(fpath_parquet, index=False, engine="pyarrow")
-
-        n_records += len(df_symbol_bars)
-
-    if len(df_symbol_bars):
-        print("Schema:")
-        df_symbol_bars.info()
-
-    print(f"\nGenerated {n_records} records")
-
-    return n_records
-
-
 if __name__ == "__main__":
     print("-" * 60)
     print("Generating test data for dbt CI Pipeline")
@@ -565,6 +670,8 @@ if __name__ == "__main__":
         print("-" * 40, "\n\n")
         total_records += create_options_test_data()
         print("-" * 40, "\n\n")
+        total_records += create_portfolio_snapshots_test_data()
+        print("-"*40, "\n\n")
         total_records += create_quotes_test_data()
         print("-" * 40, "\n\n")
         print(f"Created {total_records} total test records")
