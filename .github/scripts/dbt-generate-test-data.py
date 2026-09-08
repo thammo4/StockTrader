@@ -15,6 +15,7 @@ def get_rt_env():
     else:
         return os.path.join(os.environ["STOCK_TRADER_HOME"], "test_data", "warehouse")
 
+
 def create_acct_bal_test_data():
     print("!!! ACCT BAL DATA !!!")
 
@@ -439,8 +440,8 @@ def create_portfolio_snapshots_test_data():
     positions = [
         # occ,                  symbol, type,  strike, expiry,       cost_basis, tradier_id
         ("AAPL260918C00650000", "AAPL", "call", 650.0, "2026-09-18", -1250.0, 9000001),
-        ("KO260918P00062500",   "KO",   "put",   62.5, "2026-09-18",  -430.0, 9000002),
-        ("XOM261016C00135000",  "XOM",  "call", 135.0, "2026-10-16",  -880.0, 9000003),
+        ("KO260918P00062500", "KO", "put", 62.5, "2026-09-18", -430.0, 9000002),
+        ("XOM261016C00135000", "XOM", "call", 135.0, "2026-10-16", -880.0, 9000003),
     ]
 
     rows = []
@@ -469,9 +470,11 @@ def create_portfolio_snapshots_test_data():
             for _ in range(n_ticks):
                 for occ, symbol, opt_type, strike, expiry, cost_basis, tradier_id in positions:
                     # XOM closes mid-session on the second trading day
-                    if (occ.startswith("XOM")
-                            and market_date.date() == (base_monday + timedelta(days=1)).date()
-                            and t.hour >= 11):
+                    if (
+                        occ.startswith("XOM")
+                        and market_date.date() == (base_monday + timedelta(days=1)).date()
+                        and t.hour >= 11
+                    ):
                         continue
 
                     if phase == "live" or occ not in frozen_mark:
@@ -677,7 +680,7 @@ if __name__ == "__main__":
         total_records += create_options_test_data()
         print("-" * 40, "\n\n")
         total_records += create_portfolio_snapshots_test_data()
-        print("-"*40, "\n\n")
+        print("-" * 40, "\n\n")
         total_records += create_quotes_test_data()
         print("-" * 40, "\n\n")
         print(f"Created {total_records} total test records")
