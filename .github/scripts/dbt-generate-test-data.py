@@ -447,6 +447,13 @@ def create_portfolio_snapshots_test_data():
     base_monday = datetime(2026, 8, 17)
     dates = [base_monday + timedelta(days=d) for d in range(0, 7)]  # Mon..Sun
 
+    #
+    # Persists across dates so a day's first pre-open snapshot repeats the prior
+    # day's close and is correctly flagged stale.
+    #
+
+    frozen_mark = {}
+
     for market_date in dates:
         is_weekend = market_date.isoweekday() > 5
 
@@ -456,7 +463,6 @@ def create_portfolio_snapshots_test_data():
         else:
             phases = [("frozen", 3), ("live", 8), ("frozen", 3)]
 
-        frozen_mark = {}
         t = datetime.combine(market_date.date(), datetime.min.time()) + timedelta(hours=6)
 
         for phase, n_ticks in phases:
@@ -517,7 +523,7 @@ def create_portfolio_snapshots_test_data():
     df = pd.DataFrame(rows)
 
     data_dir = get_rt_env()
-    output_dir = os.path.join(data_dir, "portfolio_snapshots")
+    output_dir = os.path.join(data_dir, "portfolio_positions_snapshots")
     os.makedirs(output_dir, exist_ok=True)
     fpath_parquet = os.path.join(output_dir, "snapshots.parquet")
     df.to_parquet(fpath_parquet, index=False, engine="pyarrow")
