@@ -28,7 +28,7 @@ sources:
     schema: raw
     description: >
       Intraday per-position snapshots (positions, quotes, m2m) from monitor_tradier_portfolio_dag.
-      Imported from s3://portfolio-snapshots via scripts/minio_ddb_import/run.sh with portfolio_snapshots importer.
+      Imported from s3://portfolio-snapshots via scripts/minio_ddb_import/run.sh with portfolio_positions_snapshots importer.
       The snapshot_ts is writer container's naive wall clock.
     tables:
       - name: portfolio__positions_snapshots

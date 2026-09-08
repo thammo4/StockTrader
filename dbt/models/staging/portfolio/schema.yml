@@ -8,7 +8,7 @@ models:
   - name: stg_portfolio__positions_snapshots
     description: >
       Market hours position snapshots.
-      Grain = one row per snapshot_ts.
+      Grain = one row per (snapshot_ts, tradier_id).
     meta:
       owner: "deng"
       refresh_frequency: "daily"
@@ -45,7 +45,7 @@ models:
       - name: expiry_type
         tests:
           - accepted_values:
-              values: {'standard', 'weeklys', 'eom'}
+              values: ['standard', 'weeklys', 'eom']
               config: {severity: warn}
       - name: expiry_date
         description: "Contracts expiration dates."
@@ -78,8 +78,15 @@ models:
       - name: upl_pct
         description: "upl / |cost_basis| * 100"
         meta:
-          unit: "USD"
           precision: "hundredths"
+      - name: days_held
+        description: "Calendar days from acq_date to market_date"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 1000
+              config: {severity: warn}
       - name: acq_ts
         description: "Position acquisition ts from Tradier (UTC)"
         tests:
