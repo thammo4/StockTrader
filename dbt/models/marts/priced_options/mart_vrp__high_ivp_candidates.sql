@@ -9,10 +9,29 @@
 -- Trading Activity Cutoffs
 --
 
-{% set min_volume = 12 %}
-{% set min_open_interest = 105 %}
-{% set min_bid_size = 12 %}
-{% set min_ask_size = 12 %}
+-- {% set min_volume = 12 %}
+-- {% set min_open_interest = 105 %}
+-- {% set min_bid_size = 12 %}
+-- {% set min_ask_size = 12 %}
+-- {% set min_time_value_bid_price = 0 %}
+-- {% set max_bid_ask_spread_pct = 0.09 %}
+
+-- {% set min_volume = 10 %}
+
+-- {% set min_open_interest = 95 %}
+-- {% set min_bid_size = 10 %}
+-- {% set min_ask_size = 10 %}
+
+
+
+-- {% set min_volume = 8 %}
+-- {% set min_open_interest = 80 %}
+
+{% set min_volume = 5 %}
+{% set min_open_interest = 40 %}
+
+{% set min_bid_size = 8 %}
+{% set min_ask_size = 8 %}
 {% set min_time_value_bid_price = 0 %}
 {% set max_bid_ask_spread_pct = 0.09 %}
 
@@ -21,9 +40,9 @@
 -- IV Cutoffs
 --
 
-{% set min_vrp_ratio = 1.095 %}
-{% set min_vrp_spread = 0.095 %}
-{% set min_iv_cdf = 0.8925 %}
+{% set min_vrp_ratio = 1.025 %}
+{% set min_vrp_spread = 0.0925 %}
+{% set min_iv_cdf = 0.8725 %}
 {% set min_iv_partition_n = 30 %}
 
 
@@ -31,15 +50,16 @@
 -- Moneyness Cutoffs
 --
 
-{% set min_abs_delta = 0.455 %}
-{% set max_abs_delta = 0.545 %}
-
+-- {% set min_abs_delta = 0.455 %}
+-- {% set max_abs_delta = 0.545 %}
+{% set min_abs_delta = 0.225 %}
+{% set max_abs_delta = 0.775 %}
 
 --
 -- Symbol Count Cutoffs
 --
 
-{% set max_symbol_rank = 2 %}
+{% set max_symbol_rank = 4 %}
 
 
 with ivp_population as (
