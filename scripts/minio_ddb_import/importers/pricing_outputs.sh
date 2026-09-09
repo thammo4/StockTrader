@@ -11,7 +11,6 @@
 TARGET_SCHEMA="raw"
 TARGET_TABLE="qlib_priced__bopm_dividends"
 PARTITION_COL="batch_id"
-# KEY_REGEX='^[0-9]{8}_[0-9]{6}$'
 KEY_REGEX='^[A-Za-z0-9_]+$'
 IMPORT_MODE="skip"
 ALLOW_EMPTY=false
@@ -64,7 +63,7 @@ sql_select () { cat << EOF
 		'$2'                        AS batch_id,
 		shard::INT                  AS shard,
 		CURRENT_TIMESTAMP::TIMESTAMPTZ AS ingest_ts
-	FROM read_parquet('$1')
+	FROM read_parquet('$1', union_by_name = true)
 EOF
 }
 
