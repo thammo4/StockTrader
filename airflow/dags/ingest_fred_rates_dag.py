@@ -11,6 +11,9 @@ from scripts.ingest_fred_rates import ingest_fred_rates
 
 log = LoggingMixin().log
 
+#
+# Define DAG Parameters
+#
 
 default_args = {
     "owner": "airflow",

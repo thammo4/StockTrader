@@ -13,6 +13,10 @@ from scripts.skip_us_holidays import skip_us_holidays
 
 log = LoggingMixin().log
 
+#
+# Define DAG Parameters
+#
+
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
