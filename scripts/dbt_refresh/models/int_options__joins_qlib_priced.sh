@@ -82,8 +82,23 @@ DDB_SELECT_SQL=$(cat << 'EOF'
 				gamma,
 				theta,
 				iv
-			FROM main_staging.stg_qlib_priced__outputs
-			WHERE pricing_status = 'ok'
+			FROM (
+				SELECT
+					market_date,
+					occ,
+					npv,
+					delta,
+					gamma,
+					theta,
+					iv,
+					ROW_NUMBER() OVER (
+						PARTITION BY market_date, occ
+						ORDER BY regexp_extract(batch_id, '([0-9]{8}_[0-9]{6})$', 1) DESC
+					) AS rank_i
+				FROM main_staging.stg_qlib_priced__outputs
+				WHERE pricing_status = 'ok'
+			)
+			WHERE rank_i = 1
 		),
 		joined_options_qlib_priced AS (
 			SELECT
