@@ -34,7 +34,7 @@ def dag_me():
         dag_id="ingest_tradier_options",
         default_args=default_args,
         description="Retrieve current day's options chain data from Tradier for symbols in largecap_all text file",
-        schedule_interval="40 16 * * 1-5",
+        schedule_interval="59 16 * * 1-5",
         start_date=datetime(2025, 5, 1),
         catchup=False,
         max_active_tasks=20,
