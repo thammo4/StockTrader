@@ -81,7 +81,7 @@ sql_select () { cat << EOF
 		acq_time::TIMETZ           AS acq_time,
 		tradier_id::BIGINT         AS tradier_id,
 		CURRENT_TIMESTAMP::TIMESTAMPTZ AS ingest_ts
-	FROM read_parquet('$1', filename = true)
+	FROM read_parquet('$1', filename = true, union_by_name=true)
 EOF
 }
 
