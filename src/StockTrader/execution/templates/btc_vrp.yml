@@ -1,0 +1,12 @@
+#
+# FILE: `StockTrader/src/StockTrader/execution/templates/btc_vrp.yml`
+#
+
+asset_type: option
+symbol: "{symbol}"
+occ: "{occ}"
+side: buy_to_close
+order_type: limit
+quantity: "{close_quantity}"
+limit_price: "{close_price}"
+duration: day
