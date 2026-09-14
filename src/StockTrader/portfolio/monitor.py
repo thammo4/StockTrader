@@ -9,7 +9,6 @@ from StockTrader.settings import logger
 from StockTrader.portfolio.position_loader import PositionLoader
 from StockTrader.portfolio.position_quotes import PositionQuotes
 from StockTrader.portfolio.m2m import M2MCalc
-
 from utils.minio_store import MinioStore
 
 SNAPSHOT_BUCKET = "portfolio-snapshots"
@@ -38,12 +37,15 @@ def run_monitoring(account_client, quotes_client, minio_store: MinioStore):
 
     df_enriched = q.add_market_data(df_positions)
     df_upl = M2MCalc.compute_upl(df_enriched)
+
     portfolio_summary = M2MCalc.portfolio_summary(df_upl)
     logger.info(f"Portfolio summary: {portfolio_summary} [monitor]")
 
-    now = datetime.now()
+    now = datetime.now(MARKET_TZ)
+
     date_str = now.strftime("%Y%m%d")
     time_str = now.strftime("%H%M%S")
+
     snapshot_id = f"{date_str}/{time_str}.parquet"
     summary_id = f"{date_str}/{time_str}.json"
 
@@ -65,5 +67,9 @@ def run_monitoring(account_client, quotes_client, minio_store: MinioStore):
     )
     logger.info(f"Summary: {s3_addr_summary} [monitor]")
 
-    logger.info(f"Snapshot persisted to: {SNAPSHOT_BUCKET} [monitor]")
-    logger.info(f"Summary persisted to: {SUMMARY_BUCKET} [monitor]")
+    return {
+        "snapshot_bucket": SNAPSHOT_BUCKET,
+        "snapshot_id": snapshot_id,
+        "summary_bucket": SUMMARY_BUCKET,
+        "summary_id": summary_id
+    }
