@@ -50,6 +50,8 @@ StockTrader/
 │   └── warehouse/
 │       ├── stocktrader_analytics_dev.duckdb
 │       ├── stocktrader_analytics_prod.duckdb
+│       ├── account_af/
+│       │   └── <ACCOUNTID>.parquet
 │       ├── fred_af/
 │       │   └── <SERIESID>.parquet
 │       ├── dividends_af/
