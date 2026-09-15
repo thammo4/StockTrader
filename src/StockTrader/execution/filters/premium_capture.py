@@ -59,6 +59,7 @@ class PremiumCaptureLoader(DataLoader):
 			"mid_price",
 			"bid_price",
 			"ask_price",
+			"n_contracts"
 		}
 
 		missing = required - set(df.columns)
@@ -112,6 +113,7 @@ class PremiumCaptureLoader(DataLoader):
 		#
 		# Close Order Fields
 		#
+
 		price_col = self.PRICE_COLUMNS[self._price_point]
 
 		df["close_quantity"] = (
@@ -124,6 +126,9 @@ class PremiumCaptureLoader(DataLoader):
 			df[price_col],
 			errors="coerce",
 		)
+		df["close_debit_est"] = (df["close_price"] * df["close_quantity"] * df["n_contracts"])
+		df["limit_capture"] = (1.0-(df["close_debit_est"]/df["premium_received"])).round(4)
+		df["limit_capture_pct"] = 100.0 * df["limit_capture"]
 
 		df["capture_threshold"] = self._capture_threshold
 		df["close_price_point"] = self._price_point
@@ -131,15 +136,13 @@ class PremiumCaptureLoader(DataLoader):
 		#
 		# Filter Eligible Closing Orders
 		#
+
 		is_valid_price = (
 			np.isfinite(df["close_price"])
 			& (df["close_price"] > 0)
 		)
 
-		is_ok_capture = (
-			df["premium_capture"]
-			>= self._capture_threshold
-		)
+		is_ok_capture = ((df["premium_capture"] >= self._capture_threshold) & (df["limit_capture"] >= self._capture_threshold) )
 
 		n0 = len(df)
 
