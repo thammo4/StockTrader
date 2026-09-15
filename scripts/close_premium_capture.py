@@ -29,7 +29,7 @@ def close_premium_capture(
 	if not snapshot_id:
 		raise AirflowSkipException("No portfolio snapshot provided. [close_premium_capture]")
 
-	if price_point not in {"ask", "bid", "mid", "close"}:
+	if price_point not in {"ask", "bid", "mid"}:
 		raise ValueError("Bad price point [close_premium_capture]")
 
 	if not 0 < capture_threshold <= 1:
