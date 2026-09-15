@@ -36,6 +36,15 @@ def run_monitoring(account_client, quotes_client, minio_store: MinioStore):
     #
 
     df_enriched = q.add_market_data(df_positions)
+
+    #
+    # Quote Outage: Skip Rather Than Write a Zero-Row Snapshot Missing M2M Columns
+    #
+
+    if df_enriched.empty:
+        logger.warning("No quote data for open positions, skip snapshot [monitor]")
+        return
+
     df_upl = M2MCalc.compute_upl(df_enriched)
 
     portfolio_summary = M2MCalc.portfolio_summary(df_upl)
