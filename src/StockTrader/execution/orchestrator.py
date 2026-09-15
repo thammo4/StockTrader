@@ -8,6 +8,13 @@ from StockTrader.execution.order_iface import DataLoader, OrderBuilder, OrderExe
 from StockTrader.execution.dto import ExecutionResult
 
 
+class NoOrdersError(ValueError):
+    """
+    Normal empty pipeline outcome (nothing loaded / nothing built).
+    Subclasses ValueError so existing `except ValueError` callers (main2.py) are unaffected.
+    """
+
+
 class OrderPipe:
     def __init__(self, loader: DataLoader, builder: OrderBuilder, executor: OrderExecutor, persister: ResultPersister):
         self.loader = loader
@@ -27,11 +34,11 @@ class OrderPipe:
 
         df = self.loader.load(**load_kwargs)
         if df.empty:
-            raise ValueError("No data loaded [orchestratpr]")
+            raise NoOrdersError("No data loaded [orchestrator]")
 
         orders = self.builder.build(df)
         if not orders:
-            raise ValueError("No orders built [orchestrator]")
+            raise NoOrdersError("No orders built [orchestrator]")
 
         results = self.executor.execute(orders, dry_run=dry_run)
 
