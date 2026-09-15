@@ -11,4 +11,4 @@ def monitor_tradier_portfolio(
 ):
     m = MinioStore(endpoint=minio_endpoint, access_key=minio_access_key, secret_key=minio_secret_key)
 
-    run_monitoring(acct_client, quotes_client, m)
+    return run_monitoring(acct_client, quotes_client, m)
