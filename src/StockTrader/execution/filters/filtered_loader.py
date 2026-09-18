@@ -21,7 +21,7 @@ class FilteredCandidateLoader(DataLoader):
         account_client,
         max_position_frac: float = 0.05,
         max_portfolio_margin_frac: float = 0.80,
-        min_credit_frac: float = 0.005,
+        min_credit_frac: float = 0.000,
         ok_duplicate_symbols: bool = False,
     ):
         self._inner = inner_loader
