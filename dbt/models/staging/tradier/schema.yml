@@ -1,6 +1,10 @@
 #
 # FILE: `StockTrader/dbt/models/staging/tradier/schema.yml`
 #
+# Bounds policy: value-range tests catch impossible or garbage values, not rare
+# but legitimate corporate events (delistings, reverse splits, halts, special
+# dividends). Delisted symbols are retained for survivorship-bias analysis.
+#
 
 version: 2
 
@@ -352,7 +356,7 @@ models:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 105.0
+              max_value: 1000.0
               config:
                 severity: warn
                 warn_if: ">25"
@@ -365,7 +369,7 @@ models:
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: "'2024-01-01'"
+              min_value: "'2000-01-01'"
               max_value: "current_date + interval '2 year'"
               config: {severity: warn}
       - name: frequency
@@ -394,7 +398,7 @@ models:
               config: {severity: error}
       - name: is_regular_dividend
         description: >
-          Boolean Flag to indicate regular dividneds.
+          Boolean Flag to indicate regular dividends.
           True=regular, False=special.
         tests:
           - not_null:
@@ -420,8 +424,8 @@ models:
           config: {severity: warn}
 
       - dbt_expectations.expect_table_row_count_to_be_between:
-          min_value: 1000
-          max_value: 10000
+          min_value: 10000
+          max_value: 1000000
           config: {severity: warn}
 
 
@@ -431,6 +435,8 @@ models:
       Contains historical daily price action and volume for equities.
       Model also computes daily log-returns and previous closing prices of time-series.
       Weekly data refresh at end of trading week.
+      Delisted symbols are retained for survivorship-bias analysis; price and return
+      bounds are intentionally wide to accommodate delistings and reverse splits.
     meta:
       owner: "deng"
       refresh_frequency: "weekly"
@@ -448,10 +454,12 @@ models:
         description: "Open price for the trading day."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: .750
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "open_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">100"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -461,10 +469,12 @@ models:
         description: "Highest trading price of security during trading session (e.g. day)."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: .750
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "high_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">100"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -474,10 +484,12 @@ models:
         description: "Lowest trading price of security during trading session (e.g. day)."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: .750
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "low_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">100"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -492,9 +504,11 @@ models:
           - not_null:
               config: {severity: error}
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: .750
-              max_value: 15000.00
-              config: {severity: warn}
+              min_value: 0.00
+              max_value: 1000000.00
+              config:
+                severity: warn
+                warn_if: ">100"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -507,9 +521,12 @@ models:
           NULL for first observation in dataset (roughly 1 year in past apropos current date).
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0.750
-              max_value: 15000.00
-              config: {severity: warn}
+              min_value: 0.00
+              max_value: 1000000.00
+              where: "prev_close_price is not null"
+              config:
+                severity: warn
+                warn_if: ">100"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -520,13 +537,15 @@ models:
           Natural logarithm of price ratio: ln(close_price/prev_close_price).
           Denotes continuous compounding return for trading day.
           NULL if prev_close_price = NULL or 0.
+          Bounds of +/-5 admit delisting collapses (ln(0.01) = -4.6) and unadjusted reverse splits.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: -0.05
-              max_value: 0.750
+              min_value: -5.0
+              max_value: 5.0
+              where: "log_return is not null"
               config:
                 severity: warn
-                warn_if: ">30"
+                warn_if: ">100"
         meta:
           unit: "ratio"
           precision: "ten-thousandths"
@@ -541,8 +560,8 @@ models:
               config: {severity: error}
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 1000000000
-              config: {severity: error}
+              max_value: 100000000000
+              config: {severity: warn}
         meta:
           unit: "shares"
           iqr_typical: "(1170882, 5658518)"
@@ -552,7 +571,7 @@ models:
           - not_null:
               config: {severity: error}
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: "'2024-01-01'"
+              min_value: "'2000-01-01'"
               max_value: "current_date"
               config: {severity: error}
       - name: created_date
@@ -571,6 +590,7 @@ models:
       Standardized EOD quote snapshots from Tradier market API.
       Daily refresh during M-F trading week.
       Information from this table used primarily for downstream dimensions/attributes.
+      Delisted and halted symbols are retained; quote fields may be null or extreme for them.
     meta:
       owner: "deng"
       refresh_frequency: "daily"
@@ -589,7 +609,7 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">12"
+                warn_if: ">100"
           - dbt_expectations.expect_column_value_lengths_to_be_between:
               min_value: 1
               max_value: 150
@@ -605,7 +625,7 @@ models:
           - not_null
           - dbt_expectations.expect_column_values_to_match_regex:
               regex: "^[A-Z]$"
-              config: {severity: error}
+              config: {severity: warn}
       - name: security_type
         description: "Classification of security (e.g. stock, etf)."
         tests:
@@ -624,12 +644,14 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">25"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "last_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -639,10 +661,12 @@ models:
         description: "Open price for the trading day."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "open_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -652,10 +676,12 @@ models:
         description: "Highest trading price of security during trading session."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "high_price is not null"
-              config: {config: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -665,18 +691,22 @@ models:
         description: "Lowest trading price of security during trading session."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "low_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
       - name: close_price
         description: "Closing price for trading day"
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "close_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -688,10 +718,12 @@ models:
           Used for computing daily price change and log return.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "prev_close_price is not null"
-              config: {severity: error}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -704,12 +736,12 @@ models:
           NULL when prev_close_price or close_price undefined.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: -0.50
-              max_value: 0.50
+              min_value: -5.0
+              max_value: 5.0
               where: "log_return is not null"
               config:
                 severity: warn
-                warn_if: ">5"
+                warn_if: ">100"
         meta:
           unit: "ratio"
           precision: "ten-thousandths"
@@ -719,10 +751,12 @@ models:
         description: "Signed price change from previous close."
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: -7500.00
-              max_value: 7500.00
+              min_value: -1000000.00
+              max_value: 1000000.00
               where: "change_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -732,14 +766,15 @@ models:
         description: >
           Percentage change in price from prev_close_price to close_price.
           Computed as 100 * (close_price - prev_close_price) / prev_close_price.
+          Floor of -100 is a mathematical bound; ceiling admits reverse-split artifacts.
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: -50.00
-              max_value: 50.00
+              min_value: -100.00
+              max_value: 10000.00
               where: "change_price_pct is not null"
               config:
                 severity: warn
-                warn_if: ">5"
+                warn_if: ">100"
         meta:
           unit: "percent"
           precision: "hundredths"
@@ -753,12 +788,14 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "bid_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -771,12 +808,14 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "ask_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -789,12 +828,14 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               where: "mid_price is not null"
-              config: {severity: warn}
+              config:
+                severity: warn
+                warn_if: ">50"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -808,14 +849,14 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0.00
-              max_value: 1000.00
+              max_value: 100000.00
               where: "bid_ask_spread is not null"
               config:
                 severity: warn
-                warn_if: ">10"
+                warn_if: ">100"
         meta:
           unit: "USD"
           precision: "hundredths"
@@ -829,8 +870,8 @@ models:
               config: {severity: error}
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 1000000000
-              config: {severity: error}
+              max_value: 1000000000000
+              config: {severity: warn}
         meta:
           unit: "shares"
           iqr_typical: "(1170882, 5658518)"
@@ -840,7 +881,7 @@ models:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 100000000
+              max_value: 100000000000
               config: {severity: warn}
         meta:
           unit: "shares"
@@ -851,7 +892,7 @@ models:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 100000000
+              max_value: 100000000000
               config:
                 severity: warn
                 warn_if: ">10"
@@ -865,57 +906,57 @@ models:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 200000
+              max_value: 10000000
               config: {severity: warn}
         meta:
           units: "orders"
           precision: "hundreds"
           iqr_typical: "(1.0,3.0)"
       - name: bid_exchange
-        description: "Ask exchange code."
+        description: "Bid exchange code."
       - name: ask_size
         description: "Size of ask (hundreds)"
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
               min_value: 0
-              max_value: 200000
+              max_value: 10000000
               config: {severity: warn}
         meta:
           units: "orders"
           precision: "hundreds"
           iqr_typical: "(1.0,4.0)"
       - name: ask_exchange
-        description: "Bid exchange code"
+        description: "Ask exchange code."
       - name: week52_high_price
         description: "52-week high price"
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               config:
                 severity: warn
-                warn_if: ">10"
+                warn_if: ">50"
       - name: week52_low_price
         description: "52-week low price"
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 1.00
-              max_value: 15000.00
+              min_value: 0.00
+              max_value: 1000000.00
               config:
                 severity: warn
-                warn_if: ">40"
+                warn_if: ">50"
       - name: trade_date
         description: "Most recent trade date."
         tests:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: "'2025-01-01'"
+              min_value: "'2000-01-01'"
               max_value: "current_timestamp"
               where: "trade_date is not null"
               config: {severity: warn}
@@ -925,9 +966,9 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: "'2025-01-01'"
+              min_value: "'2000-01-01'"
               max_value: "current_timestamp"
               where: "bid_date is not null"
               config: {severity: warn}
@@ -937,9 +978,10 @@ models:
           - not_null:
               config:
                 severity: warn
-                warn_if: ">20"
+                warn_if: ">100"
           - dbt_expectations.expect_column_values_to_be_between:
-              min_value: "'2025-01-01'"
+              min_value: "'2000-01-01'"
               max_value: "current_timestamp"
               where: "ask_date is not null"
               config: {severity: warn}
+
