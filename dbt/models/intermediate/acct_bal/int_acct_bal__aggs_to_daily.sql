@@ -5,13 +5,14 @@
 {{ config(materialized='view') }}
 
 --
--- Wealth state variable = stg_tradier__acct_bal.value (Tradier total_equity)
+-- Wealth State Variable = stg_tradier__acct_bal.value (Tradier total_equity)
 --
 
 with snaps as (
     select
         created_date as market_date,
-        created_ts as ts, acct_id,
+        created_ts as ts,
+        acct_id,
         acct_type,
         value,
         cash,
@@ -27,6 +28,7 @@ with snaps as (
     from {{ ref('stg_tradier__acct_bal') }}
     where isodow(created_date) between 1 and 5
     and value > 0
+    and extract(hour from (created_ts at time zone 'UTC') at time zone 'America/New_York') between 9 and 16
     qualify row_number() over (partition by acct_id, created_ts order by value desc) = 1
 ),
 
@@ -62,13 +64,20 @@ daily as (
         -- EOD Balance Sheet State
         arg_max(cash, ts) as cash,
         arg_max(option_buy_pwr, ts) as option_buy_pwr,
+
         arg_max(req_margin, ts) as req_margin,
+        min(req_margin) as req_margin_low,
+        max(req_margin) as req_margin_high,
+
         arg_max(req_option, ts) as req_option,
+
         arg_max(market_value, ts) as market_value,
         arg_max(option_value_short, ts) as option_value_short,
         arg_max(option_value_long, ts) as option_value_long,
+
         arg_max(pnl_open, ts) as pnl_open,
         arg_max(pnl_close, ts) as pnl_close,
+
         arg_max(n_orders_pending, ts) as n_orders_pending
     from intraday_steps
     group by acct_id, market_date
@@ -98,7 +107,8 @@ daily_wealth as (
         option_value_long,
         pnl_open,
         pnl_close,
-        n_orders_pending
+        n_orders_pending,
+        n_snaps>1 and wealth_high=wealth_low and req_margin_high=req_margin_low as is_frozen
     from daily
 )
 
