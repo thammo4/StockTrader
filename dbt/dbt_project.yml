@@ -53,4 +53,7 @@ vars:
   min_expiry_days: 7
   max_expiry_days: 180
   trading_days_per_annum: 252
+
+  tradier_options_per_contract_fee: 0.40
+
   # min_open_interest: 10
