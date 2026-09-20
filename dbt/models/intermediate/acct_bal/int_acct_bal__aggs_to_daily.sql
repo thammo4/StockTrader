@@ -32,7 +32,8 @@ with snaps as (
 
 
 --
--- Intraday Log Step t
+-- Intraday Log Step Transformation
+--
 
 intraday_steps as (
     select
@@ -48,15 +49,15 @@ daily as (
         any_value(acct_type) as acct_type,
         market_date,
         count(*) as n_snaps,
-        min(ts) as ts_0,
-        max(ts) as ts_1,
+        min(ts) as ts_min,
+        max(ts) as ts_max,
 
         -- Intraday Wealth Stats
-        arg_min(value, ts) as w_open,
-        arg_max(value, ts) as w_close,
-        min(value) as w_low,
-        max(value) as w_high,
-        sum(step_log_return * step_log_return) as w_rv,
+        arg_min(value, ts) as wealth_open,
+        arg_max(value, ts) as wealth_close,
+        min(value) as wealth_low,
+        max(value) as wealth_high,
+        sum(step_log_return * step_log_return) as wealth_rv,
 
         -- EOD Balance Sheet State
         arg_max(cash, ts) as cash,
@@ -72,21 +73,22 @@ daily as (
     from intraday_steps
     group by acct_id, market_date
 ),
+
 daily_wealth as (
     select
         acct_id,
         acct_type,
         market_date,
         n_snaps,
-        ts_0,
-        ts_1,
-        w_open,
-        w_high,
-        w_low,
-        w_close,
-        (w_high-w_low) / nullif(w_open,0) as w_range,
-        sqrt(w_rv) as w_rv_sqrt,
-        ln(w_high / nullif(w_low,0)) / (2 * sqrt(ln(2.0))) as w_vol_park,
+        ts_min,
+        ts_max,
+        wealth_open,
+        wealth_high,
+        wealth_low,
+        wealth_close,
+        (wealth_high-wealth_low) / nullif(wealth_open,0) as wealth_range,
+        sqrt(wealth_rv) as wealth_vol_rv,
+        ln(wealth_high / nullif(wealth_low,0)) / (2 * sqrt(ln(2.0))) as wealth_vol_parkinson,
         cash,
         option_buy_pwr,
         req_margin,
@@ -99,4 +101,5 @@ daily_wealth as (
         n_orders_pending
     from daily
 )
-select * from daily_wealth;
+
+select * from daily_wealth
