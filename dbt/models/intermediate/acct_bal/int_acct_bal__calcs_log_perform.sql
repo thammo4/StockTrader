@@ -236,8 +236,10 @@ final_calcs as (
 
 		-- Exposure ~ Wealth
 		round(req_margin / nullif(wealth_close, 0),4) 					as req_margin_wealth_frac,
+		round(req_margin_prev/nullif(wealth_prev,0),4) 					as req_margin_wealth_prev_frac,
 		round(option_buy_pwr / nullif(wealth_close, 0),4) 				as option_buy_pwr_wealth_frac,
 		round(abs(option_value_short) / nullif(wealth_close,0),4) 		as option_value_short_wealth_frac,
+		round(pnl_explained/nullif(req_margin_prev,0),4) 				as pnl_explained_req_margin_prev_frac
 	from ny_timezone
 )
 
@@ -302,8 +304,10 @@ select
 
 	-- Exposure Fractions
 	req_margin_wealth_frac,
+	req_margin_wealth_prev_frac
 	option_buy_pwr_wealth_frac,
 	option_value_short_wealth_frac,
+	pnl_explained_req_margin_prev_frac
 
 	-- Intraday Wealth Risk
 	wealth_range,
