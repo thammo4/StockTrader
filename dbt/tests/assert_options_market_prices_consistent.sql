@@ -27,4 +27,4 @@ select
 	n_prices_bad,
 	p_prices_bad
 from price_consistency
-where p_prices_bad > 0.01
+where p_prices_bad > 0.0125
